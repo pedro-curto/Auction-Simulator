@@ -137,10 +137,9 @@ int main(int argc, char *argv[]) {
 
 
         if(!strcmp(command, "login")) {
-            char username[100], login[100];
-            sscanf("%*s %s %s", login, username, input); // * reads from stream and discards
-            char *password = sscanf("%s", input);
+            char username[100], password[100];
             int valid = 1;
+            sscanf("%*s %s %s", username, password); // * reads from stream and discards
             // checks if username is strictly 6 digits from 0 to 9
             if (strlen(username) != 6) valid = 0;
             for (int i = 0; i <= 5; i++) {
