@@ -2,7 +2,13 @@
 #include <string.h>
 #include <stdlib.h>
 
-int main() {
+int main(int argc, char *argv[]) {
+    // prints out the argc and argvs
+    printf("argc: %d\n", argc);
+    for (int i = 0; i < argc; i++) {
+        printf("argv[%d]: %s\n", i, argv[i]);
+    }
+    
     while (1) {
         int i = 0;
         char c, input[100], command[12], username[100], password[100];

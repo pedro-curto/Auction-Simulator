@@ -1,17 +1,18 @@
 // nc -u <address> <port> ; -u (UDP)
+#include "user.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h> 
+#include <stdlib.h>
 #include <string.h>
-#define GN 53 // não sei se é este, já se altera
-#define PORT (58000 + GN) // isto tá mal
+#include <stdint.h>
+#include <ctype.h>
 
-//FAZER FUNCOES PARA CADA COMANDO
 
-void login(char* IP, char* port) {
+void login(char* IP, uint16_t port) {
     int fd, errcode;
     ssize_t n;
     socklen_t addrlen;
@@ -44,83 +45,85 @@ void login(char* IP, char* port) {
     
 }
 
-void logout(char* IP, char* port){
+void logout(char* IP, uint16_t port) {
 
 }
 
-void unregister(char* IP, char* port){
+void unregister(char* IP, uint16_t port) {
 
 }
 
-void exit(char* IP, char* port){
+void exit(char* IP, uint16_t port) {
 
 }
 
-void handle_open(char* IP, char* port) { 
+void handle_open(char* IP, uint16_t port) { 
 
 
 }
     
-void handle_close(char* IP, char* port) {
+void handle_close(char* IP, uint16_t port) {
 
 }
 
-void my_auctions(char* IP, char* port) {
+void my_auctions(char* IP, uint16_t port) {
 
 }
 
-void my_bids(char* IP, char* port) {
+void my_bids(char* IP, uint16_t port) {
 
 }
 
-void list(char* IP, char* port){
+void list(char* IP, uint16_t port) {
 
 }
 
-void show_asset(char* IP, char* port){
+void show_asset(char* IP, uint16_t port) {
 
 }
 
-void bid(char* IP, char* port){
+void bid(char* IP, uint16_t port) {
 
 }
 
-void show_record(char* IP, char* port){
+void show_record(char* IP, uint16_t port) {
     
 }
 
 
 int main(int argc, char *argv[]) {
-    char *IP;
-    char *port;
+    char IP[16] = SERVER_IP; 
+    uint16_t port = PORT;
     
-    switch(argc) {  // TODO
-        case 0:
-            //char *IP = machineIP;
-            //char *port = 58000+GN;
+    switch(argc) {  
+        case 1: 
+            IP = SERVER_IP;
+            port = PORT;
             break;
-        case 2:
-            if(!strcmp(argv[2],"-n")) {
-                IP = argv[3];
-                //char *port = 58000+GN;
-            }
-            if(!strcmp(argv[2],"-p")) {
-                //char *IP = machineIP;
+        case 3:
+            if(!strcmp(argv[1], "-n")) {
+                IP = argv[2];
+            } else if(!strcmp(argv[2], "-p")) {
                 port = argv[5];
+            } else {
+                printf("Invalid arguments.\n");
+                return -1;
             }
             break;
-
-        case 4:
+        case 5:
             if(!strcmp(argv[2],"-n") && !strcmp(argv[4],"-p")) {
                 IP = argv[3];
                 port = argv[5];
+            } else {
+                printf("Invalid arguments.\n");
+                return -1;
             }
             break;
-
-        default: //error
+        default: 
+            printf("Invalid arguments.\n");
+            return -1;
     }
 
-    char input[100];
     while (1) {
         char input[100], command[12];
         // gets stdin into input buffer
@@ -129,56 +132,53 @@ int main(int argc, char *argv[]) {
             return -1;
         }
         if (input[strlen(input)-1] == '\n') input[strlen(input)-1] = '\0';
-
         sscanf(input, "%11s", command);
-        
-    
 // bid AID value (or b AID value); close AID; login UID password; logout; list (or l); exit; open name asset_fname start_value timeactive; myauctions; ma; mybids (or mb) ; show_asset AID (or sa AID);  show_record AID (or sr AID); unregister;
 
 
         if(!strcmp(command, "login")) {
-            char username[100], password[100];
+            char uid[100], password[100];
             int valid = 1;
-            sscanf("%*s %s %s", username, password); // * reads from stream and discards
-            // checks if username is strictly 6 digits from 0 to 9
-            if (strlen(username) != 6) valid = 0;
+            sscanf("%*s %s %s", uid, password); // * reads from stream and discards
+            if (strlen(uid) != 6 || strlen(password) != 8) valid = 0;
             for (int i = 0; i <= 5; i++) {
-                if(username[i] < '0' || username[i] > '9') valid = 0;
+                if (!isdigit(uid[i])) valid = 0;
             }
-            if (valid) login(IP, port);
+            for (int i = 0; i <= 7; i++) {
+                if (!isalnum(password[i])) valid = 0;
+            }
+            if (valid) login(IP, port, uid, password);
             else printf("Incorrect login attempt.\n");
 
-        } else if(!strcmp(command, "logout")) {
+        } else if (!strcmp(command, "logout")) {
             logout(IP, port);
-        } else if(!strcmp(command, "unregister")){
+        } else if (!strcmp(command, "unregister")) {
             unregister(IP, port);
-        } else if(!strcmp(command, "exit")){
+        } else if (!strcmp(command, "exit")) {
             exit(IP, port);
-        } else if(!strcmp(command, "open")) {
+        } else if (!strcmp(command, "open")) {
             char *name = scanf(input);
-            char *asset_nam
+            char *asset_name;
 
             handle_open(IP, port);
-        } else if(!strcmp(command, "close")){
+        } else if (!strcmp(command, "close")){
             handle_close(IP, port);
-        } else if(!strcmp(command, "myauctions") || !strcmp(command, "ma")){
+        } else if (!strcmp(command, "myauctions") || !strcmp(command, "ma")){
             my_auctions(IP, port);
-        } else if(!strcmp(command, "mybids") || !strcmp(command, "mb")){
+        } else if (!strcmp(command, "mybids") || !strcmp(command, "mb")){
             my_bids(IP, port);
-        } else if(!strcmp(command, "list") || command == 'l') { 
+        } else if (!strcmp(command, "list") || command == 'l') { 
             list(IP, port);
-        } else if(!strcmp(command, "show_asset") || !strcmp(command, "sa")){
+        } else if (!strcmp(command, "show_asset") || !strcmp(command, "sa")){
             show_asset(IP, port);
-        } else if(!strcmp(command, "bid") || command == 'b'){
+        } else if (!strcmp(command, "bid") || command == 'b'){
             bid(IP, port);
-        } else if(!strcmp(command, "show_record") || !strcmp(command, "sr")){
+        } else if (!strcmp(command, "show_record") || !strcmp(command, "sr")){
             show_record(IP, port);
-        } else{
+        } else {
             print("invalid command!");
         }
     }
     
     return 0;
 }
-
-

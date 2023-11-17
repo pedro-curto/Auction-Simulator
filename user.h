@@ -1,25 +1,21 @@
+#ifndef USER_H
+#define USER_H
 
-//isto é preciso fazer? (header file) TODO
+#define SERVER_IP "tejo.tecnico.ulisboa.pt"
+#define GN 63 
+#define PORT (58000 + GN) 
 
-void login(char* IP, char* port)
-void logout(char* IP, char* port)
-void unregister(char* IP, char* port)
+void login(char* IP, uint16_t port, char *username, char *password);
+void logout(char* IP, uint16_t port);
+void unregister(char* IP, uint16_t port);
+void exit(char* IP, uint16_t port);
+void handle_open(char* IP, uint16_t port);
+void handle_close(char* IP, uint16_t port);
+void my_auctions(char* IP, uint16_t port);
+void my_bids(char* IP, uint16_t port);
+void list(char* IP, uint16_t port);
+void show_asset(char* IP, uint16_t port);
+void bid(char* IP, uint16_t port);
+void show_record(char* IP, uint16_t port);
 
-void exit(char* IP, char* port)
-
-void open(char* IP, char* port)
-    
-void close(char* IP, char* port)
-
-void my_auctions(char* IP, char* port)
-
-void my_bids(char* IP, char* port)
-
-void list(char* IP, char* port)
-
-void show_asset(char* IP, char* port)
-
-void bid(char* IP, char* port)
-
-void show_record(char* IP, char* port)
-
+#endif
