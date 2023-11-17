@@ -3,12 +3,12 @@
 
 #define SERVER_IP "tejo.tecnico.ulisboa.pt"
 #define GN 63 
-#define PORT (58000 + GN) 
+#define PORT "58001" 
 
-void login(char* IP, uint16_t port, char *username, char *password);
+void login(char* IP, char* port, char *username, char *password);
 void logout(char* IP, uint16_t port);
 void unregister(char* IP, uint16_t port);
-void exit(char* IP, uint16_t port);
+void handle_exit(char* IP, uint16_t port);
 void handle_open(char* IP, uint16_t port);
 void handle_close(char* IP, uint16_t port);
 void my_auctions(char* IP, uint16_t port);
