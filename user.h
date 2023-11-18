@@ -3,7 +3,7 @@
 
 #define SERVER_IP "tejo.tecnico.ulisboa.pt"
 #define GN 63 
-#define PORT "58001" 
+#define PORT "58063" 
 
 void login(char* IP, char* port, char *username, char *password);
 void logout(char* IP, uint16_t port);

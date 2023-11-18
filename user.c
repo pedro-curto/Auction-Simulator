@@ -35,8 +35,7 @@ void login(char* IP, char* port, char* uid, char* password) { // uses UDP protoc
     if (n == -1) exit(1);
 
     addrlen = sizeof(addr);
-    n = recvfrom(fd, buffer, 128, 0,
-                 (struct sockaddr*) &addr, &addrlen);
+    n = recvfrom(fd, buffer, 128, 0, (struct sockaddr*) &addr, &addrlen);
     if (n == -1) exit(1);
 
     printf("Echo from server: %.*s", (int) n, buffer);
@@ -45,7 +44,7 @@ void login(char* IP, char* port, char* uid, char* password) { // uses UDP protoc
     //write(1, buffer, n);
     freeaddrinfo(res);
     close(fd);
-    
+
 }
 
 /*void logout(char* IP, uint16_t port) {
@@ -99,7 +98,6 @@ int main(int argc, char *argv[]) {
     char* port = PORT;
     printf("argc: %d\n", argc);
     printf("argv[1]: %s\n", argv[1]);
-    printf
     switch(argc) {  
         case 1: 
             break;
@@ -154,9 +152,9 @@ int main(int argc, char *argv[]) {
             if (valid) login(IP, port, uid, password);
             else printf("Incorrect login attempt.\n");
 
-        } /*else if (!strcmp(command, "logout")) {
+        } else if (!strcmp(command, "logout")) {
             logout(IP, port);
-        } else if (!strcmp(command, "unregister")) {
+        } /*else if (!strcmp(command, "unregister")) {
             unregister(IP, port);
         } else if (!strcmp(command, "exit")) {
             handle_exit(IP, port);
@@ -184,3 +182,30 @@ int main(int argc, char *argv[]) {
     
     return 0;
 }
+
+// TCP client
+/*
+fd = socket(AF_INET, SOCK_STREAM, 0);
+if (fd == -1) exit(1);
+
+memset(&hints, 0, sizeof hints);
+hints.ai_family = AF_INET; // IPv4
+hints.ai_socktype = SOCK_STREAM; // TCP socket
+
+errcode = getaddrinfo("tejo.tecnico.ulisboa.pt", PORT, &hints, &res);
+if (errcode != 0) exit(1);
+
+n = connect(fd, res->ai_addr, res->ai_addrlen);
+if (n == -1) exit(1);
+
+n = write(fd, "Message from client\n", 20);
+if (n == -1) exit(1);
+
+n = read(fd, buffer, 128);
+if (n == -1) exit(1);
+
+write(1, "echo: ", 6); 
+write(1, buffer, n);
+
+freeaddrinfo(res);
+close(fd);*/
