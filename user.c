@@ -1,94 +1,168 @@
 // nc -u <address> <port> ; -u (UDP)
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h> 
-#include <stdlib.h>
-#include <string.h>
-#include <stdint.h>
-#include <ctype.h>
 #include "user.h"
 
-void login(char* IP, char* port, char* uid, char* password) { // uses UDP protocol
+char* connect_UDP(char* IP, char* port, char* request, char* buffer) {
     int fd, errcode;
     ssize_t n;
     socklen_t addrlen;
     struct addrinfo hints, *res;
     struct sockaddr_in addr;
-    char buffer[128], login_request[100];
+    int allgood = 1; // TODO não gosto disto, podemos fazer como está no connect_TCP 
+    // fica mais perceptível do que teres 1 erro que pode acontecer em qualquer sítio e o debug é no caralho
 
-    snprintf(login_request, sizeof(login_request), "LIN %s %s", uid, password);
-    
     fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd == -1) allgood = 0;
+    
+    memset(&hints, 0, sizeof hints);
+    memset(&addr, 0, sizeof addr);
+    hints.ai_family = AF_INET; // IPv4
+    hints.ai_socktype = SOCK_DGRAM; // UDP socket
+
+    errcode = getaddrinfo(IP, port, &hints, &res);
+    if (errcode != 0) allgood = 0; 
+    n = sendto(fd, request, strlen(request), 0, res->ai_addr, res->ai_addrlen);
+    if (n == -1) allgood = 0;
+
+    addrlen = sizeof(addr);
+    n = recvfrom(fd, buffer, 128, 0, (struct sockaddr*) &addr, &addrlen);
+    if (n == -1) allgood = 0;
+
+    freeaddrinfo(res);
+    close(fd);
+
+    if(!allgood){
+        return "error";
+    } 
+    return buffer;
+}
+
+char* connect_TCP(char* IP, char* port, char* request, char* buffer) {
+    int fd, errcode;
+    ssize_t n;
+    //socklen_t addrlen;
+    struct addrinfo hints, *res;
+    //struct sockaddr_in addr;
+
+    fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1) exit(1);
     
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // IPv4
-    hints.ai_socktype = SOCK_DGRAM; // UDP socket
+    hints.ai_socktype = SOCK_STREAM; // TCP socket
 
-    errcode = getaddrinfo("tejo.tecnico.ulisboa.pt", port, &hints, &res);
-    if (errcode != 0) exit(1);
+    errcode = getaddrinfo(IP, port, &hints, &res);
+    if (errcode != 0) perror("Error getting address info.");
 
-    n = sendto(fd, login_request, strlen(login_request), 0 ,res->ai_addr, res->ai_addrlen);
-    if (n == -1) exit(1);
+    n = connect(fd, res->ai_addr, res->ai_addrlen);
+    if (n == -1) perror("Error connecting.");
 
-    addrlen = sizeof(addr);
-    n = recvfrom(fd, buffer, 128, 0, (struct sockaddr*) &addr, &addrlen);
-    if (n == -1) exit(1);
+    n = write(fd, request, strlen(request));
+    if (n == -1) perror("Error writing.");
 
-    printf("Echo from server: %.*s", (int) n, buffer);
+    n = read(fd, buffer, 128);
+    if (n == -1) perror("Error reading.");
 
-    //write(1, "echo: ", 6);
-    //write(1, buffer, n);
     freeaddrinfo(res);
     close(fd);
 
+    return buffer;
 }
 
-/*void logout(char* IP, uint16_t port) {
+void login(char* IP, char* port, char* uid, char* password) { // uses UDP protocol
+
+    char buffer[128], login_request[100];
+    printf("ur inside login func now \n");
+
+    snprintf(login_request, sizeof(login_request), "LIN %s %s\n", uid, password);
+    
+    if (!strncmp(connect_UDP(IP, port, login_request, buffer), "error", 5)) return;
+
+    if (!strncmp(buffer, "RLI OK", 6)){
+        printf("User is now logged in.\n");
+    } else if (!strncmp(buffer, "RLI REG", 7)) {
+        printf("New user successfully created and logged in.\n");
+    } else if (!strncmp(buffer, "RLI NOK", 7)) {
+        printf("Password doesn't match.\n");
+    } else { // não sei se este caso é necessário mas é mais fácil dar debug se der merda ig
+        printf("Error logging in.\n");
+    }
+    
+    printf("ur leaving login func now \n");
+}
+
+void logout(char* IP, char* port, char* uid, char* password) {
+    printf("ur inside logout func now \n");
+    char buffer[128], logout_request[100];
+    snprintf(logout_request, sizeof(logout_request), "LOU %s %s\n", uid, password);
+    if (!strncmp(connect_UDP(IP, port, logout_request, buffer), "error", 5)) {
+        printf("Error connecting to log out.\n");
+        return;
+    }
+
+    if(!strncmp(buffer, "RLO OK", 6)){
+        printf("User is logged out.\n");
+    } else if (!strncmp(buffer, "RLO NOK", 7)){
+        printf("User was not logged in.\n");
+    } else if(!strncmp(buffer, "RLO UNR", 7)) {
+        printf("User was not registered.\n");
+    }
+    
+    printf("ur leaving logout func now \n");
+}
+
+void unregister(char* IP, char* port, char* uid, char* password) {
+    printf("! You're inside unregister function !\n");
+    char buffer[128], unregister_request[100];
+    snprintf(unregister_request, sizeof(unregister_request), "UNR %s %s\n", uid, password); 
+    if (!strncmp(connect_UDP(IP, port, unregister_request, buffer), "error", 5)) {
+        printf("Error connecting to unregister.\n");
+        return;
+    }
+
+
+
+
+
+    printf("! You're leaving unregister function !\n");    
+}
+
+
+
+/*
+void handle_exit(char* IP, char* port) {
 
 }
 
-void unregister(char* IP, uint16_t port) {
-
-}
-
-void handle_exit(char* IP, uint16_t port) {
-
-}
-
-void handle_open(char* IP, uint16_t port) { 
+void handle_open(char* IP, char* port) { 
 
 
 }
     
-void handle_close(char* IP, uint16_t port) {
+void handle_close(char* IP, char* port) {
 
 }
 
-void my_auctions(char* IP, uint16_t port) {
+void my_auctions(char* IP, char* port) {
 
 }
 
-void my_bids(char* IP, uint16_t port) {
+void my_bids(char* IP, char* port) {
 
 }
 
-void list(char* IP, uint16_t port) {
+void list(char* IP, char* port) {
 
 }
 
-void show_asset(char* IP, uint16_t port) {
+void show_asset(char* IP, char* port) {
 
 }
 
-void bid(char* IP, uint16_t port) {
+void bid(char* IP, char* port) {
 
 }
 
-void show_record(char* IP, uint16_t port) {
+void show_record(char* IP, char* port) {
     
 }*/
 
@@ -97,24 +171,29 @@ int main(int argc, char *argv[]) {
     char IP[50] = SERVER_IP; 
     char* port = PORT;
     printf("argc: %d\n", argc);
-    printf("argv[1]: %s\n", argv[1]);
+    for (int i = 0; i < argc; i++) {
+        printf("argv[%d]: %s\n", i, argv[i]);
+    }
     switch(argc) {  
         case 1: 
+            printf("case 1\n");
             break;
-        case 3:
+        case 3: 
+            printf("case 3\n");
             if(!strcmp(argv[1], "-n")) {
                 strcpy(IP, argv[2]);
-            } else if(!strcmp(argv[2], "-p")) {
-                port = argv[5];
+            } else if(!strcmp(argv[1], "-p")) {
+                strcpy(port, argv[2]);
             } else {
                 printf("Invalid arguments.\n");
-                return -1;
+                return -1;  
             }
             break;
         case 5:
-            if(!strcmp(argv[2],"-n") && !strcmp(argv[4],"-p")) {
+            printf("case 5\n");
+            if(!strcmp(argv[1],"-n") && !strcmp(argv[3],"-p")) {
                 strcpy(IP, argv[2]);
-                port = argv[5];
+                strcpy(port, argv[4]);
             } else {
                 printf("Invalid arguments.\n");
                 return -1;
@@ -127,6 +206,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         char input[100], command[12];
+        char uid[UID_SIZE + 1], password[PASSWORD_SIZE + 1];
         // gets stdin into input buffer
         if (fgets(input, sizeof(input), stdin) == NULL) {
             perror("Error reading input");
@@ -134,29 +214,31 @@ int main(int argc, char *argv[]) {
         }
         if (input[strlen(input)-1] == '\n') input[strlen(input)-1] = '\0';
         sscanf(input, "%11s", command);
-// bid AID value (or b AID value); close AID; login UID password; logout; list (or l); exit; open name asset_fname start_value timeactive; myauctions; ma; mybids (or mb) ; show_asset AID (or sa AID);  show_record AID (or sr AID); unregister;
+        // bid AID value (or b AID value); close AID; login UID password; logout; list (or l); exit; open name asset_fname start_value timeactive; myauctions; ma; mybids (or mb) ; show_asset AID (or sa AID);  show_record AID (or sr AID); unregister;
 
 
         if(!strcmp(command, "login")) {
-            char uid[100], password[100];
             int valid = 1;
-            sscanf(command, "%*s %s %s", uid, password); // * reads from stream and discards
-            if (strlen(uid) != 6 || strlen(password) != 8) valid = 0;
-            for (int i = 0; i < 6; i++) {
+            sscanf(input, "login %s %s", uid, password); // * reads from stream and discards
+
+            if (strlen(uid) != UID_SIZE || strlen(password) != PASSWORD_SIZE) valid = 0;
+            for (int i = 0; i < UID_SIZE; i++) {
                 if (!isdigit(uid[i])) valid = 0;
             }
-            for (int i = 0; i < 8; i++) {
+            for (int i = 0; i < PASSWORD_SIZE; i++) {
                 if (!isalnum(password[i])) valid = 0;
             }
-            printf("uid: %s\npassword: %s\n", uid, password);
+
+            printf("command: %s\nuid: %s\npassword: %s\n",command, uid, password);
+
             if (valid) login(IP, port, uid, password);
-            else printf("Incorrect login attempt.\n");
+            else printf("Invalid login attempt.\n");
 
         } else if (!strcmp(command, "logout")) {
-            logout(IP, port);
-        } /*else if (!strcmp(command, "unregister")) {
-            unregister(IP, port);
-        } else if (!strcmp(command, "exit")) {
+            logout(IP, port, uid, password);
+        } else if (!strcmp(command, "unregister")) {
+            unregister(IP, port, uid, password);
+        } /*else if (!strcmp(command, "exit")) {
             handle_exit(IP, port);
         } else if (!strcmp(command, "open")) {
 
@@ -176,36 +258,9 @@ int main(int argc, char *argv[]) {
         } else if (!strcmp(command, "show_record") || !strcmp(command, "sr")){
             show_record(IP, port);
         } else {
-            print("invalid command!");
+            printf("invalid command!\n");
         }*/
     }
     
     return 0;
 }
-
-// TCP client
-/*
-fd = socket(AF_INET, SOCK_STREAM, 0);
-if (fd == -1) exit(1);
-
-memset(&hints, 0, sizeof hints);
-hints.ai_family = AF_INET; // IPv4
-hints.ai_socktype = SOCK_STREAM; // TCP socket
-
-errcode = getaddrinfo("tejo.tecnico.ulisboa.pt", PORT, &hints, &res);
-if (errcode != 0) exit(1);
-
-n = connect(fd, res->ai_addr, res->ai_addrlen);
-if (n == -1) exit(1);
-
-n = write(fd, "Message from client\n", 20);
-if (n == -1) exit(1);
-
-n = read(fd, buffer, 128);
-if (n == -1) exit(1);
-
-write(1, "echo: ", 6); 
-write(1, buffer, n);
-
-freeaddrinfo(res);
-close(fd);*/
