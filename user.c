@@ -5,17 +5,13 @@ int main(int argc, char *argv[]) {
     char IP[50] = SERVER_IP; 
     char port[10] = PORT;
     char input[100], command[12];
-    char uid[UID_SIZE + 1], password[PASSWORD_SIZE + 1];
+    char uid[UID_SIZE+1], password[PASSWORD_SIZE+1];
     int user_loggedin = 0;
-    printf("argc: %d\n", argc);
-    for (int i = 0; i < argc; i++) printf("argv[%d]: %s\n", i, argv[i]);
     
     switch(argc) {
         case 1:
-            printf("case 1\n");
             break;
         case 3: 
-            printf("case 3\n");
             if(!strcmp(argv[1], "-n")) {
                 strcpy(IP, argv[2]);
             } else if(!strcmp(argv[1], "-p")) {
@@ -26,7 +22,6 @@ int main(int argc, char *argv[]) {
             }
             break;
         case 5:
-            printf("case 5\n");
             if(!strcmp(argv[1],"-n") && !strcmp(argv[3],"-p")) {
                 strcpy(IP, argv[2]);
                 strcpy(port, argv[4]);
@@ -73,19 +68,28 @@ int main(int argc, char *argv[]) {
             else printf("Invalid login attempt.\n");
 
         } else if (!strcmp(command, "logout")) {
-            int correct_logout;
             if (!user_loggedin) {
                 printf("You are not logged in.\n");
                 continue;
             }
-            correct_logout = logout(IP, port, uid, password);
-            if (correct_logout) user_loggedin = 0;
+            if (logout(IP, port, uid, password)) {
+                user_loggedin = 0;
+                // logged out: clears uid and password of current user
+                strcpy(uid, "");
+                strcpy(password, "");
+            }
         } else if (!strcmp(command, "unregister")) {
             if (!user_loggedin) {
                 printf("You are not logged in.\n");
                 continue;
             }
-            unregister(IP, port, uid, password);
+            if (unregister(IP, port, uid, password)) { 
+                user_loggedin = 0;
+                // unregistered: clears uid and password of user
+                strcpy(uid, "");
+                strcpy(password, "");
+            } else printf("Error unregistering.\n");
+            
         } else if (!strcmp(command, "exit")) {
             if(user_loggedin) {
                 printf("You are still logged in.\n");
@@ -116,14 +120,16 @@ int main(int argc, char *argv[]) {
             }
             //handle_open(IP, port, uid, password, name, asset_fname, start_value, timeactive);
 
-        }/* else if (!strcmp(command, "close")){
+        } else if (!strcmp(command, "list") || command[0] == 'l') { 
+            listAllAuctions(IP, port);
+        }
+        
+        /* else if (!strcmp(command, "close")){
             handle_close(IP, port);
         } else if (!strcmp(command, "myauctions") || !strcmp(command, "ma")){
             my_auctions(IP, port);
-        } else if (!strcmp(command, "mybids") || !strcmp(command, "mb")){
+        } else if (!strcmp(command, "mybids") || !strcmp(command, "mb")) {
             my_bids(IP, port);
-        } else if (!strcmp(command, "list") || command == 'l') { 
-            list(IP, port);
         } else if (!strcmp(command, "show_asset") || !strcmp(command, "sa")){
             show_asset(IP, port);
         } else if (!strcmp(command, "bid") || command == 'b'){
@@ -262,7 +268,6 @@ int unregister(char* IP, char* port, char* uid, char* password) {
     // checks server response
     if (!strncmp(buffer, "RUR OK", 6)) {
         printf("User was successfully unregistered.\n");
-        //logout(IP, port, uid, password); // TODO não sei se é suposto pormos isto?
         return 1;
     } else if (!strncmp(buffer, "RUR NOK", 7)) {
         printf("Incorrect register attempt: the user was not logged in.\n");
@@ -273,16 +278,38 @@ int unregister(char* IP, char* port, char* uid, char* password) {
     return 0;
 }
 
+void listAllAuctions(char* IP, char* port) { // uses UDP protocol
+    char buffer[1024], *list_request = "LST\n";
+    // establishes UDP connection with server and sends request
+    if (!strncmp(connect_UDP(IP, port, list_request, buffer), "error", 5)) {
+        printf("Error while connecting to list all auctions.\n");
+        return;
+    }
+    // checks server response
+    if (!strncmp(buffer, "RLS OK", 6)) {
+        printf("Auctions currently open:\n");
+        char *token = strtok(buffer, " ");
+        token = strtok(NULL, " ");
+        while (token != NULL) {
+            printf("%s\n", token);
+            token = strtok(NULL, " ");
+        }
+    }
+    else if (!strncmp(buffer, "RLS NOK", 7)) {
+        printf("No auctions are currently open.\n");
+    } else {
+        printf("Unexpected server response: %s\n", buffer);
+    }
+}
 
-
-/*void handle_open(char* IP, char* port, char* uid, char* password, char* name, char* asset_fname, int start_value, int timeactive) {
+void handle_open(char* IP, char* port, char* uid, char* password, char* name, char* asset_fname, int start_value, int timeactive) {
     printf("! You're inside unregister function !\n");
     char buffer[1024], open_request[1000];
-    int Fsize;
+    int Fsize = 0;
     char Fdata[100];
     int AID;
 
-    snprintf(open_request, sizeof(open_request), "OPA %s %s %s %d %d %s %s %s\n", uid, password, name, start_value, timeactive, asset_fname, Fsize, Fdata);
+    snprintf(open_request, sizeof(open_request), "OPA %s %s %s %d %d %s %d %s\n", uid, password, name, start_value, timeactive, asset_fname, Fsize, Fdata);
 
     if (!strncmp(connect_TCP(IP, port, open_request, buffer), "error", 5)) {
         printf("Error connecting to unregister.\n");
@@ -294,12 +321,12 @@ int unregister(char* IP, char* port, char* uid, char* password) {
     } else if (!strncmp(buffer, "ROA NLG", 7)) {
         printf("User was not logged in.\n");
     } else if (!strncmp(buffer, "ROA OK", 5)) {
-        sscanf(buffer, "ROA OK %d", AID);
-        //store local copy of file???
+        sscanf(buffer, "ROA OK %d", &AID); 
+
         printf("Auction identifier: %d.\n", AID);
     } else printf("Error opening auction.\n");
 
-}*/
+}
 /*
 void handle_close(char* IP, char* port) {
 
@@ -313,9 +340,6 @@ void my_bids(char* IP, char* port) {
 
 }
 
-void list(char* IP, char* port) {
-
-}
 
 void show_asset(char* IP, char* port) {
 

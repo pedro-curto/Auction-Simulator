@@ -27,11 +27,11 @@
 int login(char* IP, char* port, char *uid, char *password);
 int logout(char* IP, char* port, char* uid, char* password);
 int unregister(char* IP, char* port, char *uid, char *password);
-void handle_open(char* IP, char* port, char* name, char* asset_fname, int start_value, int timeactive);
+void handle_open(char* IP, char* port, char* uid, char* password, char* name, char* asset_fname, int start_value, int timeactive);
 void handle_close(char* IP, char* port);
 void my_auctions(char* IP, char* port);
 void my_bids(char* IP, char* port);
-void list(char* IP, char* port);
+void listAllAuctions(char* IP, char* port);
 void show_asset(char* IP, char* port);
 void bid(char* IP, char* port);
 void show_record(char* IP, char* port);
