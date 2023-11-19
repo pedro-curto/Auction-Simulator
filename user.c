@@ -99,6 +99,7 @@ int main(int argc, char *argv[]) {
         } else if (!strcmp(command, "open")) {
             char name[NAME_SIZE + 1], asset_fname[ASSET_FNAME_SIZE + 1];
             int start_value, timeactive;
+            printf("IP in main open: %s\nport in main open: %s\n", IP, port);
             sscanf(input, "open %s %s %d %d", name, asset_fname, &start_value, &timeactive);
             printf("command: %s\nname: %s\nasset_fname: %s\nstart_value: %d\ntimeactive: %d\n", command, name, asset_fname, start_value, timeactive);
 
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
                 continue;
             }
             if (start_value < 0 || timeactive < 0) {
-                printf("Invalid open attempt: start value or time active cannot be negative.\n");
+                printf("Invalid open attempt: minimum selling value for the asset and auction duration cannot be negative.\n");
                 continue;
             }
             openAuction(IP, port, uid, password, name, asset_fname, start_value, timeactive);
@@ -189,6 +190,7 @@ char* connect_TCP(char* IP, char* port, char* request, char* buffer) {
     hints.ai_socktype = SOCK_STREAM; // TCP socket
 
     errcode = getaddrinfo(IP, port, &hints, &res);
+    printf("IP in TCP: %s\nport in TCP: %s", IP, port);
     if (errcode != 0) perror("Error getting address info.");
 
     n = connect(fd, res->ai_addr, res->ai_addrlen);
@@ -298,11 +300,11 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
 }
 
 void openAuction(char* IP, char* port, char* uid, char* password, char* name, char* asset_fname, int start_value, int timeactive) {
-    printf("! You're inside unregister function !\n");
     char buffer[1024], open_request[1000];
     char Fdata[100], fsizeStr[9];
     int AID;
     off_t fsize = get_file_size(asset_fname);
+    printf("IP in openAuction: %s\nport in openAuction: %s\n", IP, port);
     if (fsize == -1) {
         printf("Error opening file.\n");
         return;
@@ -345,7 +347,7 @@ successful, and the assigned auction identifier, AID, a 3-digit number.*/
 
 
 void closeAuction(char* IP, char* port) {
-
+    (void) IP; (void) port;
 }
 
 /* close AID – the User application sends a message to the AS, using the TCP
