@@ -118,14 +118,14 @@ int main(int argc, char *argv[]) {
                 printf("Invalid open attempt: start value or time active cannot be negative.\n");
                 continue;
             }
-            //handle_open(IP, port, uid, password, name, asset_fname, start_value, timeactive);
+            openAuction(IP, port, uid, password, name, asset_fname, start_value, timeactive);
 
         } else if (!strcmp(command, "list") || command[0] == 'l') { 
             listAllAuctions(IP, port);
         }
         
         /* else if (!strcmp(command, "close")){
-            handle_close(IP, port);
+            closeAuction(IP, port);
         } else if (!strcmp(command, "myauctions") || !strcmp(command, "ma")){
             my_auctions(IP, port);
         } else if (!strcmp(command, "mybids") || !strcmp(command, "mb")) {
@@ -150,11 +150,9 @@ char* connect_UDP(char* IP, char* port, char* request, char* buffer) {
     socklen_t addrlen;
     struct addrinfo hints, *res;
     struct sockaddr_in addr;
-    int allgood = 1; // TODO não gosto disto, podemos fazer como está no connect_TCP 
-    // fica mais perceptível do que teres 1 erro que pode acontecer em qualquer sítio e o debug é no caralho
-
+    // TODO devemos permitir que a função continue se qualquer um dos perrors ocorrer?
     fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd == -1) allgood = 0;
+    if (fd == -1) perror("Error creating socket.");
     
     memset(&hints, 0, sizeof hints);
     memset(&addr, 0, sizeof addr);
@@ -162,20 +160,17 @@ char* connect_UDP(char* IP, char* port, char* request, char* buffer) {
     hints.ai_socktype = SOCK_DGRAM; // UDP socket
 
     errcode = getaddrinfo(IP, port, &hints, &res);
-    if (errcode != 0) allgood = 0; 
+    if (errcode != 0) perror("Error getting address info."); 
     n = sendto(fd, request, strlen(request), 0, res->ai_addr, res->ai_addrlen);
-    if (n == -1) allgood = 0;
+    if (n == -1) perror("Error sending request.");
 
     addrlen = sizeof(addr);
     n = recvfrom(fd, buffer, 128, 0, (struct sockaddr*) &addr, &addrlen);
-    if (n == -1) allgood = 0;
+    if (n == -1) perror("Error receiving response.");
 
     freeaddrinfo(res);
     close(fd);
 
-    if(!allgood){
-        return "error";
-    } 
     return buffer;
 }
 
@@ -302,36 +297,67 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     }
 }
 
-void handle_open(char* IP, char* port, char* uid, char* password, char* name, char* asset_fname, int start_value, int timeactive) {
+void openAuction(char* IP, char* port, char* uid, char* password, char* name, char* asset_fname, int start_value, int timeactive) {
     printf("! You're inside unregister function !\n");
     char buffer[1024], open_request[1000];
-    int Fsize = 0;
-    char Fdata[100];
+    char Fdata[100], fsizeStr[9];
     int AID;
-
-    snprintf(open_request, sizeof(open_request), "OPA %s %s %s %d %d %s %d %s\n", uid, password, name, start_value, timeactive, asset_fname, Fsize, Fdata);
+    off_t fsize = get_file_size(asset_fname);
+    if (fsize == -1) {
+        printf("Error opening file.\n");
+        return;
+    }
+    if (fsize > MAX_FILESIZE) { // FIXME quero eventualmente que isto saia mas enquanto não sei o upper bound é lidar
+        printf("File size exceeds allowed limit.\n");
+        return;
+    }
+    if (read_file(asset_fname, Fdata, fsize) == -1) {
+        printf("Error reading file.\n");
+        return;
+    }
+    snprintf(fsizeStr, sizeof(fsizeStr), "%08jd", fsize);
+    snprintf(open_request, sizeof(open_request), "OPA %s %s %s %d %d %s %s %s\n", 
+             uid, password, name, start_value, timeactive, asset_fname, fsizeStr, Fdata);
 
     if (!strncmp(connect_TCP(IP, port, open_request, buffer), "error", 5)) {
         printf("Error connecting to unregister.\n");
         return;
     }
-
+    // handles server response
     if (!strncmp(buffer, "ROA NOK", 7)) {
         printf("Auction could not be started.\n");
     } else if (!strncmp(buffer, "ROA NLG", 7)) {
         printf("User was not logged in.\n");
     } else if (!strncmp(buffer, "ROA OK", 5)) {
         sscanf(buffer, "ROA OK %d", &AID); 
-
         printf("Auction identifier: %d.\n", AID);
     } else printf("Error opening auction.\n");
 
+
 }
+
+/* Open a new auction. The User application sends a message to the AS asking to open
+a new auction, providing a short description name (represented with up to 10
+alphanumerical characters), an image (or other document file) of the asset to sell, the
+start value (represented with up to 6 digits), and the duration of the auction in
+seconds (represented with up to 5 digits). In reply, the AS informs if the request was
+successful, and the assigned auction identifier, AID, a 3-digit number.*/
+
+
+void closeAuction(char* IP, char* port) {
+
+}
+
+/* close AID – the User application sends a message to the AS, using the TCP
+protocol, asking to close an ongoing auction, with identifier AID, that had been
+started by the logged in user.
+The AS will reply informing whether the auction was successfully closed,
+cancelling the sale, or if the auction time had already ended. This information
+should be displayed to the User. After receiving the reply from the AS, the User
+closes the TCP connection.
+*/
+
 /*
-void handle_close(char* IP, char* port) {
-
-}
-
 void my_auctions(char* IP, char* port) {
 
 }
@@ -353,6 +379,8 @@ void show_record(char* IP, char* port) {
     
 }*/
 
+// ---------------------------- Auxiliary functions ----------------------------
+
 int valid_filename(char *filename) {
 
     if (strlen(filename) > ASSET_FNAME_SIZE) return -1;
@@ -363,4 +391,30 @@ int valid_filename(char *filename) {
     if (!isalpha(extension[1]) || !isalpha(extension[2]) || !isalpha(extension[3])) return -1;
 
     return 1;
+}
+
+off_t get_file_size(char *filename) {
+    struct stat st;
+    // stat returns 0 on success
+    if (!stat(filename, &st)) {
+        return st.st_size;
+    }
+    return -1;
+}
+
+
+int read_file(char *filename, char *buffer, off_t size) {
+    //size_t bufferSize = 100;
+    int fd = open(filename, O_RDONLY);
+    if (fd == -1) { 
+        perror("Error opening file");
+        return -1;
+    }
+    ssize_t n = read(fd, buffer, size);
+    close(fd);
+    if (n == -1) {
+        perror("Error reading file");
+        return -1;
+    }
+    return 0;
 }
