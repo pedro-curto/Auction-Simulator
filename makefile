@@ -1,5 +1,6 @@
 #Makefile
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -pedantic 
 
 user: user.c user.h
-	gcc user.c user.h -o user
-	./user
+	$(CC) $(CFLAGS) user.c -o user
