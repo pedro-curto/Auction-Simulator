@@ -1,0 +1,7 @@
+
+
+
+
+login 123123 abcdefgh
+open aucname123 monalisa.jpg 100 300
+

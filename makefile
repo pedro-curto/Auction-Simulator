@@ -1,6 +1,11 @@
 #Makefile
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -pedantic 
+user: user.c
+	$(CC) user.c -o user
+ 
+1: main.c functions.c aux_functions.c
+	$(CC) main.c functions.c aux_functions.c -o user1
 
-user: user.c user.h
-	$(CC) $(CFLAGS) user.c -o user
+
+#CFLAGS = -Wall -Wextra -Werror -pedantic 
+#	$(CC) $(CFLAGS) user.c -o user

@@ -27,17 +27,32 @@
 #define MAX_TIME_ACTIVE_LENGTH 5
 #define MAX_FILESIZE 10000000 // 10 MB
 
-int login(char* IP, char* port, char *uid, char *password);
+int login(char* IP, char* port, char* uid, char* password, char* input);
 int logout(char* IP, char* port, char* uid, char* password);
 int unregister(char* IP, char* port, char *uid, char *password);
-void openAuction(char* IP, char* port, char* uid, char* password, char* name, char* asset_fname, int start_value, int timeactive);
-void closeAuction(char* IP, char* port);
-void my_auctions(char* IP, char* port);
-void my_bids(char* IP, char* port);
+void openAuction(char* IP, char* port, char* uid, char* password, char* input);
+void closeAuction(char* IP, char* port, char* uid, char* password, char* input);
+
+/*myauctions or ma – the User application sends a message to the AS, using
+the UDP protocol, asking for a list of the auctions started by the logged in user,
+or auctions in which the logged in user has placed a bid.
+The AS will reply with the requested list, or an information that the user is not
+involved in any of the currently active auctions. This information should be
+displayed to the User.*/
+void myAuctions(char* IP, char* port, char* uid, char* password, int aid);
+
+/*mybids or mb – the User application sends a message to the AS, using the
+UDP protocol, asking for a list of the auctions for which the logged in user has
+placed a bid.
+The AS will reply with the requested list, or an information that the user has no
+active auction bids. This information should be displayed to the User. */
+void myBids(char* IP, char* port, char* uid, char* password);
+
+
 void listAllAuctions(char* IP, char* port);
-void show_asset(char* IP, char* port);
+void showAsset(char* IP, char* port);
 void bid(char* IP, char* port);
-void show_record(char* IP, char* port);
+void showRecord(char* IP, char* port);
 char* connect_TCP(char* IP, char* port, char* request, char* buffer);
 char* connect_UDP(char* IP, char* port, char* request, char* buffer);
 int valid_filename(char *filename);
