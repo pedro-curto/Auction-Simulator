@@ -234,7 +234,7 @@ are ongoing auctions for user UID the reply status is OK and a list of the
 identifiers AID and state for all ongoing auctions started by this user, separated by single spaces, 
 is sent by the AS. state takes value 1 if the auction is active, or 0 otherwise.
 */
-void myAuctions(char* IP, char* port, char* uid, char* password, int aid) {
+void myAuctions(char* IP, char* port, char* uid, char* password) {
     char buffer[1024], myauctions_request[12]; // LMA UID---\n
     snprintf(myauctions_request, sizeof(myauctions_request), "LMA %6s\n", uid);
     if (!strncmp(connect_UDP(IP, port, myauctions_request, buffer), "error", 5)) {
@@ -264,9 +264,127 @@ void myAuctions(char* IP, char* port, char* uid, char* password, int aid) {
 UDP protocol, asking for a list of the auctions for which the logged in user has
 placed a bid.
 The AS will reply with the requested list, or an information that the user has no
-active auction bids. This information should be displayed to the User. */
-void myBids(char* IP, char* port, char* uid, char* password) {
+active auction bids. This information should be displayed to the User. 
+LMB UID
+Following the mybids command the User sends the AS a request to list the
+auctions for which the user UID has made bids.
+RMB status[ AID state]*
+In reply to a LMB request the AS reply status is NOK if user UID has no
+ongoing bids. If the user is not logged in the reply status is NLG. If there are
+ongoing bids for user UID the reply status is OK and a list of the identifiers
+AID and state for all ongoing auctions for which this user has placed bids,
+separated by single spaces, is sent by the AS. state takes value 1 if the auction
+is active, or 0 otherwise.*/
+void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
+    char buffer[1024], mybids_request[12]; // LMB UID---\n
+    (void) IP; (void) port; (void) uid;
+    snprintf(mybids_request, sizeof(mybids_request), "LMB %6s\n", uid);
+    if (!strncmp(connect_UDP(IP, port, mybids_request, buffer), "error", 5)) {
+        printf("Error while connecting to list user's bids.\n");
+        return;
+    }
+    // handles server response
+    if (!strncmp(buffer, "RMB NOK", 7)) {
+        printf("Bid listing error: user has no ongoing bids.\n");
+    } else if (!strncmp(buffer, "RMB NLG", 7)) {
+        printf("Bid listing error: user is not logged in.\n");
+    } else if (!strncmp(buffer, "RMB OK", 6)) {
+        // FIXME
+        printf("Auctions currently open:\n");
+        char *token = strtok(buffer, " ");
+        token = strtok(NULL, " ");
+        while (token != NULL) {
+            printf("%s", token);
+            token = strtok(NULL, " ");
+        }
+    } else printf("Server responded with an error when trying to list bids.\n");
+}
 
+/*show_asset AID or sa AID – the User establishes a TCP session with
+the AS and sends a message asking to receive the image file of the asset in sale
+for auction number AID.
+In reply, the AS sends the required file, or an error message. The file is stored
+and its name and the directory of storage are displayed to the User. After
+receiving the reply from the AS, the user closes the TCP connection.
+SAS AID
+Following the show_asset command the User application opens a TCP
+connection with the AS and asks to receive the image illustrating the asset for
+sale in auction AID.
+RSA status [Fname Fsize Fdata]
+In reply to a SAS request the AS replies with status = OK and sends a file
+containing the image illustrative of the asset for sale. The information sent
+includes:
+• the filename Fname;
+• the file size Fsize, in bytes;
+• the contents of the selected file (Fdata).
+The file is locally stored using the filename Fname.
+The User displays the name and size of the stored file.
+If there is no file to be sent, or some other problem, the AS replies with
+status = NOK.
+After receiving the reply message, the User closes the TCP connection with the
+AS.
+
+*/
+
+void showAsset(char* IP, char* port, int aid) {
+    (void) IP; (void) port; (void) aid;
+    char buffer[1024], showasset_request[10]; // SAS AID\n
+    snprintf(showasset_request, sizeof(showasset_request), "SAS %3d\n", aid);
+    if (!strncmp(connect_TCP(IP, port, showasset_request, buffer), "error", 5)) {
+        printf("Error while connecting to show asset.\n");
+        return;
+    }
+    // handles server response
+    if (!strncmp(buffer, "RSA NOK", 7)) {
+        printf("Error showing asset: no such file.\n");
+    } else if (!strncmp(buffer, "RSA OK", 6)) {
+        // FIXME
+        printf("Auctions currently open:\n");
+        char *token = strtok(buffer, " ");
+        token = strtok(NULL, " ");
+        while (token != NULL) {
+            printf("%s", token);
+            token = strtok(NULL, " ");
+        }
+    } else printf("Server responded with an error when trying to show asset.\n");
 
 }
+
+/*bid AID value or b AID value – the User application sends a message
+to the AS, using the TCP protocol, asking to place a bid for auction AID of value
+value.
+The AS will reply reporting the result of the bid: accepted, refused (if value is
+not larger than the previous highest bid), or informing that the auction is no
+longer active. The user is not allowed to bid in an auction hosted by him. This
+information should be displayed to the User. After receiving the reply from the
+AS, the User closes the TCP connection.
+BID UID password AID value
+Following the bid command the User application opens a TCP connection
+with the AS and sends the AS a request to place a bid, with value value, for
+auction AID.
+RBD status
+In reply to a BID request the AS reply status is NOK if auction AID is not
+active. If the user was not logged in the reply status is NLG. If auction AID is
+ongoing the reply status is ACC if the bid was accepted. The reply status is
+REF if the bid was refused because a larger bid has already been placed
+previously. The reply status is ILG if the user tries to make a bid in an
+auction hosted by himself.
+After receiving the reply message, the User closes the TCP connection with the
+AS.
+*/
+
+void bid(char* IP, char* port, char* uid, char* password, int aid, int value) {
+    (void) IP; (void) port; (void) uid; (void) password; (void) aid; (void) value;
+}
+
+/* show_record AID or sr AID – the User application sends a message to
+the AS, using the UDP protocol, asking to see the record of auction AID.
+The AS will reply with the auction details, including the list of received bids and
+information if the auction is already closed. This information should be
+displayed to the User*/
+
+void showRecord(char* IP, char* port) {
+    (void) IP; (void) port;
+}
+
 

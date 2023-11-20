@@ -83,23 +83,24 @@ int main(int argc, char *argv[]) {
             
             closeAuction(IP, port, uid, password, input);
         
-        /*
-        } else if (!strcmp(command, "myauctions") || !strcmp(command, "ma")) {
-            myAuctions(IP, port, uid, password);*/
-
-        /*
         
-        } /else if (!strcmp(command, "mybids") || !strcmp(command, "mb")) {
-            my_bids(IP, port); */
+        } else if (!strcmp(command, "myauctions") || !strcmp(command, "ma")) {
+            myAuctions(IP, port, uid, password);
 
-        /*
-        } else if (!strcmp(command, "show_asset") || !strcmp(command, "sa")) {
-            show_asset(IP, port);
-        } else if (!strcmp(command, "bid") || command == 'b'){
-            bid(IP, port);
+        } else if (!strcmp(command, "mybids") || !strcmp(command, "mb")) {
+            myBids(IP, port); 
+
+        } else if (!strcmp(command, "showAsset") || !strcmp(command, "sa")) {
+            int aid;
+            sscanf(input, "%*s %d", &aid);
+            showAsset(IP, port, uid, password, aid);
+        } else if (!strcmp(command, "bid") || command[0] == 'b') {
+            int aid, value;
+            sscanf(input, "%*s %d %d", &aid, &value);
+            bid(IP, port, uid, password, aid, value);
         } else if (!strcmp(command, "show_record") || !strcmp(command, "sr")) {
-            show_record(IP, port);
-        */
+            showRecord(IP, port);
+        
         } else {
             printf("invalid command!\n");
         }

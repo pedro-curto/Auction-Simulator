@@ -32,26 +32,11 @@ int logout(char* IP, char* port, char* uid, char* password);
 int unregister(char* IP, char* port, char *uid, char *password);
 void openAuction(char* IP, char* port, char* uid, char* password, char* input);
 void closeAuction(char* IP, char* port, char* uid, char* password, char* input);
-
-/*myauctions or ma – the User application sends a message to the AS, using
-the UDP protocol, asking for a list of the auctions started by the logged in user,
-or auctions in which the logged in user has placed a bid.
-The AS will reply with the requested list, or an information that the user is not
-involved in any of the currently active auctions. This information should be
-displayed to the User.*/
-void myAuctions(char* IP, char* port, char* uid, char* password, int aid);
-
-/*mybids or mb – the User application sends a message to the AS, using the
-UDP protocol, asking for a list of the auctions for which the logged in user has
-placed a bid.
-The AS will reply with the requested list, or an information that the user has no
-active auction bids. This information should be displayed to the User. */
-void myBids(char* IP, char* port, char* uid, char* password);
-
-
+void myAuctions(char* IP, char* port, char* uid, char* password);
+void myBids(char* IP, char* port, char* uid);
 void listAllAuctions(char* IP, char* port);
-void showAsset(char* IP, char* port);
-void bid(char* IP, char* port);
+void showAsset(char* IP, char* port, int aid);
+void bid(char* IP, char* port, char* uid, char* password, int aid, int value);
 void showRecord(char* IP, char* port);
 char* connect_TCP(char* IP, char* port, char* request, char* buffer);
 char* connect_UDP(char* IP, char* port, char* request, char* buffer);
