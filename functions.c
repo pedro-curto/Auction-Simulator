@@ -41,7 +41,6 @@ int login(char* IP, char* port, char* uid, char* password, char* input) { // use
 
 int logout(char* IP, char* port, char* uid, char* password) {
     char buffer[128], logout_request[100];
-    
     // composes request and sends to server through UDP
     snprintf(logout_request, sizeof(logout_request), "LOU %s %s\n", uid, password);
     if (!strncmp(connect_UDP(IP, port, logout_request, buffer), "error", 5)) {
@@ -84,6 +83,20 @@ int unregister(char* IP, char* port, char* uid, char* password) {
     return 0;
 }
 
+
+/* 
+list or l – the User application sends a message to the AS, using the UDP
+protocol, asking for a list of the currently active auctions.
+The AS will reply with the requested list, or an information that no auctions are
+currently active. This information should be displayed to the User.
+LST
+Following the list command the User sends the AS an auction list request.
+RLS status[ AID state]*
+In reply to a LST request the AS reply status is NOK if no auction was yet
+started. If there are ongoing auctions the reply status is OK and a list of the
+identifiers AID and state for all auctions, separated by single spaces, is sent
+by the AS. state takes value 1 if the auction is active, or 0 otherwise. 
+*/
 void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     char buffer[1024], *list_request = "LST\n";
     // establishes UDP connection with server and sends request
@@ -94,7 +107,7 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     // checks server response
     if (!strncmp(buffer, "RLS OK", 6)) {
         printf("Auctions currently open:\n");
-        char *token = strtok(buffer, " ");
+        char *token = strtok(buffer+7, "OK "); // 
         token = strtok(NULL, " ");
         while (token != NULL) {
             printf("%s\n", token);
@@ -327,7 +340,6 @@ AS.
 */
 
 void showAsset(char* IP, char* port, int aid) {
-    (void) IP; (void) port; (void) aid;
     char buffer[1024], showasset_request[10]; // SAS AID\n
     snprintf(showasset_request, sizeof(showasset_request), "SAS %3d\n", aid);
     if (!strncmp(connect_TCP(IP, port, showasset_request, buffer), "error", 5)) {
@@ -340,11 +352,14 @@ void showAsset(char* IP, char* port, int aid) {
     } else if (!strncmp(buffer, "RSA OK", 6)) {
         // FIXME
         printf("Auctions currently open:\n");
-        char *token = strtok(buffer, " ");
+        char *token = strtok(buffer, " "); // skips RSA
         token = strtok(NULL, " ");
-        while (token != NULL) {
-            printf("%s", token);
-            token = strtok(NULL, " ");
+        if (token != NULL) {
+            // Extract filename, size, and data
+            char *filename = strtok(NULL, " "); // fname
+            char *size = strtok(NULL, " "); // fsize
+            char *data = strtok(NULL, "\0"); // fdata
+            printf("Filename: %s\nSize: %s\n", filename, size);
         }
     } else printf("Server responded with an error when trying to show asset.\n");
 
@@ -372,19 +387,82 @@ auction hosted by himself.
 After receiving the reply message, the User closes the TCP connection with the
 AS.
 */
+void bid(char* IP, char* port, int aid, int value) { // uses TCP protocol
+    char buffer[1024], bid_request[16]; // BID AID value\n
+    snprintf(bid_request, sizeof(bid_request), "BID %3d %6d\n", aid, value);
+    if (!strncmp(connect_TCP(IP, port, bid_request, buffer), "error", 5)) {
+        printf("Error while connecting to bid.\n");
+        return;
+    }
+    // handles server response
+    if (!strncmp(buffer, "RBD ACC", 7)) {
+        printf("Your bid has been accepted!\n");
+    } else if (!strncmp(buffer, "RBD NOK", 7)) {
+        printf("Bid error: auction %3d is not active.\n", aid);
+    } else if (!strncmp(buffer, "RBD NLG", 7)) {
+        printf("Bid error: user is not logged in.\n");
+    }  else if (!strncmp(buffer, "RBD REF", 7)) {
+        printf("Bid refused: a larger bid has already been placed previously.\n");
+    } else if (!strncmp(buffer, "RBD ILG", 7)) {
+        printf("Bid refused: you cannot bid on an auction hosted by yourself!\n");
+    } else printf("Server responded with an error when trying to bid.\n");
 
-void bid(char* IP, char* port, char* uid, char* password, int aid, int value) {
-    (void) IP; (void) port; (void) uid; (void) password; (void) aid; (void) value;
 }
 
 /* show_record AID or sr AID – the User application sends a message to
 the AS, using the UDP protocol, asking to see the record of auction AID.
 The AS will reply with the auction details, including the list of received bids and
 information if the auction is already closed. This information should be
-displayed to the User*/
-
-void showRecord(char* IP, char* port) {
-    (void) IP; (void) port;
+displayed to the User.
+SRC AID
+Following the show_record command the User sends the AS a request for
+the record of auction AID.
+RRC status [host_UID auction_name asset_fname start_value
+start_date-time timeactive]
+[ B bidder_UID bid_value bid_date-time bid_sec_time]*
+[ E end_date-time end_sec_time]
+In reply to a SRC request the AS reply status is NOK if the auction AID does
+not exist. Otherwise the reply status is OK followed by information about the
+ID host_UID of the user that started the auction, the auction name
+auction_name and the name of the file asset_fname with information
+about the item being sold, the minimum bid value start_value, and the start
+date and time start_date-time of the auction in the format YYYY-MMDD HH:MM:SS (19 bytes), as well as the duration of the auction timeactive
+in seconds (represented using 6 digits).
+If this auction has received bids then a description of each bid is presented in a
+separate line starting with B and including: the ID of the user that place this bid
+bidder_UID, the bid value bid_value, the bid date and time
+bid_date-time in the format YYYY-MM-DD HH:MM:SS (19 bytes), as
+well as the number of seconds elapsed since the beginning of the auction until
+the bid was made bid_sec_time (represented using 6 digits).
+In case the auction is already closed there is one last line added to the reply
+including the date and time of the auction closing end_date-time in the
+format YYYY-MM-DD HH:MM:SS (19 bytes), as well as the number of
+seconds elapsed since the beginning of the auction until the bid was made
+end_sec_time.*/
+void showRecord(char* IP, char* port, int aid) {
+    (void) IP; (void) port; (void) aid;
+    char buffer[1024], showrecord_request[10]; // SRC AID\n
+    snprintf(showrecord_request, sizeof(showrecord_request), "SRC %3d\n", aid);
+    if (!strncmp(connect_UDP(IP, port, showrecord_request, buffer), "error", 5)) {
+        printf("Error while connecting to show record.\n");
+        return;
+    }
+    // handles server response
+    if (!strncmp(buffer, "RRC NOK", 7)) {
+        printf("Error showing record: no such auction.\n");
+    } else if (!strncmp(buffer, "RRC OK", 6)) {
+        // FIXME: precisa de ser feito corretamente
+        printf("Auction record:\n");
+        char *token = strtok(buffer, " "); // skips RRC
+        token = strtok(NULL, " ");
+        if (token != NULL) {
+            // Extract filename, size, and data
+            char *filename = strtok(NULL, " "); // fname
+            char *size = strtok(NULL, " "); // fsize
+            char *data = strtok(NULL, "\0"); // fdata
+            printf("Filename: %s\nSize: %s\n", filename, size);
+        }
+    } else printf("Server responded with an error when trying to show record.\n");
 }
 
 
