@@ -48,7 +48,6 @@ int logout(char* IP, char* port, char* uid, char* password) {
         return 0;
     }
     // checks server response
-    printf("Server response for logout: %s\n", buffer);
     if (!strncmp(buffer, "RLO OK", 6)) {
         printf("User was correctly logged out.\n");
         return 1;
@@ -107,9 +106,10 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     // checks server response
     if (!strncmp(buffer, "RLS OK", 6)) {
         printf("Auctions currently open:\n");
-        char *token = strtok(buffer+7, "OK "); // 
-        token = strtok(NULL, " ");
+        char *token = strtok(buffer+7, "OK ");
         while (token != NULL) {
+            printf("%s ", token);
+            token = strtok(NULL, " ");
             printf("%s\n", token);
             token = strtok(NULL, " ");
         }
@@ -177,8 +177,9 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     snprintf(open_request, open_request_size, "OPA %s %s %s %d %d %s %s %s\n", 
              uid, password, name, start_value, timeactive, asset_fname, fsizeStr, Fdata);
 
-    if (!strncmp(connect_TCP(IP, port, open_request, buffer), "error", 5)) {
+    if (!strncmp(connect_TCP(IP, port, open_request, buffer, sizeof(buffer)), "error", 5)) {
         printf("Error connecting to unregister.\n");
+        free(Fdata);
         free(open_request);
         return;
     }
@@ -192,6 +193,7 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
         printf("Auction identifier: %d.\n", AID);
     } else printf("Error opening auction.\n");
 
+    free(Fdata);
     free(open_request);
 }
 
@@ -218,7 +220,7 @@ void closeAuction(char* IP, char* port, char* uid, char* password, char* input) 
 
     snprintf(close_request, sizeof(close_request), "CLS %6s %8s %3d\n", uid, password, aid);
     
-    if (!strncmp(connect_TCP(IP, port, close_request, buffer), "error", 5)) {
+    if (!strncmp(connect_TCP(IP, port, close_request, buffer, sizeof(buffer)), "error", 5)) {
         printf("Error while connecting to close an auction.\n");
         return;
     }
@@ -342,7 +344,7 @@ AS.
 void showAsset(char* IP, char* port, int aid) {
     char buffer[1024], showasset_request[10]; // SAS AID\n
     snprintf(showasset_request, sizeof(showasset_request), "SAS %3d\n", aid);
-    if (!strncmp(connect_TCP(IP, port, showasset_request, buffer), "error", 5)) {
+    if (!strncmp(connect_TCP(IP, port, showasset_request, buffer, sizeof(buffer)), "error", 5)) {
         printf("Error while connecting to show asset.\n");
         return;
     }
@@ -390,7 +392,7 @@ AS.
 void bid(char* IP, char* port, int aid, int value) { // uses TCP protocol
     char buffer[1024], bid_request[16]; // BID AID value\n
     snprintf(bid_request, sizeof(bid_request), "BID %3d %6d\n", aid, value);
-    if (!strncmp(connect_TCP(IP, port, bid_request, buffer), "error", 5)) {
+    if (!strncmp(connect_TCP(IP, port, bid_request, buffer, sizeof(buffer)), "error", 5)) {
         printf("Error while connecting to bid.\n");
         return;
     }
@@ -442,11 +444,14 @@ end_sec_time.*/
 void showRecord(char* IP, char* port, int aid) {
     (void) IP; (void) port; (void) aid;
     char buffer[1024], showrecord_request[10]; // SRC AID\n
-    snprintf(showrecord_request, sizeof(showrecord_request), "SRC %3d\n", aid);
+
+    snprintf(showrecord_request, sizeof(showrecord_request), "SRC %03d\n", aid);
     if (!strncmp(connect_UDP(IP, port, showrecord_request, buffer), "error", 5)) {
         printf("Error while connecting to show record.\n");
         return;
     }
+    printf("showrecord_request: %s\n", showrecord_request);
+    printf("buffer: %s\n", buffer);
     // handles server response
     if (!strncmp(buffer, "RRC NOK", 7)) {
         printf("Error showing record: no such auction.\n");
@@ -454,6 +459,7 @@ void showRecord(char* IP, char* port, int aid) {
         // FIXME: precisa de ser feito corretamente
         printf("Auction record:\n");
         char *token = strtok(buffer, " "); // skips RRC
+        token = strtok(NULL, " ");
         token = strtok(NULL, " ");
         if (token != NULL) {
             // Extract filename, size, and data

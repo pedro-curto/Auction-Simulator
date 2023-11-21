@@ -38,7 +38,7 @@ void listAllAuctions(char* IP, char* port);
 void showAsset(char* IP, char* port, int aid);
 void bid(char* IP, char* port, int aid, int value);
 void showRecord(char* IP, char* port, int aid);
-char* connect_TCP(char* IP, char* port, char* request, char* buffer);
+char* connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size);
 char* connect_UDP(char* IP, char* port, char* request, char* buffer);
 int valid_filename(char *filename);
 off_t get_file_size(char *filename);

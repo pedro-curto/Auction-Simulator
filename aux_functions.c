@@ -23,7 +23,7 @@ char* connect_UDP(char* IP, char* port, char* request, char* buffer) {
     if (n == -1) perror("Error sending request.");
 
     addrlen = sizeof(addr);
-    n = recvfrom(fd, buffer, 128, 0, (struct sockaddr*) &addr, &addrlen);
+    n = recvfrom(fd, buffer, 1023, 0, (struct sockaddr*) &addr, &addrlen);
     if (n == -1) perror("Error receiving response.");
 
     freeaddrinfo(res);
@@ -32,43 +32,34 @@ char* connect_UDP(char* IP, char* port, char* request, char* buffer) {
     return buffer;
 }
 
-char* connect_TCP(char* IP, char* port, char* request, char* buffer) {
+char* connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size) {
     int fd, errcode;
     ssize_t n;
     //socklen_t addrlen;
     struct addrinfo hints, *res;
     //struct sockaddr_in addr;
-    printf("ENTERING TCP\n");
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd == -1) printf("Error creating socket.\n");
     
-    printf("fd: %d", fd);
-    if (fd == -1) printf("Error creating socket.");
-    printf("antes memset");
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP socket
-    printf("antes getaddrinfo");
 
     errcode = getaddrinfo(IP, port, &hints, &res);
-    printf("errcode: %d", errcode);
-    if (errcode != 0) printf("Error getting address info.");
-
-    printf("antes connect");
+    if (errcode != 0) printf("Error getting address info.\n");
 
     n = connect(fd, res->ai_addr, res->ai_addrlen);
-    if (n == -1) perror("Error connecting.");
-    printf("antes write");
+    if (n == -1) perror("Error connecting.\n");
     
     n = write(fd, request, strlen(request));
-    if (n == -1) perror("Error writing.");
-    printf("antes read");
-    n = read(fd, buffer, sizeof(buffer));
-    if (n == -1) perror("Error reading.");
+    if (n == -1) perror("Error writing.\n");
+    
+    n = read(fd, buffer, buffer_size - 1);
+    if (n == -1) perror("Error reading.\n");
 
     freeaddrinfo(res);
     close(fd);
-    printf("LEAVING TCP\n");
     return buffer;
 } 
 

@@ -37,27 +37,10 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         // gets stdin into input buffer
-        scanf("%s", command); // FIXME scanf não é seguro, qual é o teu stress com o sscanf pra sacar o command??
-        // printf("command: %s\n", command);
+        scanf("%s", command); // FIXME scanf não é seguro
         fgets(input, sizeof(input), stdin);
         if (input[strlen(input)-1] == '\n') input[strlen(input)-1] = '\0';
-        // printf("input:%s\n", input);
-        // if (fgets(input, sizeof(input), stdin) == NULL) {
-        //     perror("Error reading input");
-        //     return -1;
-        // }
-        // sscanf(input, "%11s", command);
-        // FIXME isto está errado portanto vou comentar tudo
-        /*
-        if (!user_loggedin){
-            if (!strcmp(command, "login")) {
-                if (login(IP, port, uid, password, input)){
-                    user_loggedin = 1;
-                }
-            } else if(!strcmp(command, "exit")) {
-                break;
-            } else printf("You are not logged in.\n");*/
-
+        
         if (!strcmp(command, "login")) {
             if (user_loggedin) {
                 printf("You are already logged in.\n");
@@ -100,15 +83,15 @@ int main(int argc, char *argv[]) {
 
         } else if (!strcmp(command, "show_asset") || !strcmp(command, "sa")) {
             int aid;
-            sscanf(input, "%*s %d", &aid);
+            sscanf(input, "%d", &aid);
             showAsset(IP, port, aid);
         } else if (!strcmp(command, "bid") || command[0] == 'b') {
             int aid, value;
-            sscanf(input, "%*s %d %d", &aid, &value);
+            sscanf(input, "%d %d", &aid, &value);
             bid(IP, port, aid, value);
         } else if (!strcmp(command, "show_record") || !strcmp(command, "sr")) {
             int aid;
-            sscanf(input, "%*s %d", &aid);
+            sscanf(input, "%d", &aid);
             showRecord(IP, port, aid);
         
         } else {
