@@ -37,16 +37,25 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         // gets stdin into input buffer
-        scanf("%s", command); // FIXME scanf not safe
+        scanf("%s", command);
+        // printf("command: %s\n", command);
         fgets(input, sizeof(input), stdin);
         if (input[strlen(input)-1] == '\n') input[strlen(input)-1] = '\0';
-        
-        if (!strcmp(command, "login")) {
-            if (user_loggedin) {
-                printf("You are already logged in.\n");
-            } else if (login(IP, port, uid, password, input)) {
-                user_loggedin = 1;
-            }
+        // printf("input:%s\n", input);
+        // if (fgets(input, sizeof(input), stdin) == NULL) {
+        //     perror("Error reading input");
+        //     return -1;
+        // }
+        // sscanf(input, "%11s", command);
+        if (!user_loggedin){
+            if (!strcmp(command, "login")) {
+                if (login(IP, port, uid, password, input)){
+                    user_loggedin = 1;
+                }
+            } else if(!strcmp(command, "exit")) {
+                break;
+            } else printf("You are not logged in.\n");
+
         } else if (!strcmp(command, "logout")) {
             if(logout(IP, port, uid, password)){
                 user_loggedin = 0;
@@ -63,9 +72,7 @@ int main(int argc, char *argv[]) {
             } else printf("Error unregistering.\n");
             
         } else if (!strcmp(command, "exit")) {
-            if (user_loggedin) {
-                printf("You are still logged in. Please logout first.\n");
-            } else break;
+            printf("You are still logged in. Please logout first.\n");
 
         } else if (!strcmp(command, "open")) {
             openAuction(IP, port, uid, password, input);
@@ -73,26 +80,26 @@ int main(int argc, char *argv[]) {
         } else if (!strcmp(command, "list") || command[0] == 'l') { 
             listAllAuctions(IP, port);
         } else if (!strcmp(command, "close")) {
+            
             closeAuction(IP, port, uid, password, input);
+        
         
         } else if (!strcmp(command, "myauctions") || !strcmp(command, "ma")) {
             myAuctions(IP, port, uid, password);
 
         } else if (!strcmp(command, "mybids") || !strcmp(command, "mb")) {
-            myBids(IP, port, uid); 
+            myBids(IP, port); 
 
-        } else if (!strcmp(command, "show_asset") || !strcmp(command, "sa")) {
+        } else if (!strcmp(command, "showAsset") || !strcmp(command, "sa")) {
             int aid;
-            sscanf(input, "%d", &aid);
-            showAsset(IP, port, aid);
+            sscanf(input, "%*s %d", &aid);
+            showAsset(IP, port, uid, password, aid);
         } else if (!strcmp(command, "bid") || command[0] == 'b') {
             int aid, value;
-            sscanf(input, "%d %d", &aid, &value);
-            bid(IP, port, aid, value);
+            sscanf(input, "%*s %d %d", &aid, &value);
+            bid(IP, port, uid, password, aid, value);
         } else if (!strcmp(command, "show_record") || !strcmp(command, "sr")) {
-            int aid;
-            sscanf(input, "%d", &aid);
-            showRecord(IP, port, aid);
+            showRecord(IP, port);
         
         } else {
             printf("invalid command!\n");

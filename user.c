@@ -500,3 +500,11 @@ int read_file(char *filename, char *buffer, off_t size) {
     }
     return 0;
 }
+
+
+
+
+/*Encomendei tamanho 45 seguindo tabela de tamanhos que dizia que este corresponde 
+a 29cm de tamanho de pé, o que coincide perfeitamente com o meu. Porém, os ténis 
+nem sequer me entram no pé, portanto sou forçado a devolver.
+*/
