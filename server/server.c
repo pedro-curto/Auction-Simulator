@@ -22,6 +22,49 @@
     }
 }*/
 
+int main(int argc, char *argv[]) {
+    char port[10] = PORT;
+    char input[100], command[12];
+    char uid[UID_SIZE+1], password[PASSWORD_SIZE+1];
+    int user_loggedin = 0;
+    int verbose_mode = 0;
+    
+    switch(argc) {
+        case 1:
+            break;
+        case 2:
+            if(!strcmp(argv[1], "-v")) {
+                verbose_mode = 1;
+            } else {
+                printf("Invalid arguments.\n");
+                return -1;
+            }
+            break;
+        case 3: 
+            if(!strcmp(argv[1], "-p")) {
+                strcpy(port, argv[2]);
+            } else {
+                printf("Invalid arguments.\n");
+                return -1;
+            }
+            break;
+        case 4:
+            if(!strcmp(argv[1],"-p") && !strcmp(argv[3],"-v")) {
+                strcpy(port, argv[2]);
+                verbose_mode = 1;
+            } else {
+                printf("Invalid arguments.\n");
+                return -1;
+            }
+            break;
+        default: 
+            printf("Invalid arguments.\n");
+            return -1;
+    }
+
+    
+}
+
 void UDPServer() {
     int fd, errcode;
     ssize_t n;
