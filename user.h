@@ -26,6 +26,7 @@
 #define MAX_START_VALUE_LENGTH 6
 #define MAX_TIME_ACTIVE_LENGTH 5
 #define MAX_FILESIZE 10000000 // 10 MB
+#define MAX_AUCTIME 99999
 
 int login(char* IP, char* port, char* uid, char* password, char* input);
 int logout(char* IP, char* port, char* uid, char* password);
@@ -41,7 +42,7 @@ void showRecord(char* IP, char* port, int aid);
 char* connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size);
 char* connect_UDP(char* IP, char* port, char* request, char* buffer);
 int valid_filename(char *filename);
-off_t get_file_size(char *filename);
+int get_file_size(char *filename);
 int read_file(char *filename, char *buffer, off_t size);
 
 #endif

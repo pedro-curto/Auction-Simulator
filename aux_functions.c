@@ -76,16 +76,15 @@ int valid_filename(char *filename) {
     return 1;
 }
 
-off_t get_file_size(char *filename) {
+int get_file_size(char *filename) {
     struct stat st;
-    // stat returns 0 on success
-    if (!stat(filename, &st)) {
-        printf("File size: %ld\n", st.st_size);
-        return st.st_size;
-    }
-    printf("File size not obtained.\n");
-    return -1;
+    int ret_stat;
+
+    ret_stat = stat(filename, &st);
+    if (ret_stat == -1 || st.st_size == 0) return -1;
+    return st.st_size;
 }
+
 
 
 int read_file(char *filename, char *buffer, off_t size) {

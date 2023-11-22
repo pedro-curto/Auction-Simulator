@@ -134,26 +134,34 @@ of the asset to sell, stored in the file asset_fname, indicating the start value
 for the auction, start_value, and the duration of the auction, timeactive.
 In reply, the AS sends a message indicating whether the request was successful,
 and the assigned auction identifier, AID, which should be displayed to the User.
-After receiving the reply from the AS, the User closes the TCP connection
+After receiving the reply from the AS, the User closes the TCP connection.
+OPA UID password name start_value timeactive Fname
+Fsize Fdata
+Following the open command the User application opens a TCP connection
+with the AS and asks to open a new auction. The information sent includes:
+• a short description name (a single word): name
+• the minimum selling value for the asset: start_value
+• the duration of the auction in minutes: timeactive
+• the filename where an image of the asst to be sold is included: Fname
+• the file size in bytes: Fsize
+• the contents of the selected file: Fdata
 */
 
 // escrever o cabeçalho todo, e só depois enviar os dados através de uma função à parte em que envio 512 a 512
+// exemplo de função para enviar o ficheiro depois à parte: sendfile() (procurar a entry do man)
 
 void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     char name[NAME_SIZE + 1], asset_fname[ASSET_FNAME_SIZE + 1];
-    char buffer[1024];//, open_request[10000000];
-    char fsizeStr[9]; //, Fdata[10000000];
-    int start_value, timeactive;
-    int AID;
-
+    char buffer[1024], request_header[100];//, fsizeStr[9];
+    int start_value, timeactive, aid;
     // printf("IP in main open: %s\nport in main open: %s\n", IP, port);
     sscanf(input, "%s %s %d %d", name, asset_fname, &start_value, &timeactive);
     printf("name: %s\nasset_fname: %s\nstart_value: %d\ntimeactive: %d\n", name, asset_fname, start_value, timeactive);
     
-    off_t fsize = get_file_size(asset_fname);
+    int fsize = get_file_size(asset_fname);
 
     if (strlen(name) > NAME_SIZE) {
-        printf("Invalid open attempt: name or asset filename too long.\n");
+        printf("Invalid open attempt: auction description name too long.\n");
         return;
     }
     if (!valid_filename(asset_fname)) {
@@ -164,14 +172,19 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
         printf("Invalid open attempt: minimum selling value for the asset and auction duration cannot be negative.\n");
         return;
     }
+
+    if (timeactive > MAX_AUCTIME) {
+        printf("Invalid open attempt: auction duration is too large.\n");
+        return;
+    }
+
     printf("%ld\n", fsize);
     if (fsize == -1) {
         printf("Error opening file.\n");
         return;
     }
     char* Fdata = (char*) malloc(fsize);
-    // char Fdata[fsize];
-    if (fsize > MAX_FILESIZE) { // FIXME quero eventualmente que isto saia mas enquanto não sei o upper bound é lidar
+    if (fsize > MAX_FILESIZE) { 
         printf("File size exceeds allowed limit.\n");
         return;
     }
@@ -179,7 +192,8 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
         printf("Error reading file.\n");
         return;
     }
-    snprintf(fsizeStr, sizeof(fsizeStr), "%08jd", fsize);
+    //snprintf(fsizeStr, sizeof(fsizeStr), "%08jd", fsize);
+    snprintf(request_header, sizeof(request_header), "OPA %8s %6s ")
     size_t open_request_size = 100 + strlen(uid) + strlen(password) + strlen(name) + strlen(asset_fname) + strlen(fsizeStr) + fsize;
     char *open_request = (char*) malloc(open_request_size);
     // char open_request[open_request_size];
@@ -200,8 +214,8 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     } else if (!strncmp(buffer, "ROA NLG", 7)) {
         printf("User was not logged in.\n");
     } else if (!strncmp(buffer, "ROA OK", 6)) {
-        sscanf(buffer, "ROA OK %d", &AID); 
-        printf("Auction identifier: %d.\n", AID);
+        sscanf(buffer, "ROA OK %d", &aid); 
+        printf("Auction succesfully open! Your identifier is %d.\n", aid);
     } else printf("Error opening auction.\n");
 
     free(Fdata);

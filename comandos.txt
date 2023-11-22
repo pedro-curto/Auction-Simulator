@@ -1,3 +1,2 @@
 login 103091 11111111
-open aucname123 monalisa.jpg 100 300
-
+open aucname123 file.txt 100 300
