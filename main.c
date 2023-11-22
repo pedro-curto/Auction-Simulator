@@ -1,6 +1,5 @@
 #include "user.h"
 
-
 int main(int argc, char *argv[]) {
     char IP[50] = SERVER_IP;
     char port[10] = PORT;
