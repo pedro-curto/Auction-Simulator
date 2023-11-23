@@ -12,7 +12,9 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char *buffer, 
         return;
     }
 
-    if (fscanf(file, "%d") >= 999){
+    int n_users;
+    fscanf(file, "%d", &n_users);
+    if (n_users >= 999){
         strcat(status, "NOK");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
@@ -45,16 +47,17 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char *buffer, 
 
 }
 
-int create_user(uid, password){
+int create_user(char* uid, char* password){
     FILE *file = fopen("files/users", "rw");
     if (file == NULL) {
-        return;
+        return 0;
     }
 
-    int num_users;
-    if (fscanf(file, "%d", &num_users) == NULL){
-        num_users = 0;
-    }
+    int num_users = 0;
+    fscanf(file, "%d", &num_users); //   TODO corrigir isto
+    // if (num_users == NULL){
+    //     num_users = 0;
+    // }
     num_users++;
 
     fseek(file, 0, SEEK_SET);
@@ -64,9 +67,10 @@ int create_user(uid, password){
     fprintf(file, "%s %s\n", uid, password);
 
     fclose(file);
+    return 1;
 }
 
-reply_msg(udp_socket, client_addr,client_addr_len, status){
+void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_addr_len, char* status){
     if (sendto(udp_socket, status, strlen(status), 0, (struct sockaddr *)&client_addr, client_addr_len) == -1) {
         perror("UDP send error");
     }
