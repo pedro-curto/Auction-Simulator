@@ -42,7 +42,7 @@ void showRecord(char* IP, char* port, int aid);
 char* connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size);
 char* connect_UDP(char* IP, char* port, char* request, char* buffer);
 int valid_filename(char *filename);
-int get_file_size(char *filename);
-int read_file(char *filename, char *buffer, off_t size);
+int getFileSize(char *filename);
+int readFile(char *filename, char *buffer, int size);
 
 #endif

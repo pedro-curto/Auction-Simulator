@@ -183,11 +183,10 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
         printf("Invalid open attempt: auction duration is too large.\n");
         return;
     }
-    
+
     //snprintf(fsizeStr, sizeof(fsizeStr), "%08jd", fsize);
-    // FIXME TOMORROW APPEND file name to the end of the request_header
-    snprintf(request_header, sizeof(request_header), "OPA %s %s %s %d %d %s %d %s\n", 
-            uid, password, name, start_value, timeactive, asset_fname, fsize);
+    snprintf(request_header, sizeof(request_header), "OPA %s %s %s %d %d %s %d", uid, password, name, start_value, timeactive,
+             asset_fname, fsize);
     //size_t open_request_size = 100 + strlen(uid) + strlen(password) + strlen(name) + strlen(asset_fname) + strlen(fsizeStr) + fsize;
     //char *open_request = (char*) malloc(open_request_size);
     // char open_request[open_request_size];
@@ -485,3 +484,4 @@ void showRecord(char* IP, char* port, int aid) {
             printf("Filename: %s\nSize: %s\n", filename, size);
         }
     } else printf("Server responded with an error when trying to show record.\n");
+}

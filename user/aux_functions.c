@@ -38,6 +38,9 @@ char* connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buff
     //socklen_t addrlen;
     struct addrinfo hints, *res;
     //struct sockaddr_in addr;
+    if (!strncmp(request, "OPA", 3)) {
+        
+    }
 
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1) printf("Error creating socket.\n");
@@ -76,7 +79,7 @@ int valid_filename(char *filename) {
     return 1;
 }
 
-int get_file_size(char *filename) {
+int getFileSize(char *filename) {
     struct stat st;
     int ret_stat;
 
@@ -87,7 +90,7 @@ int get_file_size(char *filename) {
 
 
 
-int read_file(char *filename, char *buffer, off_t size) {
+int readFile(char *filename, char *buffer, off_t size) {
     //size_t bufferSize = 100;
     int fd = open(filename, O_RDONLY);
     if (fd == -1) { 
