@@ -2,7 +2,7 @@
 
 CC = gcc
 # CFLAGS = -Wall -Wextra -Werror -pedantic
-SRC = server.c functions.c aux_functions.c
+SRC = server.c
 TARGET = server
 
 $(TARGET): $(SRC)

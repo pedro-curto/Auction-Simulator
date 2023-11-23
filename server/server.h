@@ -10,7 +10,9 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <sys/select.h>
 
+#define MAX_BUFFER_SIZE 1024
 #define PORT "58011"
 //#define IP ""
 
@@ -18,5 +20,15 @@
 void UDPServer();
 void TCPServer();
 void *GetInAddr(struct sockaddr *sa);
+void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
+void process_tcp_request(int tcp_socket, char *buffer);
+void print_verbose_info(struct sockaddr_in client_addr, const char *protocol);
+void handle_login(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
+void handle_logout(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
+void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
+void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
+void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
+void handle_list(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
+void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
 
 #endif
