@@ -28,6 +28,7 @@
 #define MAX_TIME_ACTIVE_LENGTH 5
 #define MAX_FILESIZE 10000000 // 10 MB
 #define MAX_AUCTIME 99999
+#define MA_BUFFER_SIZE 6024// max is RMA OK\n (7) + 6 per auction, so 999*6 we round to 6024 because we can
 
 int login(char* IP, char* port, char* uid, char* password, char* input);
 int logout(char* IP, char* port, char* uid, char* password);

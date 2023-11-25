@@ -97,7 +97,7 @@ identifiers AID and state for all auctions, separated by single spaces, is sent
 by the AS. state takes value 1 if the auction is active, or 0 otherwise. 
 */
 void listAllAuctions(char* IP, char* port) { // uses UDP protocol
-    char buffer[1024], *list_request = "LST\n";
+    char buffer[4096], *list_request = "LST\n"; // FIXME buffer size? 4096?
     // establishes UDP connection with server and sends request
     if (!strncmp(connect_UDP(IP, port, list_request, buffer), "error", 5)) {
         printf("Error while connecting to list all auctions.\n");
@@ -107,12 +107,25 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     if (!strncmp(buffer, "RLS OK", 6)) {
         printf("Auctions currently open:\n");
         char *token = strtok(buffer+7, "OK ");
-        while (token != NULL) {
+        // FIXME comparar as duas implementações abaixo. a primeira tem dois \ns e a segunda um, not sure
+        /*while (token != NULL) {
             printf("%s ", token);
             token = strtok(NULL, " ");
             printf("%s\n", token);
+            if (token != NULL)
             token = strtok(NULL, " ");
+        }*/
+        while (token != NULL) {
+            printf("%s ", token);
+            // Move to the next token
+            token = strtok(NULL, " \n");
+            if (token != NULL) {
+                printf("%s\n", token);
+            }
+            // Move to the next token
+            token = strtok(NULL, " \n");
         }
+
     }
     else if (!strncmp(buffer, "RLS NOK", 7)) {
         printf("No auctions are currently open.\n");
@@ -156,7 +169,7 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     // printf("IP in main open: %s\nport in main open: %s\n", IP, port);
     sscanf(input, "%s %s %d %d", name, asset_fname, &start_value, &timeactive);
     int fsize = getFileSize(asset_fname);
-    printf("name: %s\nasset_fname: %s\nstart_value: %d\ntimeactive: %d\nfile size: %d\n", name, asset_fname, start_value, timeactive, fsize);
+    //printf("name: %s\nasset_fname: %s\nstart_value: %d\ntimeactive: %d\nfile size: %d\n", name, asset_fname, start_value, timeactive, fsize);
     // necessary checks 
     if (fsize == -1) {
         printf("Error opening file.\n");
@@ -265,7 +278,7 @@ identifiers AID and state for all ongoing auctions started by this user, separat
 is sent by the AS. state takes value 1 if the auction is active, or 0 otherwise.
 */
 void myAuctions(char* IP, char* port, char* uid, char* password) {
-    char buffer[1024], myauctions_request[12]; // LMA UID---\n
+    char buffer[MA_BUFFER_SIZE], myauctions_request[12]; // LMA UID---\n
     snprintf(myauctions_request, sizeof(myauctions_request), "LMA %6s\n", uid);
     if (!strncmp(connect_UDP(IP, port, myauctions_request, buffer), "error", 5)) {
         printf("Error while connecting to list user's auctions.\n");
@@ -278,12 +291,20 @@ void myAuctions(char* IP, char* port, char* uid, char* password) {
         printf("User is not logged in.\n");
     } else if (!strncmp(buffer, "RMA OK", 6)) { 
     // FIXME isto precisa de ser repensado quando os opens começarem a funcionar e pudermos testar isto a sério
+    // não sei se tá certo mas quis skippar o OK e assim parece estar a funcionar (?)
         printf("Auctions currently open:\n");
-        char *token = strtok(buffer, " ");
-        token = strtok(NULL, " ");
+        char *token = strtok(buffer, "RMA OK");
+        //token = strtok(NULL, " ");
+        //token = strtok(NULL, " ");
         while (token != NULL) {
-            printf("%s", token);
-            token = strtok(NULL, " ");
+            printf("%s ", token);
+            // Move to the next token
+            token = strtok(NULL, " \n");
+            if (token != NULL) {
+                printf("%s\n", token);
+            }
+            // Move to the next token
+            token = strtok(NULL, " \n");
         }
     } else printf("Server responded with an error when trying to list auctions.\n"); // in this case we got ERR
 
@@ -315,7 +336,7 @@ void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
     }
     // handles server response
     if (!strncmp(buffer, "RMB NOK", 7)) {
-        printf("Bid listing error: user has no ongoing bids.\n");
+        printf("YOu have no ongoing bids!\n");
     } else if (!strncmp(buffer, "RMB NLG", 7)) {
         printf("Bid listing error: user is not logged in.\n");
     } else if (!strncmp(buffer, "RMB OK", 6)) {
@@ -406,7 +427,7 @@ AS.
 */
 void bid(char* IP, char* port, int aid, int value) { // uses TCP protocol
     char buffer[1024], bid_request[16]; // BID AID value\n
-    snprintf(bid_request, sizeof(bid_request), "BID %3d %6d\n", aid, value);
+    snprintf(bid_request, sizeof(bid_request), "BID %03d %6d\n", aid, value);
     if (!strncmp(connect_TCP(IP, port, bid_request, buffer, sizeof(buffer)), "error", 5)) {
         printf("Error while connecting to bid.\n");
         return;
@@ -473,7 +494,7 @@ void showRecord(char* IP, char* port, int aid) {
     } else if (!strncmp(buffer, "RRC OK", 6)) {
         // FIXME: precisa de ser feito corretamente
         printf("Auction record:\n");
-        char *token = strtok(buffer, " "); // skips RRC
+        /*char *token = strtok(buffer, " "); // skips RRC
         token = strtok(NULL, " ");
         token = strtok(NULL, " ");
         if (token != NULL) {
@@ -482,7 +503,35 @@ void showRecord(char* IP, char* port, int aid) {
             char *size = strtok(NULL, " "); // fsize
             char *data = strtok(NULL, "\0"); // fdata
             printf("Filename: %s\nSize: %s\n", filename, size);
+        }*/
+        char *token = strtok(buffer, " "); // skips RRC
+        token = strtok(NULL, " "); // skips OK
+        token = strtok(NULL, " "); // skips AID
+        // Auction details
+        printf("Auction details:\n");
+        printf("Host UID: %s\n", strtok(NULL, " "));
+        printf("Auction Name: %s\n", strtok(NULL, " "));
+        printf("Asset Filename: %s\n", strtok(NULL, " "));
+        printf("Start Value: %s\n", strtok(NULL, " "));
+        printf("Start Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
+        printf("Time Active: %s\n", strtok(NULL, " "));
+        // Bids
+        printf("Bids:\n");
+        while (1) {
+            token = strtok(NULL, " ");
+            if (token == NULL || !strcmp(token, "E")) {
+                break; // Exit the loop when 'E' is encountered or when there are no more tokens
+            }
+            printf("Bidder UID: %s\n", token);
+            printf("Bid Value: %s\n", strtok(NULL, " "));
+            printf("Bid Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
+            printf("Bid Sec Time: %s\n", strtok(NULL, " "));
         }
+
+        // Closing information
+        printf("Closing Information:\n");
+        printf("End Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
+        printf("End Sec Time: %s\n", strtok(NULL, " "));
     } else printf("Server responded with an error when trying to show record.\n");
 }
 
