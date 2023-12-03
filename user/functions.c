@@ -485,3 +485,4 @@ void showRecord(char* IP, char* port, int aid) {
             printf("Filename: %s\nSize: %s\n", filename, size);
         }
     } else printf("Server responded with an error when trying to show record.\n");
+}
