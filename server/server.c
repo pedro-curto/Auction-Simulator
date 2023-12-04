@@ -174,8 +174,8 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         handle_logout(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"UNR")){
         handle_unregister(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"STA")){
-    //     handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
+    } else if (!strcmp(command,"LMA")){
+        handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
     // } else if (!strcmp(command,"LMB")){
     //     handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
     // } else if (!strcmp(command,"LST")){

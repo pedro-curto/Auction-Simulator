@@ -36,9 +36,12 @@ int create_user(char* uid, char* password);
 void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_addr_len, char* status);
 
 //change the login info of user uid to status. status = 1 means login, status = 0 means logout
-int change_user_login(char* uid, char status);
+void change_user_login(char* uid);
 int is_user_login(char* uid);
 int verify_user_exists(char* uid);
 int verify_password_correct(char* uid, char* password);
 void delete_user(char* uid);
+void user_auc_status(char* uid, char* status);
+void fetch_auctions(char* path, char* status);
+int is_auc_active(char* auc_uid);
 #endif

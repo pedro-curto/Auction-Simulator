@@ -14,18 +14,12 @@ int create_user(char* uid, char* password){
     strcat(path2, "/login.txt");
     FILE *pass_file = fopen(path, "w");
     if (pass_file == NULL) {
-        perror("fopen error");
         return 0;
     }
     fprintf(pass_file, "%s", password);
     fclose(pass_file);
 
     FILE *login_file = fopen(path2, "w");
-    if (login_file == NULL) {
-        perror("fopen error");
-        return 0;
-    }
-    fprintf(login_file, "%s", "1");
     fclose(login_file);
     return 1;
 }
@@ -51,7 +45,7 @@ int verify_user_exists(char* uid){
         printf("User %s does not exist anymore\n", uid);
         return 0;
     }
-    close(pass_file);
+    fclose(pass_file);
     return 1;
 }
 
@@ -61,23 +55,23 @@ int is_user_login(char* uid){
     strcat(path, "/login.txt");
     FILE *login_file = fopen(path, "r");
     if (login_file == NULL) {
-        perror("fopen error");
-        return -1;
+        return 0;
     }
-    char login;
-    fscanf(login_file, "%c", &login);
     fclose(login_file);
-    return login;
+    return 1;
 }
 
-void change_user_login(char* uid, char status){
+void change_user_login(char* uid){
     char path[50] = "users/";
     strcat(path, uid);
     strcat(path, "/login.txt");
     FILE *login_file = fopen(path, "r");
-
-    fprintf(login_file, "%c", status);
-    fclose(login_file);
+    if (login_file == NULL) {
+        fopen(path, "w");
+        fclose(login_file);
+    } else{
+        remove(path);
+    }
 }
 
 
@@ -111,4 +105,52 @@ void delete_user(char* uid){
 
     remove(path);
     remove(path2);
+}
+
+void user_auc_status(char* uid, char* status){
+    char user_auctions[9999];
+    char path[50] = "users/";
+
+    strcat(path, uid);
+    fetch_auctions(path, user_auctions);
+
+    char* auc_uid = strtok(user_auctions, " ");
+    while (auc_uid != NULL){
+        strcat(status, " ");
+        strcat(status, auc_uid);
+        if (is_auc_active(auc_uid)){
+            strcat(status, " 1");
+        }
+        else{
+            strcat(status, " 0");
+        }
+        auc_uid = strtok(NULL, " ");
+    }
+}
+
+void fetch_auctions(char* path, char* auctions) {
+    char auc_uid[50];
+    DIR* hosted_dir = opendir(path);
+
+    struct dirent* hosted_file;
+    while ((hosted_file = readdir(hosted_dir)) != NULL) {
+        scanf(hosted_file->d_name, "%s.txt", auc_uid);
+        strcat(auctions, auc_uid);
+        strcat(auctions, " ");
+        memset(auc_uid, 0, sizeof(auc_uid));
+    }
+    auctions[strlen(auctions) - 1] = '\n';
+    closedir(hosted_dir);
+}
+
+int is_auc_active(char* auc_uid){
+    char path[50] = "auctions/";
+    strcat(path, auc_uid);
+    strcat(path, "/active.txt");
+    FILE *active_file = fopen(path, "r");
+    if (active_file == NULL) {
+        return 0;
+    }
+    fclose(active_file);
+    return 1;
 }

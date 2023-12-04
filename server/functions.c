@@ -18,7 +18,7 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char *buffer, 
         } else if (is_user_login(uid)){
             strcat(status, "NOK\n");
         } else{
-            change_user_login(uid, '1');
+            change_user_login(uid);
             strcat(status, "OK\n");
         }
     }
@@ -41,7 +41,7 @@ void handle_logout(int udp_socket, struct sockaddr_in client_addr, char *buffer,
         } else if (!is_user_login(uid)){
             strcat(status, "NOK\n");
         } else{
-            change_user_login(uid, '0');
+            change_user_login(uid);
             strcat(status, "OK\n");
         }
     }
@@ -71,9 +71,26 @@ void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char *buf
 
 
 
-// void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
+void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
+    char uid[100];
+    char status[9999] = "RMA ";
 
-// }
+    sscanf(buffer, "UNR %s", uid);
+    uid[strlen(uid)] = '\0';
+
+    if(!verify_user_exists(uid)){
+        strcat(status, "NOK\n");
+    } else{
+        if (!is_user_login(uid)){
+            strcat(status, "NLG\n");
+        } else{
+            strcat(status, "OK");
+            user_auc_status(uid, status);
+            strcat(status, "\n");
+        }
+    }
+    reply_msg(udp_socket, client_addr, client_addr_len, status);
+}
 // void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
 
 // }
