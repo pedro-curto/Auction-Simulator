@@ -263,15 +263,12 @@ are ongoing auctions for user UID the reply status is OK and a list of the
 identifiers AID and state for all ongoing auctions started by this user, separated by single spaces, 
 is sent by the AS. state takes value 1 if the auction is active, or 0 otherwise.
 */
-void myAuctions(char* IP, char* port, char* uid, char* password) {
+void myAuctions(char* IP, char* port, char* uid) {
     char buffer[MA_BUFFER_SIZE], myauctions_request[12]; // LMA UID---\n
+    printf("uid: %s\n", uid);
     snprintf(myauctions_request, sizeof(myauctions_request), "LMA %6s\n", uid);
     // FIXME este strncmp não faz sentido nenhum, o connect_UDP e connect_TCP deveriam funcionar sendo void
     connect_UDP(IP, port, myauctions_request, buffer);
-    /*if (!strncmp(connect_UDP(IP, port, myauctions_request, buffer), "error", 5)) {
-        printf("Error while connecting to list user's auctions.\n");
-        return;
-    }*/
     // handles server response
     if (!strncmp(buffer, "RMA NOK", 7)) {
         printf("User has no ongoing auctions.\n");
@@ -366,7 +363,7 @@ AS.
 void showAsset(char* IP, char* port, int aid) {
     char showasset_request[SA_BUFFER_SIZE];//, char *buffer; | SAS AID\n
     char buffer[1000], asset_fname[ASSET_FNAME_SIZE + 1];
-    int fsize, fd;
+    //int fsize, fd;
     memset(buffer, 0, sizeof(buffer));
     printf("showassetcheck\n");
     snprintf(showasset_request, sizeof(showasset_request), "SAS %03d\n", aid);
@@ -473,7 +470,6 @@ end_sec_time.*/
 void showRecord(char* IP, char* port, int aid) {
     // FIXME properly calculate the size of the buffer
     char buffer[1024], showrecord_request[10]; // SRC AID\n
-
     snprintf(showrecord_request, sizeof(showrecord_request), "SRC %03d\n", aid);
     connect_UDP(IP, port, showrecord_request, buffer);
     printf("showrecord_request: %s\n", showrecord_request);
@@ -494,6 +490,7 @@ void showRecord(char* IP, char* port, int aid) {
             char *data = strtok(NULL, "\0"); // fdata
             printf("Filename: %s\nSize: %s\n", filename, size);
         }*/
+        printf("buffer: %s\n", buffer);
         char *token = strtok(buffer, " "); // skips RRC
         printf("skipped token1: %s\n", token);
         token = strtok(NULL, " "); // skips OK
@@ -510,19 +507,24 @@ void showRecord(char* IP, char* port, int aid) {
         // FIXME parsing is being done incorrectly! check this. Consider the token "B"
         printf("Bids:\n");
         while (1) {
-            token = strtok(NULL, " ");
+            // Format is: [ B bidder_UID bid_value bid_date-time bid_sec_time]* so I need to skip the initial "B"
+            token = strtok(NULL, " "); // skips B
             if (token == NULL || !strcmp(token, "E")) {
                 break; // Exit the loop when 'E' is encountered or when there are no more tokens
             }
-            printf("Bidder UID: %s\n", token);
+            printf("Bidder UID: %s\n", strtok(NULL, " "));
+            //printf("Bidder UID: %s\n", token);
             printf("Bid Value: %s\n", strtok(NULL, " "));
             printf("Bid Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
             printf("Bid Sec Time: %s\n", strtok(NULL, " "));
         }
-        // Closing information
-        printf("Closing Information:\n");
-        printf("End Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
-        printf("End Sec Time: %s\n", strtok(NULL, " "));
+        // Closing information: only makes sense if the auction is closed
+        if (token != NULL && !strcmp(token, "E")) {
+            printf("Closing Information:\n");
+            printf("End Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
+            printf("End Sec Time: %s\n", strtok(NULL, " "));
+        } else printf("Auction is still ongoing!\n");
+            
     } else printf("Server responded with an error when trying to show record.\n");
 }
 

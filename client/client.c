@@ -7,7 +7,10 @@ int main(int argc, char *argv[]) {
     char input[100], command[12];
     char uid[UID_SIZE+1], password[PASSWORD_SIZE+1];
     int user_loggedin = 0;
-    
+    memset(uid, 0, sizeof(uid));
+    memset(password, 0, sizeof(password));
+    //strcpy(uid, "000000");
+    //strcpy(password, "00000000");
     switch(argc) {
         case 1:
             break;
@@ -51,6 +54,8 @@ int main(int argc, char *argv[]) {
             if(logout(IP, port, uid, password)){
                 user_loggedin = 0;
                 // logged out: clears uid and password of user
+                //strcpy(uid, "000000");
+                //strcpy(password, "00000000");
                 strcpy(uid, "");
                 strcpy(password, "");
             }
@@ -76,7 +81,7 @@ int main(int argc, char *argv[]) {
             closeAuction(IP, port, uid, password, input);
         
         } else if (!strcmp(command, "myauctions") || !strcmp(command, "ma")) {
-            myAuctions(IP, port, uid, password);
+            myAuctions(IP, port, uid);
 
         } else if (!strcmp(command, "mybids") || !strcmp(command, "mb")) {
             myBids(IP, port, uid); 

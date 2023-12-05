@@ -8,6 +8,7 @@ void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME i
     socklen_t addrlen;
     struct addrinfo hints, *res;
     struct sockaddr_in addr;
+    printf("connect_UDP request: %s\n", request);
     // TODO devemos permitir que a função continue se qualquer um dos perrors ocorrer?
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1) perror("Error creating socket.");
@@ -30,7 +31,7 @@ void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME i
 
 
 void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size) {
-    int fd, asset_fd, errcode, openAuc = 0, fsize;
+    int fd, asset_fd, fsize;//,  errcode;
     char asset_fname[ASSET_FNAME_SIZE + 1];
     ssize_t n;
     struct addrinfo hints, *res;
@@ -59,6 +60,7 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
         off_t offset = 0;
         ssize_t sent_bytes = sendfile(fd, asset_fd, &offset, fsize);
         if (sent_bytes == -1) perror("Error sending file.\n");
+        if (write(fd, "\n", 1) == -1) perror("Error writing.\n");
         close(asset_fd);
     }
     n = read(fd, buffer, buffer_size - 1);
@@ -104,50 +106,3 @@ int getFileSize(char *filename) {
     return 0;
 }*/
 
-
-/*else if (!strncmp(request, "SAS", 3)) { // SAS AID\n
-        // RSA OK Fname------------------- Fsize--- 0\n
-        //printf("ENTERED\n");
-        int bytes_read = 0;
-        //printf("BUFFER SIZE: %ld\n", buffer_size);
-        n = read(fd, buffer, buffer_size - 1);
-        if (n == -1) perror("Error reading.\n");
-        bytes_read += n;
-        printf("bytes read: %ld\n", n);
-        buffer[n] = '\0';
-        printf("buffer: %s\n", buffer);
-        //bytes_read += n;
-        if (!strncmp(buffer, "RSA OK", 6)) {
-            // RSA OK Fname------------------- Fsize--- 0
-            while (bytes_read < SA_RESPONSE_HEADER) { // SA_RESPONSE_HEADER <- 41
-                n = read(fd, buffer, buffer_size - 1);
-                if (n == -1) perror("Error reading.\n");
-                bytes_read += n;
-                printf("buffer: %10s\n", buffer);
-                printf("bytes_read: %d\n", bytes_read);
-            }
-            char chunk[512];
-            ssize_t received_bytes;
-            //printf("buffer: %s", buffer);
-            sscanf(buffer, "RSA OK %24s %8d", asset_fname, &fsize);
-            printf("asset_fname: %s\n", asset_fname);
-            asset_fd = open(asset_fname, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-            printf("asset_fd: %d\n", asset_fd);
-            while (fsize > 0) {
-                received_bytes = read(fd, chunk, sizeof(chunk));
-                if (received_bytes <= 0) {
-                    perror("Error while reading from socket.\n");
-                    break;
-                }
-                
-                printf("chunk size: %ld\n", sizeof(chunk));
-                if (write(asset_fd, chunk, received_bytes) == -1) {
-                    perror("Error while writing to file.\n");
-                    break;
-                }
-                fsize -= received_bytes;
-            }
-        }
-
-    }
-*/

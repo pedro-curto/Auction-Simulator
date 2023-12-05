@@ -41,7 +41,7 @@ int logout(char* IP, char* port, char* uid, char* password);
 int unregister(char* IP, char* port, char *uid, char *password);
 void openAuction(char* IP, char* port, char* uid, char* password, char* input);
 void closeAuction(char* IP, char* port, char* uid, char* password, char* input);
-void myAuctions(char* IP, char* port, char* uid, char* password);
+void myAuctions(char* IP, char* port, char* uid);
 void myBids(char* IP, char* port, char* uid);
 void listAllAuctions(char* IP, char* port);
 void showAsset(char* IP, char* port, int aid);
