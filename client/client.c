@@ -88,7 +88,7 @@ int main(int argc, char *argv[]) {
         } else if (!strcmp(command, "bid") || command[0] == 'b') {
             int aid, value;
             sscanf(input, "%d %d", &aid, &value);
-            bid(IP, port, aid, value);
+            bid(IP, port, uid, password, aid, value);
         } else if (!strcmp(command, "show_record") || !strcmp(command, "sr")) {
             int aid;
             sscanf(input, "%d", &aid);

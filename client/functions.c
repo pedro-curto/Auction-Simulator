@@ -23,8 +23,8 @@ int login(char* IP, char* port, char* uid, char* password, char* input) { // use
 
     snprintf(login_request, sizeof(login_request), "LIN %s %s\n", uid, password);
     
-    if (!strncmp(connect_UDP(IP, port, login_request, buffer), "Error", 5)) return 0; //FIXME acho q o "else" la em baixo trata do assunto se der erro aqui
-
+    //if (!strncmp(connect_UDP(IP, port, login_request, buffer), "Error", 5)) return 0; //FIXME acho q o "else" la em baixo trata do assunto se der erro aqui
+    connect_UDP(IP, port, login_request, buffer);
     if (!strncmp(buffer, "RLI OK", 6)) {
         printf("User is now logged in.\n");
         return 1;
@@ -43,10 +43,11 @@ int logout(char* IP, char* port, char* uid, char* password) {
     char buffer[128], logout_request[100];
     // composes request and sends to server through UDP
     snprintf(logout_request, sizeof(logout_request), "LOU %s %s\n", uid, password);
-    if (!strncmp(connect_UDP(IP, port, logout_request, buffer), "error", 5)) {
+    /*if (!strncmp(connect_UDP(IP, port, logout_request, buffer), "error", 5)) {
         printf("Error logging out.\n"); // acho q isto nunca vai acontecer, o connect_UDP nao da returna  num "error" FIXME
         return 0;
-    }
+    }*/
+    connect_UDP(IP, port, logout_request, buffer);
     // checks server response
     if (!strncmp(buffer, "RLO OK", 6)) {
         printf("User was correctly logged out.\n");
@@ -65,10 +66,11 @@ int unregister(char* IP, char* port, char* uid, char* password) {
     char buffer[128], unregister_request[100];
     snprintf(unregister_request, sizeof(unregister_request), "UNR %s %s\n", uid, password);
     // establishes UDP connection with server and sends request
-    if (!strncmp(connect_UDP(IP, port, unregister_request, buffer), "error", 5)) {
+    /*if (!strncmp(connect_UDP(IP, port, unregister_request, buffer), "error", 5)) {
         printf("Error connecting to unregister.\n");
         return 0;
-    }
+    }*/
+    connect_UDP(IP, port, unregister_request, buffer);
     // checks server response
     if (!strncmp(buffer, "RUR OK", 6)) {
         printf("User was successfully unregistered.\n");
@@ -98,11 +100,11 @@ by the AS. state takes value 1 if the auction is active, or 0 otherwise.
 */
 void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     char buffer[4096], *list_request = "LST\n"; // FIXME buffer size? 4096?
+    // memset(.., .., n*sizeof(char)) substituir por isto?
+    memset(buffer, 0, sizeof(buffer));
     // establishes UDP connection with server and sends request
-    if (!strncmp(connect_UDP(IP, port, list_request, buffer), "error", 5)) {
-        printf("Error while connecting to list all auctions.\n");
-        return;
-    }
+    connect_UDP(IP, port, list_request, buffer);
+    //printf("buffer: %s\n", buffer);
     // checks server response
     if (!strncmp(buffer, "RLS OK", 6)) {
         printf("Auctions currently open:\n");
@@ -125,12 +127,11 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
             // Move to the next token
             token = strtok(NULL, " \n");
         }
-
     }
     else if (!strncmp(buffer, "RLS NOK", 7)) {
         printf("No auctions are currently open.\n");
     } else {
-        printf("Unexpected server response: %s\n", buffer);
+        printf("Unexpected server response: %s\n", buffer); // case RLS ERR
     }
 }
 
@@ -163,10 +164,9 @@ with the AS and asks to open a new auction. The information sent includes:
 // exemplo de função para enviar o ficheiro depois à parte: sendfile() (procurar a entry do man)
 
 void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
-    char name[NAME_SIZE + 1], asset_fname[ASSET_FNAME_SIZE + 1];
+    char name[NAME_SIZE + 1], asset_fname[ASSET_FNAME_SIZE + 1]; //uid[7], password[9];
     char buffer[1024], request_header[100];//, fsizeStr[9];
     int start_value, timeactive, aid;
-    // printf("IP in main open: %s\nport in main open: %s\n", IP, port);
     sscanf(input, "%s %s %d %d", name, asset_fname, &start_value, &timeactive);
     int fsize = getFileSize(asset_fname);
     //printf("name: %s\nasset_fname: %s\nstart_value: %d\ntimeactive: %d\nfile size: %d\n", name, asset_fname, start_value, timeactive, fsize);
@@ -195,23 +195,12 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
         printf("Invalid open attempt: auction duration is too large.\n");
         return;
     }
-    
-    //snprintf(fsizeStr, sizeof(fsizeStr), "%08jd", fsize);
-    // FIXME TOMORROW APPEND file name to the end of the request_header
-    snprintf(request_header, sizeof(request_header), "OPA %s %s %s %d %d %s %d ", 
+    //printf("UID: %s\nPASSWORD: %s\n", uid, password);
+    snprintf(request_header, sizeof(request_header), "OPA %s %s %s %d %d %s %d ",
             uid, password, name, start_value, timeactive, asset_fname, fsize);
-    //size_t open_request_size = 100 + strlen(uid) + strlen(password) + strlen(name) + strlen(asset_fname) + strlen(fsizeStr) + fsize;
-    //char *open_request = (char*) malloc(open_request_size);
-    // char open_request[open_request_size];
-    //snprintf(open_request,  "OPA %s %s %s %d %d %s %s %s\n", 
-             //uid, password, name, start_value, timeactive, asset_fname, fsizeStr, Fdata);
-
-    if(!strncmp(connect_TCP(IP, port, request_header, buffer, sizeof(buffer)), "error", 5)) {
-        printf("Error while trying to establish TCP connection to open auction.\n");
-        //free(Fdata);
-        //free(open_request);
-        return;
-    }
+    // establishes TCP connection
+    connect_TCP(IP, port, request_header, buffer, sizeof(buffer));
+    printf("buffer: %s\n", buffer);
     // handles server response
     if (!strncmp(buffer, "ROA NOK", 7)) {
         printf("Auction could not be started.\n");
@@ -220,10 +209,7 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     } else if (!strncmp(buffer, "ROA OK", 6)) {
         sscanf(buffer, "ROA OK %d", &aid);
         printf("Auction succesfully open! Your identifier is %d.\n", aid);
-    } else printf("Error opening auction.\n");
-
-    //free(Fdata);
-    //free(open_request);
+    } else printf("Error opening auction.\n"); // case ROA ERR
 }
 
 
@@ -247,10 +233,11 @@ void closeAuction(char* IP, char* port, char* uid, char* password, char* input) 
         return;
     }
     snprintf(close_request, sizeof(close_request), "CLS %6s %8s %03d\n", uid, password, aid);
-    if (!strncmp(connect_TCP(IP, port, close_request, buffer, sizeof(buffer)), "error", 5)) {
+    /*if (!strncmp(connect_TCP(IP, port, close_request, buffer, sizeof(buffer)), "error", 5)) {
         printf("Error while connecting to close an auction.\n");
         return;
-    }
+    }*/
+    connect_TCP(IP, port, close_request, buffer, sizeof(buffer));
     // handles server response
     //printf("Server response buffer: %s\n", buffer);
     if (!strncmp(buffer, "RCL OK", 6)) {
@@ -263,9 +250,8 @@ void closeAuction(char* IP, char* port, char* uid, char* password, char* input) 
         printf("Auction is not owned by this user.\n");
     } else if (!strncmp(buffer, "RCL END", 7)) {
         printf("Your auction has already ended.\n");
-    } else printf("Error opening auction.\n"); // in this case we got ERR
+    } else printf("Server responded with ERR while trying to close the auction.\n"); // in this case we got ERR
 }
-
 
 /* LMA UID
 Following the myauctions command the User sends the AS a request to list
@@ -280,10 +266,12 @@ is sent by the AS. state takes value 1 if the auction is active, or 0 otherwise.
 void myAuctions(char* IP, char* port, char* uid, char* password) {
     char buffer[MA_BUFFER_SIZE], myauctions_request[12]; // LMA UID---\n
     snprintf(myauctions_request, sizeof(myauctions_request), "LMA %6s\n", uid);
-    if (!strncmp(connect_UDP(IP, port, myauctions_request, buffer), "error", 5)) {
+    // FIXME este strncmp não faz sentido nenhum, o connect_UDP e connect_TCP deveriam funcionar sendo void
+    connect_UDP(IP, port, myauctions_request, buffer);
+    /*if (!strncmp(connect_UDP(IP, port, myauctions_request, buffer), "error", 5)) {
         printf("Error while connecting to list user's auctions.\n");
         return;
-    }
+    }*/
     // handles server response
     if (!strncmp(buffer, "RMA NOK", 7)) {
         printf("User has no ongoing auctions.\n");
@@ -292,7 +280,7 @@ void myAuctions(char* IP, char* port, char* uid, char* password) {
     } else if (!strncmp(buffer, "RMA OK", 6)) { 
     // FIXME isto precisa de ser repensado quando os opens começarem a funcionar e pudermos testar isto a sério
     // não sei se tá certo mas quis skippar o OK e assim parece estar a funcionar (?)
-        printf("Auctions currently open:\n");
+        printf("User %6s auctions:\n", uid);
         char *token = strtok(buffer, "RMA OK");
         //token = strtok(NULL, " ");
         //token = strtok(NULL, " ");
@@ -327,21 +315,18 @@ AID and state for all ongoing auctions for which this user has placed bids,
 separated by single spaces, is sent by the AS. state takes value 1 if the auction
 is active, or 0 otherwise.*/
 void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
+    // FIXME parsing and printing need a bit of fixing
     char buffer[1024], mybids_request[12]; // LMB UID---\n
-    (void) IP; (void) port; (void) uid;
     snprintf(mybids_request, sizeof(mybids_request), "LMB %6s\n", uid);
-    if (!strncmp(connect_UDP(IP, port, mybids_request, buffer), "error", 5)) {
-        printf("Error while connecting to list user's bids.\n");
-        return;
-    }
+    connect_UDP(IP, port, mybids_request, buffer);
     // handles server response
     if (!strncmp(buffer, "RMB NOK", 7)) {
-        printf("YOu have no ongoing bids!\n");
+        printf("You have no ongoing bids!\n");
     } else if (!strncmp(buffer, "RMB NLG", 7)) {
         printf("Bid listing error: user is not logged in.\n");
     } else if (!strncmp(buffer, "RMB OK", 6)) {
         // FIXME
-        printf("Auctions currently open:\n");
+        printf("Your current bids:\n");
         char *token = strtok(buffer, " ");
         token = strtok(NULL, " ");
         while (token != NULL) {
@@ -350,6 +335,7 @@ void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
         }
     } else printf("Server responded with an error when trying to list bids.\n");
 }
+
 
 /*show_asset AID or sa AID – the User establishes a TCP session with
 the AS and sends a message asking to receive the image file of the asset in sale
@@ -376,21 +362,33 @@ After receiving the reply message, the User closes the TCP connection with the
 AS.
 
 */
-// FIXME isto está claramente a faltar funcionalidade (falta guardar o ficheiro)
-void showAsset(char* IP, char* port, int aid) { 
-    char buffer[1024], showasset_request[10]; // SAS AID\n
-    snprintf(showasset_request, sizeof(showasset_request), "SAS %3d\n", aid);
-    if (!strncmp(connect_TCP(IP, port, showasset_request, buffer, sizeof(buffer)), "error", 5)) {
+// Falta guardar o ficheiro
+void showAsset(char* IP, char* port, int aid) {
+    char showasset_request[SA_BUFFER_SIZE];//, char *buffer; | SAS AID\n
+    char buffer[1000], asset_fname[ASSET_FNAME_SIZE + 1];
+    int fsize, fd;
+    memset(buffer, 0, sizeof(buffer));
+    printf("showassetcheck\n");
+    snprintf(showasset_request, sizeof(showasset_request), "SAS %03d\n", aid);
+    printf("sizeof buffer: %ld\n", sizeof(buffer));
+    connect_TCP(IP, port, showasset_request, buffer, sizeof(buffer));
+    // FIXME este strncmp não faz sentido nenhum, o connect_UDP e connect_TCP deveriam funcionar sendo void
+    /*if (!strncmp(connect_TCP(IP, port, showasset_request, buffer, sizeof(buffer)), "error", 5)) {
         printf("Error while connecting to show asset.\n");
         return;
-    }
+    }*/
     // handles server response
     if (!strncmp(buffer, "RSA NOK", 7)) {
         printf("Error showing asset: no such file.\n");
     } else if (!strncmp(buffer, "RSA OK", 6)) {
+        printf("final check: buffer is %24s\n", asset_fname);
+        sscanf("RSA OK %24s", asset_fname);
+        printf("File %s successfully retrieved and stored locally.\n", asset_fname);
+        //printf("Received buffer: %s\n", buffer);
         // FIXME
-        printf("Auctions currently open:\n");
-        char *token = strtok(buffer, " "); // skips RSA
+        // RSA OK Fname Fsize Fdata; needs to read Fname and Fsize
+
+        /*char *token = strtok(buffer, " "); // skips RSA
         token = strtok(NULL, " ");
         if (token != NULL) {
             // Extract filename, size, and data
@@ -398,9 +396,8 @@ void showAsset(char* IP, char* port, int aid) {
             char *size = strtok(NULL, " "); // fsize
             char *data = strtok(NULL, "\0"); // fdata
             printf("Filename: %s\nSize: %s\n", filename, size);
-        }
+        }*/
     } else printf("Server responded with an error when trying to show asset.\n");
-
 }
 
 /*bid AID value or b AID value – the User application sends a message
@@ -423,20 +420,17 @@ REF if the bid was refused because a larger bid has already been placed
 previously. The reply status is ILG if the user tries to make a bid in an
 auction hosted by himself.
 After receiving the reply message, the User closes the TCP connection with the
-AS.
+AS. 
 */
-void bid(char* IP, char* port, int aid, int value) { // uses TCP protocol
-    char buffer[1024], bid_request[16]; // BID AID value\n
-    snprintf(bid_request, sizeof(bid_request), "BID %03d %6d\n", aid, value);
-    if (!strncmp(connect_TCP(IP, port, bid_request, buffer, sizeof(buffer)), "error", 5)) {
-        printf("Error while connecting to bid.\n");
-        return;
-    }
+void bid(char* IP, char* port, char *uid, char* password, int aid, int value) { // uses TCP protocol
+    char buffer[1024], bid_request[32]; // BID UID-- password AID value-\n (31+1)
+    snprintf(bid_request, sizeof(bid_request), "BID %6s %8s %03d %06d\n", uid, password, aid, value);
+    connect_TCP(IP, port, bid_request, buffer, sizeof(buffer));
     // handles server response
     if (!strncmp(buffer, "RBD ACC", 7)) {
         printf("Your bid has been accepted!\n");
     } else if (!strncmp(buffer, "RBD NOK", 7)) {
-        printf("Bid error: auction %3d is not active.\n", aid);
+        printf("Bid error: auction %03d is not active.\n", aid);
     } else if (!strncmp(buffer, "RBD NLG", 7)) {
         printf("Bid error: user is not logged in.\n");
     }  else if (!strncmp(buffer, "RBD REF", 7)) {
@@ -445,7 +439,7 @@ void bid(char* IP, char* port, int aid, int value) { // uses TCP protocol
         printf("Bid refused: you cannot bid on an auction hosted by yourself!\n");
     } else printf("Server responded with an error when trying to bid.\n");
 
-}
+} 
 
 /* show_record AID or sr AID – the User application sends a message to
 the AS, using the UDP protocol, asking to see the record of auction AID.
@@ -455,8 +449,7 @@ displayed to the User.
 SRC AID
 Following the show_record command the User sends the AS a request for
 the record of auction AID.
-RRC status [host_UID auction_name asset_fname start_value
-start_date-time timeactive]
+RRC status [host_UID auction_name asset_fname start_value start_date-time timeactive]
 [ B bidder_UID bid_value bid_date-time bid_sec_time]*
 [ E end_date-time end_sec_time]
 In reply to a SRC request the AS reply status is NOK if the auction AID does
@@ -478,14 +471,11 @@ format YYYY-MM-DD HH:MM:SS (19 bytes), as well as the number of
 seconds elapsed since the beginning of the auction until the bid was made
 end_sec_time.*/
 void showRecord(char* IP, char* port, int aid) {
-    (void) IP; (void) port; (void) aid;
+    // FIXME properly calculate the size of the buffer
     char buffer[1024], showrecord_request[10]; // SRC AID\n
 
     snprintf(showrecord_request, sizeof(showrecord_request), "SRC %03d\n", aid);
-    if (!strncmp(connect_UDP(IP, port, showrecord_request, buffer), "error", 5)) {
-        printf("Error while connecting to show record.\n");
-        return;
-    }
+    connect_UDP(IP, port, showrecord_request, buffer);
     printf("showrecord_request: %s\n", showrecord_request);
     printf("buffer: %s\n", buffer);
     // handles server response
@@ -505,8 +495,9 @@ void showRecord(char* IP, char* port, int aid) {
             printf("Filename: %s\nSize: %s\n", filename, size);
         }*/
         char *token = strtok(buffer, " "); // skips RRC
+        printf("skipped token1: %s\n", token);
         token = strtok(NULL, " "); // skips OK
-        token = strtok(NULL, " "); // skips AID
+        printf("skipped token2: %s\n", token);
         // Auction details
         printf("Auction details:\n");
         printf("Host UID: %s\n", strtok(NULL, " "));
@@ -516,6 +507,7 @@ void showRecord(char* IP, char* port, int aid) {
         printf("Start Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
         printf("Time Active: %s\n", strtok(NULL, " "));
         // Bids
+        // FIXME parsing is being done incorrectly! check this. Consider the token "B"
         printf("Bids:\n");
         while (1) {
             token = strtok(NULL, " ");
@@ -527,7 +519,6 @@ void showRecord(char* IP, char* port, int aid) {
             printf("Bid Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
             printf("Bid Sec Time: %s\n", strtok(NULL, " "));
         }
-
         // Closing information
         printf("Closing Information:\n");
         printf("End Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));

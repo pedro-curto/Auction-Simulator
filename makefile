@@ -1,3 +1,3 @@
 # Top-level Makefile
 all:
-    $(MAKE) -C User
+	$(MAKE) -C client
