@@ -1,8 +1,8 @@
 # server/Makefile
 
 CC = gcc
-# CFLAGS = -Wall -Wextra -Werror -pedantic
-SRC = server.c functions.c
+CFLAGS = -Wall -Wextra -Werror -pedantic
+SRC = server.c functions.c aux_functions.c
 TARGET = server
 
 $(TARGET): $(SRC)

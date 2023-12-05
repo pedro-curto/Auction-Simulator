@@ -54,7 +54,7 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     // writes the header in open
     if (write(fd, request, strlen(request)) == -1) perror("Error writing.\n");
     printf("request: %s\n", request);
-    //n = read(fd, buffer, buffer_size - 1);
+    n = read(fd, buffer, buffer_size - 1);
     if (!strncmp(request, "OPA", 3)) {
         // uses sendfile() to send the image
         if (n == -1) perror("Error reading.\n");

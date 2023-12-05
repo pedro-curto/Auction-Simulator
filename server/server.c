@@ -33,7 +33,6 @@ int main(int argc, char *argv[]) {
     FD_ZERO(&read_fds);
 
     as_port = PORT;
-    int user_loggedin = 0;
     int verbose_mode = 0;
     
     switch(argc) {
@@ -171,12 +170,12 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 
     if (!strcmp(command,"LIN")){
         handle_login(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"LOU")){
-    //     handle_logout(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"UNR")){
-    //     handle_unregister(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"STA")){
-    //     handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
+    } else if (!strcmp(command,"LOU")){
+        handle_logout(udp_socket, client_addr, buffer, client_addr_len);
+    } else if (!strcmp(command,"UNR")){
+        handle_unregister(udp_socket, client_addr, buffer, client_addr_len);
+    } else if (!strcmp(command,"LMA")){
+        handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
     // } else if (!strcmp(command,"LMB")){
     //     handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
     // } else if (!strcmp(command,"LST")){
@@ -191,6 +190,8 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 }
 
 void process_tcp_request(int tcp_socket, char *buffer) {
+    (void) tcp_socket;
+    (void) buffer;
     // Implement TCP request processing here
 }
 
@@ -235,14 +236,15 @@ void UDPServer() {
 }
 
 void TCPServer() {
-    int fd, newfd, errcode;
-    ssize_t n;
+    int fd, newfd;
+    ssize_t n = 10;
     socklen_t addrlen;
     struct addrinfo hints, *res;
     struct sockaddr_in addr;
     char buffer[128];
 
-    if (socket(AF_INET, SOCK_STREAM, 0) == -1) perror("Error creating socket.");
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd == -1) perror("Error creating socket.\n");
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // IPv4
