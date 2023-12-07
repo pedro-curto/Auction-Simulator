@@ -40,25 +40,20 @@ int verify_user_exists(char* uid){
     }
     closedir(dir);
     strcat(path, "/pass.txt");
-    FILE *pass_file = fopen(path, "r");
-    if (pass_file == NULL) {
-        printf("User %s does not exist anymore\n", uid);
-        return 0;
+    if (stat(path, NULL) == 0) { //0 = file exists
+        return 1;
     }
-    fclose(pass_file);
-    return 1;
+    return 0;
 }
 
 int is_user_login(char* uid){
     char path[50] = "users/";
     strcat(path, uid);
     strcat(path, "/login.txt");
-    FILE *login_file = fopen(path, "r");
-    if (login_file == NULL) {
-        return 0;
+    if (stat(path, NULL) == 0) { //0 = file exists
+        return 1;
     }
-    fclose(login_file);
-    return 1;
+    return 0;
 }
 
 void change_user_login(char* uid){
@@ -147,10 +142,9 @@ int is_auc_active(char* auc_uid){
     char path[50] = "auctions/";
     strcat(path, auc_uid);
     strcat(path, "/active.txt");
-    FILE *active_file = fopen(path, "r");
-    if (active_file == NULL) {
-        return 0;
+    if (stat(path, NULL) == 0) {
+        return 1;
     }
-    fclose(active_file);
-    return 1;
+    return 0;
 }
+

@@ -365,17 +365,17 @@ void showAsset(char* IP, char* port, int aid) {
     char buffer[1000], asset_fname[ASSET_FNAME_SIZE + 1];
     //int fsize, fd;
     memset(buffer, 0, sizeof(buffer));
-    printf("showassetcheck\n");
+    
     snprintf(showasset_request, sizeof(showasset_request), "SAS %03d\n", aid);
-    printf("sizeof buffer: %ld\n", sizeof(buffer));
+    
     SA_connect_TCP(IP, port, showasset_request, buffer, sizeof(buffer));
     // handles server response
     if (!strncmp(buffer, "RSA NOK", 7)) {
-        printf("Error showing asset: no such file.\n");
+        
     } else if (!strncmp(buffer, "RSA OK", 6)) {
-        printf("final check: buffer is %24s\n", asset_fname);
+        
         sscanf("RSA OK %24s", asset_fname);
-        printf("File %s successfully retrieved and stored locally.\n", asset_fname);
+        
         //printf("Received buffer: %s\n", buffer);
         // FIXME
         // RSA OK Fname Fsize Fdata; needs to read Fname and Fsize
