@@ -190,6 +190,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 }
 
 void process_tcp_request(int tcp_socket, char *buffer) {
+<<<<<<< HEAD
     char command[4];
     int bytes_read = 0;
     while (bytes_read < 3) {
@@ -211,6 +212,23 @@ void process_tcp_request(int tcp_socket, char *buffer) {
     }
 
     // Implement TCP request processing here
+=======
+    char command[10];
+    sscanf(buffer, "%s",command);
+
+    if(!strcmp(command,"OPA")){
+        handle_open_auc(tcp_socket, buffer);
+    } else if(!strcmp(command,"CLS")){
+
+    } else if (!strcmp(command,"SAS")){
+
+    } else if (!strcmp(command,"BID")){
+
+    } else {
+        printf("Invalid command.\n");
+    }
+
+>>>>>>> bf469a6e61f6473f977c1f274573f4cfe47213af
 }
 
 void print_verbose_info(struct sockaddr_in client_addr, const char *protocol) {
