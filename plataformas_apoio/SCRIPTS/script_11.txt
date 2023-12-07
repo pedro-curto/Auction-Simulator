@@ -1,0 +1,29 @@
+login 111111 abcdefgh
+open Apollo11 Apollo11_Columbia.jpg 1000 10
+logout
+login 222222 hgfedcba
+open Rembrandt Rembrandt_01.jpg 1000 10
+show_record 001
+bid 001 1010
+bid 001 1011
+myauctions
+mybids
+show_record
+logout
+list
+login 111111 abcdefgh
+open Apollo11 Apollo11_Columbia.jpg 1000 10
+show_record 002
+bid 002 1010
+bid 002 1011
+myauctions
+mybids
+logout
+list
+show_record 001
+show_record 002
+sleep 15
+list
+show_record 001
+show_record 002
+exit

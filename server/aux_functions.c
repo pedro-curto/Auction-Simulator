@@ -61,7 +61,7 @@ int is_user_login(char* uid){
     return 1;
 }
 
-void change_user_login(char* uid){
+void change_user_login(char* uid) {
     char path[50] = "users/";
     strcat(path, uid);
     strcat(path, "/login.txt");
@@ -75,7 +75,7 @@ void change_user_login(char* uid){
 }
 
 
-int verify_password_correct(char* uid, char* password){
+int verify_password_correct(char* uid, char* password) {
     char path[50] = "users/";
     strcat(path, uid);
     strcat(path, "/pass.txt");
@@ -87,13 +87,14 @@ int verify_password_correct(char* uid, char* password){
     }
     char correct_pass[50];
     fscanf(pass_file, "%s", correct_pass);
-    if (strcmp(correct_pass, password)){
+    if (strcmp(correct_pass, password)) {
         fclose(pass_file);
         return 0;
     }
     fclose(pass_file);
     return 1;
 }
+
 
 void delete_user(char* uid){
     char path[50] = "users/";
@@ -154,3 +155,7 @@ int is_auc_active(char* auc_uid){
     fclose(active_file);
     return 1;
 }
+
+
+
+

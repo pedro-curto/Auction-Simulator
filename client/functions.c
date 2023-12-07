@@ -418,7 +418,7 @@ After receiving the reply message, the User closes the TCP connection with the
 AS. 
 */
 void bid(char* IP, char* port, char *uid, char* password, int aid, int value) { // uses TCP protocol
-    char buffer[1024], bid_request[32]; // BID UID-- password AID value-\n (31+1)
+    char buffer[30000], bid_request[32]; // BID UID-- password AID value-\n (31+1)
     snprintf(bid_request, sizeof(bid_request), "BID %6s %8s %03d %06d\n", uid, password, aid, value);
     connect_TCP(IP, port, bid_request, buffer, sizeof(buffer));
     // handles server response
