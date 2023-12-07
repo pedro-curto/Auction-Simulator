@@ -54,5 +54,8 @@ int valid_filename(char *filename);
 int getFileSize(char *filename);
 //int readFile(char *filename, char *buffer, int size);
 int sendImage(char *filename, char *buffer, int size);
+int read_file(int tcp_socket, int size, char* path);
+int read_field(int tcp_socket, char *buffer, size_t size);
+int connect_tcp(char* IP, char* port);
 
 #endif

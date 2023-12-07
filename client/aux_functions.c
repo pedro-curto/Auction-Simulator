@@ -51,10 +51,12 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     if (getaddrinfo(IP, port, &hints, &res) != 0) printf("Error getting address info.\n");
     if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) printf("Error connecting.\n");
     // writes the header in open
+    printf("Request: %s\n", request);
     if (write(fd, request, strlen(request)) == -1) perror("Error writing.\n");
     if (!strncmp(request, "OPA", 3)) {
         sscanf(request, "OPA %*s %*s %*s %*d %*d %s %d", asset_fname, &fsize); 
         // uses sendfile() to send the image
+        printf("asset_fname: %s\n", asset_fname);
         asset_fd = open(asset_fname, O_RDONLY);
         if (asset_fd == -1) perror("Error opening file.\n");
         off_t offset = 0;
@@ -98,72 +100,85 @@ int getFileSize(char *filename) {
     return st.st_size;
 }
 
-
-void SA_connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size) {
-    int fd, asset_fd, fsize, to_read, to_write;//,  errcode;
-    char *ptr = buffer, asset_fname[ASSET_FNAME_SIZE + 1];
+    
+int read_field(int tcp_socket, char *buffer, size_t size) {
+    size_t bytes_read = 0;
     ssize_t n;
-    struct addrinfo hints, *res;
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == -1) perror("Error creating socket.\n");
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET; // IPv4
-    hints.ai_socktype = SOCK_STREAM; // TCP socket
-    if (getaddrinfo(IP, port, &hints, &res) != 0) printf("Error getting address info.\n");
-    if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) printf("Error connecting.\n");
-    // writes the header in open
-    n = write(fd, request, strlen(request));
-    if (n == -1) perror("Error writing.\n");
-    to_read = SA_RESPONSE_HEADER;
-    while (to_read > 0) {
-        n = read(fd, ptr, to_read);
-        if (n == -1) perror("Error reading.\n");
-        else if (n == 0) break;
-        to_read -= n;
-        ptr += n;
-    }
-    /*printf("SA_connect_TCP buffer after header: %s\n", buffer);
-    printf("n: %d\n", n);
-    printf("ptr: %s\n", ptr);*/
-
-    if (strncmp(buffer, "RSA OK ", 7)) {
-        printf("Answer was not RSA OK.\n");
-        freeaddrinfo(res);
-        close(fd);
-        return;
-    }
-    char *temp_ptr = buffer;
-    sscanf(temp_ptr, "RSA OK %24s %8d%n", asset_fname, &fsize, &n);
-    temp_ptr += n;
-    printf("SA_connect_TCP asset_fname: %s, fsize: %d\ntemp_ptr: %s\nn: %d", asset_fname, fsize, temp_ptr, n);
-    char chunk[512];
-    FILE *file = fopen(asset_fname, "wb");
-    fwrite(temp_ptr, 1, n, file);
-    size_t nleft = fsize;
-    printf("check1\n");
-    while (nleft > 0) {
-        size_t to_read = (nleft < 512) ? nleft : 512;
-        n = read(fd, temp_ptr, to_read);
-        if (n == -1) {
-            perror("Error reading Fdata.\n");
-            fclose(file);
-            close(fd);
-            freeaddrinfo(res);
-            return;
+    // check if the first character read is a space
+    
+    while (bytes_read <= size) {
+        n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
+        if (n <= 0) {
+            perror("TCP read error");
+            return 0;
         }
-
-        fwrite(temp_ptr, 1, n, file);
-        temp_ptr += n;
-        nleft -= n;
+        bytes_read += n;
+        // at any time, if we read a space we stop
+        if (buffer[bytes_read-1] == ' ') { // 103091  11111111 abcdefgh
+            break;
+        } 
     }
-    printf("check2\n");
-    fclose(file);
-
-    buffer[n] = '\0';
-    freeaddrinfo(res);
-    close(fd);
+    buffer[bytes_read-1] = '\0';
+    return bytes_read;
 }
 
+
+int read_file(int tcp_socket, int size, char* path) {
+    char buffer[1024];
+    size_t bytes_read = 0;
+    ssize_t n;
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        perror("fopen error");
+        return 0;
+    }
+    while (bytes_read < size) {
+        n = read(tcp_socket, buffer, 1024); // read in chunks
+        if (n <= 0) {
+            perror("TCP read error");
+            return 0;
+        }
+        bytes_read += n;
+
+        // write to file
+        
+        fwrite(buffer, 1, n, file);
+    }
+    fclose(file);
+    return bytes_read;
+}
+
+
+int connect_tcp(char* IP, char* port) {
+    int fd;
+    struct addrinfo hints, *res;
+
+    fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (fd == -1) {
+        perror("Error creating socket.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_INET;          // IPv4
+    hints.ai_socktype = SOCK_STREAM;    // TCP socket
+
+    if (getaddrinfo(IP, port, &hints, &res) != 0) {
+        perror("Error getting address info.\n");
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) {
+        perror("Error connecting.\n");
+        close(fd);
+        exit(EXIT_FAILURE);
+    }
+
+    freeaddrinfo(res);
+
+    return fd;
+}
 
 
 /*void SA_connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size) {

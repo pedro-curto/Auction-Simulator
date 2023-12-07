@@ -30,8 +30,9 @@ void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_a
     }
 }
 
-int verify_user_exists(char* uid){
+int verify_user_exists(char* uid) {
     char path[50] = "users/";
+    struct stat st;
     strcat(path, uid);
     DIR *dir = opendir(path);
     if (dir == NULL) {
@@ -40,17 +41,20 @@ int verify_user_exists(char* uid){
     }
     closedir(dir);
     strcat(path, "/pass.txt");
-    if (stat(path, NULL) == 0) { //0 = file exists
+    if (!stat(path, &st)) { //0 = file exists
         return 1;
     }
     return 0;
 }
 
-int is_user_login(char* uid){
+
+
+int is_user_login(char* uid) {
     char path[50] = "users/";
+    struct stat st;
     strcat(path, uid);
     strcat(path, "/login.txt");
-    if (stat(path, NULL) == 0) { //0 = file exists
+    if (!stat(path, &st)) { //0 = file exists
         return 1;
     }
     return 0;
@@ -62,9 +66,9 @@ void change_user_login(char* uid) {
     strcat(path, "/login.txt");
     FILE *login_file = fopen(path, "r");
     if (login_file == NULL) {
-        fopen(path, "w");
+        login_file = fopen(path, "w");
         fclose(login_file);
-    } else{
+    } else {
         remove(path);
     }
 }
@@ -141,16 +145,65 @@ void fetch_auctions(char* path, char* auctions) {
 
 int is_auc_active(char* auc_uid){
     char path[50] = "auctions/";
+    struct stat st;
     strcat(path, auc_uid);
     strcat(path, "/active.txt");
-    if (stat(path, NULL) == 0) {
+    if (!stat(path, &st)) {
         return 1;
     }
     return 0;
 }
 
 
+// usa isto
+int read_field(int tcp_socket, char *buffer, size_t size) {
+    size_t bytes_read = 0;
+    ssize_t n;
+    // check if the first character read is a space
+    
+    while (bytes_read <= size) {
+        n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
+        if (n <= 0) {
+            perror("TCP read error");
+            return 0;
+        }
+        bytes_read += n;
+        // at any time, if we read a space we stop
+        if (buffer[bytes_read-1] == ' ') { // 103091  11111111 abcdefgh
+            break;
+        } 
+    }
+    buffer[bytes_read-1] = '\0';
+    return bytes_read;
+}
 
+
+int read_file(int tcp_socket, size_t size, char* path) {
+    char buffer[1024];
+    size_t bytes_read = 0;
+    ssize_t n;
+    
+    while (bytes_read < size) {
+        n = read(tcp_socket, buffer, size); // read in chunks
+        if (n <= 0) {
+            perror("TCP read error");
+            return 0;
+        }
+        bytes_read += n;
+
+        // write to file
+        FILE *file = fopen(path, "w");
+        if (file == NULL) {
+            perror("fopen error");
+            return 0;
+        }
+        fwrite(buffer, 1, n, file);
+        fclose(file);
+        
+
+    }
+    return bytes_read;
+}
 
 
 

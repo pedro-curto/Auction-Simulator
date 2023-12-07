@@ -16,10 +16,10 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char *buffer, 
         printf("before password\n");
         if (!verify_password_correct(uid, password)) {
             strcat(status, "NOK\n");
-        } /*else if (is_user_login(uid)) {
+        } else if (is_user_login(uid)) {
             printf("User %s already logged in\n", uid);
             strcat(status, "NOK\n");
-        } */else {
+        } else {
             printf("before change_user_login\n");
             change_user_login(uid);
             strcat(status, "OK\n");
@@ -57,14 +57,17 @@ void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char *buf
     sscanf(buffer, "UNR %s %s", uid, password);
     uid[strlen(uid)] = '\0';
 
-    if(!verify_user_exists(uid)){
+    if (!verify_user_exists(uid)) {
+        printf("1\n");
         strcat(status, "NOK\n");
-    } else{
-        if (!verify_password_correct(uid, password)){
+    } else {
+        if (!verify_password_correct(uid, password)) {
+            printf("2\n");
             strcat(status, "NOK\n");
-        } else if (is_user_login(uid)){
+        } else if (!is_user_login(uid)) {
+            printf("3\n");
             strcat(status, "NOK\n");
-        } else{
+        } else {
             delete_user(uid);
             strcat(status, "OK\n");
         }
@@ -95,15 +98,6 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buf
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
-
-void handle_open(int tcp_socket, char *buffer) {
-    (void) tcp_socket;
-    char uid[100], password[50];
-    //char status[50] = "ROA ";
-    sscanf(buffer, "OPA %s %s ", uid, password);
-    uid[strlen(uid)] = '\0';
-    
-}
 
 // void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
 

@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     socklen_t client_addr_len = sizeof(client_addr);
     char buffer[MAX_BUFFER_SIZE];
     char *as_port;
+    int auction_id = 0;
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -144,7 +145,7 @@ int main(int argc, char *argv[]) {
                 if (verbose_mode) {
                     print_verbose_info(client_addr, "TCP");
                 }
-                process_tcp_request(client_socket, buffer);
+                process_tcp_request(client_socket, buffer, &auction_id);
                 /*if (recv(client_socket, buffer, sizeof(buffer), 0) == -1) {
                     perror("TCP receive error");
                 } else {
@@ -170,11 +171,11 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 
     if (!strcmp(command,"LIN")) {
         handle_login(udp_socket, client_addr, buffer, client_addr_len);
-    } else if (!strcmp(command,"LOU")){
+    } else if (!strcmp(command,"LOU")) {
         handle_logout(udp_socket, client_addr, buffer, client_addr_len);
-    } else if (!strcmp(command,"UNR")){
+    } else if (!strcmp(command,"UNR")) {
         handle_unregister(udp_socket, client_addr, buffer, client_addr_len);
-    } else if (!strcmp(command,"LMA")){
+    } else if (!strcmp(command,"LMA")) {
         handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
     // } else if (!strcmp(command,"LMB")){
     //     handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
@@ -189,18 +190,15 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 
 }
 
-void process_tcp_request(int tcp_socket, char *buffer) {
-<<<<<<< HEAD
-    char command[4];
+void process_tcp_request(int tcp_socket, char *buffer, int *auction_id) {
+    char command[20];
     int bytes_read = 0;
-    while (bytes_read < 3) {
-        bytes_read += read(tcp_socket, buffer + bytes_read, 3 - bytes_read);
+    while (bytes_read < 4) {
+        bytes_read += read(tcp_socket, command + bytes_read, 4 - bytes_read);
     }
-    command[strlen(command)] = '\0';
-    printf("Command: %s\n", command);
 
-    if (!strcmp(command,"OPA")) {
-        handle_open(tcp_socket, buffer);
+    if (!strncmp(command,"OPA ",4)) {
+        handle_open(tcp_socket, buffer, auction_id);
     } /*else if (!strcmp(command,"CLS")){
         handle_close(tcp_socket, buffer);
     } else if (!strcmp(command,"SAS")){
@@ -212,23 +210,6 @@ void process_tcp_request(int tcp_socket, char *buffer) {
     }
 
     // Implement TCP request processing here
-=======
-    char command[10];
-    sscanf(buffer, "%s",command);
-
-    if(!strcmp(command,"OPA")){
-        handle_open_auc(tcp_socket, buffer);
-    } else if(!strcmp(command,"CLS")){
-
-    } else if (!strcmp(command,"SAS")){
-
-    } else if (!strcmp(command,"BID")){
-
-    } else {
-        printf("Invalid command.\n");
-    }
-
->>>>>>> bf469a6e61f6473f977c1f274573f4cfe47213af
 }
 
 void print_verbose_info(struct sockaddr_in client_addr, const char *protocol) {
@@ -304,5 +285,4 @@ void TCPServer() {
     freeaddrinfo(res);
     close(fd);
 }
-
 

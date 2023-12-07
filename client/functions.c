@@ -169,10 +169,9 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     int start_value, timeactive, aid;
     sscanf(input, "%s %s %d %d", name, asset_fname, &start_value, &timeactive);
     int fsize = getFileSize(asset_fname);
-    //printf("name: %s\nasset_fname: %s\nstart_value: %d\ntimeactive: %d\nfile size: %d\n", name, asset_fname, start_value, timeactive, fsize);
     // necessary checks 
     if (fsize == -1) {
-        printf("Error opening file.\n");
+        printf("Error opening file; couldn't get file size.\n");
         return;
     }
     if (fsize > MAX_FILESIZE) { 
@@ -195,7 +194,6 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
         printf("Invalid open attempt: auction duration is too large.\n");
         return;
     }
-    //printf("UID: %s\nPASSWORD: %s\n", uid, password);
     snprintf(request_header, sizeof(request_header), "OPA %s %s %s %d %d %s %d ",
             uid, password, name, start_value, timeactive, asset_fname, fsize);
     // establishes TCP connection
@@ -367,32 +365,50 @@ void showAsset(char* IP, char* port, int aid) {
     memset(buffer, 0, sizeof(buffer));
     
     snprintf(showasset_request, sizeof(showasset_request), "SAS %03d\n", aid);
-    
-    SA_connect_TCP(IP, port, showasset_request, buffer, sizeof(buffer));
-    // handles server response
-    if (!strncmp(buffer, "RSA NOK", 7)) {
-        
-    } else if (!strncmp(buffer, "RSA OK", 6)) {
-        
-        sscanf("RSA OK %24s", asset_fname);
-        
-        //printf("Received buffer: %s\n", buffer);
-        // FIXME
-        // RSA OK Fname Fsize Fdata; needs to read Fname and Fsize
 
-        /*char *token = strtok(buffer, " "); // skips RSA
-        token = strtok(NULL, " ");
-        if (token != NULL) {
-            // Extract filename, size, and data
-            char *filename = strtok(NULL, " "); // fname
-            char *size = strtok(NULL, " "); // fsize
-            char *data = strtok(NULL, "\0"); // fdata
-            printf("Filename: %s\nSize: %s\n", filename, size);
-        }*/
-    } else if (!strncmp(buffer, "RSA ERR", 7)) {
-        printf("Server responded with an error when trying to show asset.\n");
+    int tcp_socket = connect_tcp(IP, port);
+    // sends request to server
+    if (write(tcp_socket, showasset_request, strlen(showasset_request)) < 0) {
+        printf("Error sending request to server.\n");
+        return;
     }
-    else printf("Badly formatted server response: %s\n", buffer);
+
+    // receives server response
+    char status1[5], status2[5], fname[ASSET_FNAME_SIZE + 1], fsize[9], fdata[512];
+    char path[50] = "assets/";
+    //mudar isto sff TODO
+    if (!read_field(tcp_socket, status1, sizeof(status1))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+    if (!read_field(tcp_socket, status2, sizeof(status2))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+    printf("status1: %s\nstatus2: %s\n", status1, status2);
+    if (!strncmp(status2, "NOK", 7)) {
+        printf("Error showing asset: no such auction.\n");
+        return;
+    } else if (!strncmp(status2, "OK", 6)) {
+        printf("Asset successfully shown!\n");
+    } else if (!strncmp(status2, "ERR", 7)) {
+        printf("Server responded with an error when trying to show asset.\n");
+        return;
+    } else printf("Badly formatted server response: %s\n", status1);
+
+    if (!read_field(tcp_socket, fname, sizeof(fname))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+    if (!read_field(tcp_socket, fsize, sizeof(fsize))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+    strcat(path, fname);
+    printf("fname: %s\n", fname);
+    printf("fsize: %s\n", fsize);
+    read_file(tcp_socket, atoi(fsize), path);
+
 }
 
 /*bid AID value or b AID value – the User application sends a message
