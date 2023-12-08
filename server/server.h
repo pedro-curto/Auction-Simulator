@@ -35,6 +35,7 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char *buffer, s
 void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
 void handle_open(int udp_socket);
 void handle_show_asset(int tcp_socket);
+void handle_bid(int tcp_socket);
 void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_addr_len, char* status);
 int create_user(char* uid, char* password);
 void reply_msg_tcp(int udp_socket, char* status);
@@ -51,11 +52,13 @@ int is_auc_active(char* auc_uid);
 int read_field(int tcp_socket, char *buffer, size_t size);
 int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int start_value, int timeactive, int fsize);
 int folder_exists(char* path);
-int is_auc_active(char* auc_id);
 void append_auctions(char* status);
 int exists_auctions();
 int exists_auction(char* auc_id);
 int get_auc_file_info(char* auc_id, char* status);
 int send_auc_file(int tcp_socket, char* auc_id);
 int get_next_auction_id();
+int bid_accepted(int auction_id, int value);
+int ongoing_auction(int auction_id);
+int hosted_by_self(int auction_id, char* uid);
 #endif

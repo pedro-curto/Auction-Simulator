@@ -71,3 +71,54 @@ void handle_show_asset(int tcp_socket) {
     write(tcp_socket, status, strlen(status));
     send_auc_file(tcp_socket, auc_id);
 }
+
+void handle_bid(int tcp_socket) {
+    /*g) BID UID password AID value
+    Following the bid command the User application opens a TCP connection
+    with the AS and sends the AS a request to place a bid, with value value, for
+    auction AID.
+    h) RBD status
+    In reply to a BID request the AS reply status is NOK if auction AID is not
+    active. If the user was not logged in the reply status is NLG. If auction AID is
+    ongoing the reply status is ACC if the bid was accepted. The reply status is
+    REF if the bid was refused because a larger bid has already been placed
+    previously. The reply status is ILG if the user tries to make a bid in an
+    auction hosted by himself.
+    After receiving the reply message, the User closes the TCP connection with the
+    AS.*/
+    char uid[7], password[9], aucIdStr[4], valueStr[7];
+    char status[50] = "RBD ";
+    int value, ret_val, auction_id;
+    read_field(tcp_socket, uid, 6);
+    read_field(tcp_socket, password, 8);
+    read_field(tcp_socket, aucIdStr, 3);
+    read_field(tcp_socket, valueStr, 6);
+    value = atoi(valueStr);
+    auction_id = atoi(aucIdStr);
+    printf("uid: %s\npassword: %s\nauction_id: %d\nvalue: %d\n", uid, password, auction_id, value);
+    /*In reply to a BID request the AS reply status is NOK if auction AID is not
+    active. If the user was not logged in the reply status is NLG. If auction AID is
+    ongoing the reply status is ACC if the bid was accepted. The reply status is
+    REF if the bid was refused because a larger bid has already been placed
+    previously. The reply status is ILG if the user tries to make a bid in an
+    auction hosted by himself.
+    After receiving the reply message, the User closes the TCP connection with the
+    AS.*/
+    // TODO falta implementar o bid_accepted
+    if (!is_user_login(uid)) { // must be logged in
+        strcat(status, "NLG\n");
+    } else if (!ongoing_auction(auction_id)) { // must be ongoing (active)
+        strcat(status, "NOK\n");
+    } else if (hosted_by_self(auction_id, uid)) { // must not be hosted by self
+        strcat(status, "ILG\n");
+    } else if ((ret_val = bid_accepted(auction_id, value)) == 1) { // must be accepted (bigger than a previous one)
+        strcat(status, "ACC\n");
+        if (ret_val == 0) strcat(status, "REF\n");
+
+    } else {
+        strcat(status, "ERR\n");
+    }
+
+    write(tcp_socket, status, strlen(status));
+}
+

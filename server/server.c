@@ -1,27 +1,5 @@
 #include "server.h"
 
-/*int GetBidList(int AID, BIDLIST *list) {
-    struct dirent **filelist;
-    int n_entries, n_bids, len;
-    char dirname[20];
-    char pathname[32];
-
-    sprintf(dirname, "AUCTIONS/%03d/BIDS/", AID);
-    n_entries = scandir(dirname, &filelist, 0, alphasort);
-    if (n_entries <= 0) // Could test for -1 since n_entries count always with . and ..
-        return 0;
-
-    n_bids = 0;
-    list->no_bids = 0;
-    while (n_entries--) {
-        len = strlen(filelist[n_entries]->d_name);
-        if (len == 10) // Discard '.', '..' and invalid filenames by size
-            {
-                sprintf(pathname, "AUCTIONS/%03d/BIDS/%s", AID, filelist[n_entries]->d_name);
-            }
-    }
-}*/
-
 int main(int argc, char *argv[]) {
     int udp_socket, tcp_socket, max_socket;
     struct sockaddr_in server_addr, client_addr;
@@ -178,11 +156,11 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         handle_unregister(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"LMA")) {
         handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"LMB")){
+    // } else if (!strcmp(command,"LMB")) {
     //     handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"LST")){
         handle_list(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"SRC")){
+    // } else if (!strcmp(command,"SRC")) {
     //     handle_show_record(udp_socket, client_addr, buffer, client_addr_len);
     } else {
         printf("Invalid command.\n");
@@ -204,8 +182,8 @@ void process_tcp_request(int tcp_socket) {
     //     handle_close(tcp_socket);
     } else if (!strcmp(command,"SAS")){
         handle_show_asset(tcp_socket);
-    // } else if (!strcmp(command,"BID")) {
-    //     handle_bid(tcp_socket);
+    } else if (!strcmp(command,"BID")) {
+        handle_bid(tcp_socket);
     } else {
         printf("Invalid command.\n");
     }

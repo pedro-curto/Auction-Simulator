@@ -146,7 +146,7 @@ int is_auc_active(char* auc_uid){
     char path[50] = "auctions/";
     struct stat st;
     strcat(path, auc_uid);
-    strcat(path, "/active.txt");
+    strcat(path, "START.txt");
     if (!stat(path, &st)) {
         return 1;
     }
@@ -205,6 +205,9 @@ int read_file(int tcp_socket, int size, char* path) {
 // FIXME enviar antes uma estrutura com informações da auction? devíamos apagar o diretório em qualquer return 0?
 int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int start_value, int timeactive, int fsize) {
     int auction_id = get_next_auction_id();
+    /*time_t fulltime;
+    struct tm *current_time;
+    char time_str[20];*/
     // need to create: users/uid/hosted/auction_id.txt; 
     // auctions/auction_id (directory); auctions/auction_id/START_auction_id.txt; auctions/auction_id/asset (directory);
     // auctions/auction_id/bids (directory); auctions/auction_id/asset/asset_fname (5 total)
@@ -240,13 +243,17 @@ int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int
         return 0;
     }
     // handles time and date and then writes to file
+    /*time(&fulltime);
+    current_time = gmtime(&fulltime); // convert time to YYYY-MM-DD HH:MM:SS. current_time points to a struct of type tm
+    sprintf(time_str, "%04d-%02d-%02d %02d:%02d:%02d",
+    current_time->tm_year + 1900, current_time->tm_mon + 1, current_time->tm_mday,
+    current_time->tm_hour, current_time->tm_min, current_time->tm_sec);*/
     time_t t = time(NULL);
     struct tm *local_time = localtime(&t);
     char start_datetime[20]; // YYYY-MM-DD HH:MM:SS (19 bytes)
     strftime(start_datetime, sizeof(start_datetime), "%Y-%m-%d %H:%M:%S", local_time);
     fprintf(auction_file, "%s %s %s %d %d %s %ld", uid, name, asset_fname, 
     start_value, timeactive, start_datetime, t);
-
     fclose(auction_file);
     // creates and stores asset file
     sprintf(path, "auctions/%03d/asset/%s", auction_id, asset_fname);
@@ -257,6 +264,17 @@ int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int
     return 1;
 }
 
+/*change start_date time to be obtained like below:
+time_t fulltime;
+struct tm *current_time;
+char time_str[20];
+
+time(&fulltime);
+current_time = gmtime(&fulltime); // convert time to YYYY-MM-DD HH:MM:SS. current_time points to a struct of type tm
+sprintf(time_str, "%4d-%02d-%02d %02d:%02d:%02d", 
+current_time->tm_year + 1900, current_time->tm_mon + 1, current_time->tm_mday, 
+current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
+*/
 
 
 int exists_auctions() {
@@ -384,4 +402,138 @@ int get_next_auction_id() {
     return max + 1;
 }
 
+
+int ongoing_auction(int auction_id) {
+    // START.txt is composed like: UID name asset_fname start value timeactive start_datetime start_fulltime
+    // we need to add timeactive to start_fulltime and compare it to a call to time() (current time)
+    char path[50];
+    sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
+    FILE *start_file = fopen(path, "r");
+    if (start_file == NULL) {
+        perror("fopen error");
+        return 0;
+    }
+    char start_fulltimeStr[50], timeactiveStr[50];
+    fscanf(start_file, "%*s %*s %*s %*s %*s %s %*s %s", timeactiveStr, start_fulltimeStr);
+    fclose(start_file);
+    int timeactive = atoi(timeactiveStr);
+    int start_fulltime = atoi(start_fulltimeStr);
+    time_t t = time(NULL);
+    if (t > start_fulltime + timeactive) {
+        printf("timeactive: %d\nstart_fulltime: %d\nt: %ld\n", timeactive, start_fulltime, t);
+        return 0;
+    }
+    return 1;
+}
+
+
+int hosted_by_self(int auction_id, char* uid) {
+    char path[50];
+    sprintf(path, "users/%s/hosted/", uid);
+    DIR *dir = opendir(path);
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            // auction_id is a string, this will be an error
+            if (atoi(entry->d_name) == auction_id) {
+                closedir(dir);
+                return 1;
+            }
+        }
+    }
+    closedir(dir);
+    return 0;
+}
+
+// FIXME corrigir para, quando é aceite a bid, irmos para uma função que cria o file da bid e lhe coloca o conteúdo:
+// UID bid_value bid_datetime bid_sec_time
+// atualmente o ficheiro já é criado aqui dentro mas não tem conteúdo, depois quero abstrair
+int bid_accepted(int auction_id, int value) {
+    // first we see if there is any placed bid
+    char path[50];
+    int max_bid = 0;
+    sprintf(path, "auctions/%03d/bids/", auction_id);
+    DIR *dir = opendir(path);
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            // entry->d_name is the bid value
+            int bid_value = atoi(entry->d_name);
+            if (bid_value > max_bid) {
+                max_bid = bid_value;
+            }
+        }
+    }
+    closedir(dir);
+    // if there is no bid, we compare to the starting value
+    if (max_bid == 0) {
+        sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
+        FILE *start_file = fopen(path, "r");
+        if (start_file == NULL) {
+            perror("fopen error");
+            return 0;
+        }
+        char start_valueStr[7];
+        // START.txt is composed like: UID name asset_fname start_value [...]
+        fscanf(start_file, "%*s %*s %*s %s", start_valueStr);
+        fclose(start_file);
+        int start_value = atoi(start_valueStr);
+        if (value > start_value) {
+            // bid accepted -> we create file with bid value
+            sprintf(path, "auctions/%03d/bids/%d", auction_id, value);
+            FILE *bid_file = fopen(path, "w");
+            if (bid_file == NULL) {
+                perror("fopen error");
+                return 0;
+            }
+            fclose(bid_file);
+            return 1;
+        }
+        return 0;
+    }
+    if (value > max_bid) {
+        // create file with bid value
+        sprintf(path, "auctions/%03d/bids/%d", auction_id, value);
+        FILE *bid_file = fopen(path, "w");
+        if (bid_file == NULL) {
+            perror("fopen error");
+            return 0;
+        }
+        fclose(bid_file);
+        return 1;
+    }
+    return 0;
+}
+
+
+
+// TODO implementar
+//void reply_msg_tcp(int udp_socket, char* status) {
+
+//}
+
+
+/*int GetBidList(int AID, BIDLIST *list) {
+    struct dirent **filelist;
+    int n_entries, n_bids, len;
+    char dirname[20];
+    char pathname[32];
+
+    sprintf(dirname, "AUCTIONS/%03d/BIDS/", AID);
+    n_entries = scandir(dirname, &filelist, 0, alphasort);
+    if (n_entries <= 0) // Could test for -1 since n_entries count always with . and ..
+        return 0;
+
+    n_bids = 0;
+    list->no_bids = 0;
+    while (n_entries--) {
+        len = strlen(filelist[n_entries]->d_name);
+        if (len == 10) // Discard '.', '..' and invalid filenames by size
+            {
+                sprintf(pathname, "AUCTIONS/%03d/BIDS/%s", AID, filelist[n_entries]->d_name);
+            }
+    }
+}*/
 
