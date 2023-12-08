@@ -12,10 +12,12 @@
 #include <netdb.h>
 #include <sys/select.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT "58011"
 //#define IP ""
+
 
 //int GetBidList(int AID, BIDLIST *list);
 void UDPServer();
@@ -46,4 +48,6 @@ void user_auc_status(char* uid, char* status);
 void fetch_auctions(char* path, char* status);
 int is_auc_active(char* auc_uid);
 int read_field(int tcp_socket, char *buffer, size_t size);
+int create_auction(char* uid, char* name, char* asset_fname, int start_value, int timeactive, int* auction_id);
+int folder_exists(char* path);
 #endif

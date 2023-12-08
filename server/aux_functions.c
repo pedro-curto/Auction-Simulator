@@ -182,7 +182,7 @@ int read_file(int tcp_socket, size_t size, char* path) {
     char buffer[1024];
     size_t bytes_read = 0;
     ssize_t n;
-    
+
     while (bytes_read < size) {
         n = read(tcp_socket, buffer, size); // read in chunks
         if (n <= 0) {
@@ -199,11 +199,69 @@ int read_file(int tcp_socket, size_t size, char* path) {
         }
         fwrite(buffer, 1, n, file);
         fclose(file);
-        
+
 
     }
     return bytes_read;
 }
 
+// FIXME enviar antes uma estrutura com informações da auction?
+int create_auction(char* uid, char* name, char* asset_fname, int start_value, int timeactive, int* auction_id) {
+    // UID name asset_fname start value timeactive start_datetime start_fulltime
+    char path[50] = "users/";
+    char path2[50] = "auctions/";
+    // creates txt in users directory first
+    sprintf(path, "%s%s/hosted", path, uid);
+    mkdir(path, 0777); // users/uid/hosted
+    sprintf(path, "%s/%d", path, *auction_id);
+    FILE *auction_file = fopen(path, "w");
+    if (auction_file == NULL) {
+        perror("Could not create auction file in user directory.\n");
+        return 0;
+    }
+    // handles time and date and then writes to file
+    time_t t = time(NULL);
+    struct tm *local_time = localtime(&t);
+    char start_datetime[20]; // YYYY-MM-DD HH:MM:SS (19 bytes)
+    strftime(start_datetime, sizeof(start_datetime), "%Y-%m-%d %H:%M:%S", local_time);
+    fprintf(auction_file, "%s %s %s %d %d %ld %s", uid, name, asset_fname, 
+    start_value, timeactive, t, start_datetime);
+    fclose(auction_file);
+    // TODO creation on auctions directory
+    return 1;
+}
 
 
+/*int is_user_login(char* uid) {
+    char path[50] = "users/";
+    struct stat st;
+    strcat(path, uid);
+    strcat(path, "/login.txt");
+    if (!stat(path, &st)) { //0 = file exists
+        return 1;
+    }
+    return 0;
+}*/
+/*int create_user(char* uid, char* password){
+    char path[50] = "users/";
+    char path2[50];
+    strcat(path, uid);
+    strcpy(path2, path);
+
+    printf("path1: %s\n", path);
+
+    mkdir(path, 0777);
+
+    strcat(path, "/pass.txt");
+    strcat(path2, "/login.txt");
+    FILE *pass_file = fopen(path, "w");
+    if (pass_file == NULL) {
+        return 0;
+    }
+    fprintf(pass_file, "%s", password);
+    fclose(pass_file);
+
+    FILE *login_file = fopen(path2, "w");
+    fclose(login_file);
+    return 1;
+}*/

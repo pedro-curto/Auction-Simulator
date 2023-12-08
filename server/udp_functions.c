@@ -58,14 +58,11 @@ void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char *buf
     uid[strlen(uid)] = '\0';
 
     if (!verify_user_exists(uid)) {
-        printf("1\n");
         strcat(status, "NOK\n");
     } else {
         if (!verify_password_correct(uid, password)) {
-            printf("2\n");
             strcat(status, "NOK\n");
         } else if (!is_user_login(uid)) {
-            printf("3\n");
             strcat(status, "NOK\n");
         } else {
             delete_user(uid);
@@ -84,7 +81,7 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buf
     sscanf(buffer, "UNR %s", uid);
     uid[strlen(uid)] = '\0';
 
-    if(!verify_user_exists(uid)) {
+    if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
     } else{
         if (!is_user_login(uid)){

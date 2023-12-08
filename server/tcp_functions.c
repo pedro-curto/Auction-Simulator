@@ -1,6 +1,7 @@
 #include "server.h"
 
 void handle_open(int tcp_socket, char *buffer, int *auction_id) {
+    // FIXME melhorar bastante as verificações, só quero testar se consigo abrir um auction bem
     (void) auction_id;
     //char uid[7], password[9], name[11], asset_fname[25], start_valueStr[7], timeactiveStr[6], fsizeStr[9];
     char uid[30], password[30], name[30], asset_fname[30], start_valueStr[30], timeactiveStr[30], fsizeStr[30];
@@ -27,34 +28,27 @@ void handle_open(int tcp_socket, char *buffer, int *auction_id) {
     timeactive = atoi(timeactiveStr);
     fsize = atoi(fsizeStr);
     printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
-
-
-
-
-    /*if (!verify_user_exists(uid)) {
+    // TODO missing verifications
+    if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
     } else {
         if (!verify_password_correct(uid, password)) {
             strcat(status, "NOK\n");
         } else if (!is_user_login(uid)) {
-            strcat(status, "NOK\n");
+            strcat(status, "NLG\n");
         } else {
-            // OPA uid password name start_value timeactive Fname Fsize 
-            sscanf(buffer, "OPA %6s %8s %10s %d %d %24s %d", uid, password, name, &start_value, &timeactive, asset_fname, &fsize);
-            uid[strlen(uid)] = '\0';
-            password[strlen(password)] = '\0';
-            name[strlen(name)] = '\0';
-            asset_fname[strlen(asset_fname)] = '\0';
-
-            if (create_auction(uid, name, start_value, timeactive, asset_fname, fsize)) {
+            // OPA uid password name start_value timeactive Fname Fsize
+            auction_id++;
+            if (create_auction(uid, name, asset_fname, start_value, timeactive, auction_id)) {
                 strcat(status, "OK\n");
             } else {
                 strcat(status, "NOK\n");
             }
         }
-    }*/
+    }
 
     //reply_msg(tcp_socket, status); O reply_msg aqui vai ser fazer um write do status no socket
+    // FIXME colocar isto num loop
     if (write(tcp_socket, status, strlen(status)) == -1) {
         perror("TCP write error");
     }

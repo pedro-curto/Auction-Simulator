@@ -35,6 +35,8 @@ int main(int argc, char *argv[]) {
 
     as_port = PORT;
     int verbose_mode = 0;
+    mkdir("users", 0777);
+    mkdir("auctions", 0777);
     
     switch(argc) {
         case 1:
@@ -191,19 +193,20 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 }
 
 void process_tcp_request(int tcp_socket, char *buffer, int *auction_id) {
-    char command[20];
+    char command[5];
+    read_field(tcp_socket, command, 4);
     int bytes_read = 0;
     while (bytes_read < 4) {
         bytes_read += read(tcp_socket, command + bytes_read, 4 - bytes_read);
     }
-
+    printf("command: %s\n", command);
     if (!strncmp(command,"OPA ",4)) {
         handle_open(tcp_socket, buffer, auction_id);
-    } /*else if (!strcmp(command,"CLS")){
+    } /*else if (!strcmp(command,"CLS")) {
         handle_close(tcp_socket, buffer);
     } else if (!strcmp(command,"SAS")){
         handle_show_asset(tcp_socket, buffer);
-    } else if (!strcmp(command,"BID")){
+    } else if (!strcmp(command,"BID")) {
         handle_bid(tcp_socket, buffer);
     }*/ else {
         printf("Invalid command.\n");
@@ -217,7 +220,7 @@ void print_verbose_info(struct sockaddr_in client_addr, const char *protocol) {
 }
 
 
-
+/*
 void UDPServer() {
     int fd, errcode;
     ssize_t n;
@@ -284,5 +287,5 @@ void TCPServer() {
     }
     freeaddrinfo(res);
     close(fd);
-}
+}*/
 
