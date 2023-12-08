@@ -1,10 +1,9 @@
 #include "server.h"
 
-void handle_open(int tcp_socket, int *auction_id) {
+void handle_open(int tcp_socket) {
     // FIXME melhorar bastante as verificações, só quero testar se consigo abrir um auction bem
-    (void) auction_id;
-    //char uid[7], password[9], name[11], asset_fname[25], start_valueStr[7], timeactiveStr[6], fsizeStr[9];
-    char uid[30], password[30], name[30], asset_fname[30], start_valueStr[30], timeactiveStr[30], fsizeStr[30];
+    char uid[7], password[9], name[11], asset_fname[25], start_valueStr[7], timeactiveStr[6], fsizeStr[9];
+    //char uid[30], password[30], name[30], asset_fname[30], start_valueStr[30], timeactiveStr[30], fsizeStr[30];
     char status[50] = "ROA ";
     int start_value, timeactive, fsize;
     // OPA uid password name start_value timeactive Fname Fsize
@@ -27,7 +26,7 @@ void handle_open(int tcp_socket, int *auction_id) {
     start_value = atoi(start_valueStr);
     timeactive = atoi(timeactiveStr);
     fsize = atoi(fsizeStr);
-    printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
+    //printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
     // TODO missing verifications
     if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
@@ -38,8 +37,7 @@ void handle_open(int tcp_socket, int *auction_id) {
             strcat(status, "NLG\n");
         } else {
             // OPA uid password name start_value timeactive Fname Fsize
-            auction_id++;
-            if (create_auction(uid, name, asset_fname, start_value, timeactive, auction_id)) {
+            if (create_auction(tcp_socket, uid, name, asset_fname, start_value, timeactive, fsize)) {
                 strcat(status, "OK\n");
             } else {
                 strcat(status, "NOK\n");

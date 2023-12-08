@@ -1,35 +1,29 @@
 #include "server.h"
 
 int create_user(char* uid, char* password) {
-    char path[50] = "users/"; //users/uid/hosted
-    char path2[50];
-    char path3[50];
-    char path4[50];
-    strcat(path, uid);
-    strcpy(path2, path);
+    char path[50]; //users/uid/hosted
 
-    printf("path1: %s\n", path);
-    strcat(path3, "/bidded");
-    strcat(path4, "/hosted");
-    mkdir(path, 0777);
-    mkdir(path3, 0777);
-    mkdir(path4, 0777);
-
-    strcat(path, "/pass.txt");
-    strcat(path2, "/login.txt");
+    sprintf(path, "users/%s", uid);
+    mkdir(path, 0777); // creates users/uid
+    sprintf(path, "users/%s/hosted", uid);
+    mkdir(path, 0777); // creates users/uid/hosted
+    sprintf(path, "users/%s/bidded", uid);
+    mkdir(path, 0777); // creates users/uid/bidded
+    // creates files
+    sprintf(path, "users/%s/pass.txt", uid);
     FILE *pass_file = fopen(path, "w");
     if (pass_file == NULL) {
         return 0;
     }
     fprintf(pass_file, "%s", password);
     fclose(pass_file);
-
-    FILE *login_file = fopen(path2, "w");
+    sprintf(path, "users/%s/login.txt", uid);
+    FILE *login_file = fopen(path, "w");
     fclose(login_file);
     return 1;
 }
 
-void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_addr_len, char* status){
+void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_addr_len, char* status) {
     if (sendto(udp_socket, status, strlen(status), 0, (struct sockaddr *)&client_addr, client_addr_len) == -1) {
         perror("UDP send error");
     }
@@ -41,7 +35,7 @@ int verify_user_exists(char* uid) {
     strcat(path, uid);
     DIR *dir = opendir(path);
     if (dir == NULL) {
-        printf("User %s does not exist\n", uid);
+        //printf("User %s does not exist\n", uid);
         return 0;
     }
     closedir(dir);
@@ -100,7 +94,7 @@ int verify_password_correct(char* uid, char* password) {
 }
 
 
-void delete_user(char* uid){
+void delete_user(char* uid) {
     char path[50] = "users/";
     char path2[50];
     strcat(path, uid);
@@ -112,7 +106,7 @@ void delete_user(char* uid){
     remove(path2);
 }
 
-void user_auc_status(char* uid, char* status){
+void user_auc_status(char* uid, char* status) {
     char user_auctions[9999];
     char path[50] = "users/";
 
@@ -183,46 +177,66 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
     return bytes_read;
 }
 
-
-int read_file(int tcp_socket, size_t size, char* path) {
+// FIXME read_file? isto não é bem o melhor nome de sempre né
+int read_file(int tcp_socket, int size, char* path) {
     char buffer[1024];
-    size_t bytes_read = 0;
+    int bytes_read = 0;
     ssize_t n;
-
+    FILE *file = fopen(path, "w");
+    if (file == NULL) {
+        perror("fopen error");
+        return 0;
+    }
     while (bytes_read < size) {
-        n = read(tcp_socket, buffer, size); // read in chunks
+        n = read(tcp_socket, buffer, 1024); // read in chunks
         if (n <= 0) {
             perror("TCP read error");
             return 0;
         }
         bytes_read += n;
-
         // write to file
-        FILE *file = fopen(path, "w");
-        if (file == NULL) {
-            perror("fopen error");
-            return 0;
-        }
         fwrite(buffer, 1, n, file);
-        fclose(file);
-
-
     }
+    fclose(file);
     return bytes_read;
 }
 
-// FIXME enviar antes uma estrutura com informações da auction?
-int create_auction(char* uid, char* name, char* asset_fname, int start_value, int timeactive, int* auction_id) {
-    // UID name asset_fname start value timeactive start_datetime start_fulltime
-    char path[50] = "users/";
-    char path2[50] = "auctions/";
-    // creates txt in users directory first
-    sprintf(path, "%03d", *auction_id);
-    sprintf(path2, "%03d", *auction_id); // alterei cenas nesta func pra dar make, dps continua TODO
 
-    FILE *auction_file = fopen(path, "w");
-    if (auction_file == NULL) {
+// FIXME enviar antes uma estrutura com informações da auction? devíamos apagar o diretório em qualquer return 0?
+int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int start_value, int timeactive, int fsize) {
+    int auction_id = get_next_auction_id();
+    // need to create: users/uid/hosted/auction_id.txt; 
+    // auctions/auction_id (directory); auctions/auction_id/START_auction_id.txt; auctions/auction_id/asset (directory);
+    // auctions/auction_id/bids (directory); auctions/auction_id/asset/asset_fname (5 total)
+    // UID name asset_fname start value timeactive start_datetime start_fulltime
+    char path[500];
+    // creates hosted file txt
+    sprintf(path, "users/%s/hosted/%03d.txt", uid, auction_id); // users/uid/hosted/auction_id.txt
+    FILE *hosted_file = fopen(path, "w"); // creates auction_id.txt in users/uid/hosted (1/5)
+    if (hosted_file == NULL) {
         perror("Could not create auction file in user directory.\n");
+        return 0;
+    }
+    // creates directory in auctions folder with asset and bids and start file
+    sprintf(path, "auctions/%03d", auction_id);
+    if (mkdir(path, 0777)) { // auctions/auction_id (2/5)
+        perror("Could not create auction directory.\n");
+        return 0;
+    }
+    strcat(path, "/asset");
+    if (mkdir(path, 0777)) { // auctions/auction_id/asset (3/5)
+        perror("Could not create asset directory.\n");
+        return 0;
+    }
+    sprintf(path, "auctions/%03d/bids", auction_id);
+    if (mkdir(path, 0777)) { // auctions/auction_id/bids (4/5)
+        perror("Could not create bids directory.\n");
+        return 0;
+    }
+    sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
+    FILE *auction_file = fopen(path, "w"); // auctions/auction_id/START_auction_id.txt (5/5)
+    if (auction_file == NULL) {
+        perror("Could not create auction file in auction directory.\n");
         return 0;
     }
     // handles time and date and then writes to file
@@ -230,19 +244,25 @@ int create_auction(char* uid, char* name, char* asset_fname, int start_value, in
     struct tm *local_time = localtime(&t);
     char start_datetime[20]; // YYYY-MM-DD HH:MM:SS (19 bytes)
     strftime(start_datetime, sizeof(start_datetime), "%Y-%m-%d %H:%M:%S", local_time);
-    fprintf(auction_file, "%s %s %s %d %d %ld %s", uid, name, asset_fname, 
-    start_value, timeactive, t, start_datetime);
+    fprintf(auction_file, "%s %s %s %d %d %s %ld", uid, name, asset_fname, 
+    start_value, timeactive, start_datetime, t);
+
     fclose(auction_file);
-    // TODO creation on auctions directory
+    // creates and stores asset file
+    sprintf(path, "auctions/%03d/asset/%s", auction_id, asset_fname);
+    if (!read_file(tcp_socket, fsize, path)) {
+        perror("Could not create and store asset file.\n");
+        return 0;
+    }
     return 1;
 }
 
 
 
-int exists_auctions(){
+int exists_auctions() {
     DIR* dir = opendir("auctions");
     
-    if (readdir(dir) == NULL){
+    if (readdir(dir) == NULL) {
         return 0;
     }
 
@@ -260,7 +280,8 @@ int exists_auctions(){
     return 0;
 }
 
-void append_auctions(char* status){
+
+void append_auctions(char* status) {
     DIR* dir = opendir("auctions");
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
@@ -280,7 +301,7 @@ void append_auctions(char* status){
     strcat(status, "\n");
 }
 
-int exists_auction(char* auc_id){
+int exists_auction(char* auc_id) {
     char path[50] = "auctions/";
     strcat(path, auc_id);
     DIR* dir = opendir(path);
@@ -291,7 +312,7 @@ int exists_auction(char* auc_id){
     return 1;
 }
 
-int get_auc_file_info(char* auc_id, char* status){
+int get_auc_file_info(char* auc_id, char* status) {
     char path[50] = "auctions/";
     strcat(path, auc_id);
     strcat(path, "/asset/");
@@ -314,7 +335,8 @@ int get_auc_file_info(char* auc_id, char* status){
     return -1;
 }
 
-int send_auc_file(int tcp_socket, char* auc_id){
+
+int send_auc_file(int tcp_socket, char* auc_id) {
     char path[50] = "auctions/";
     strcat(path, auc_id);
     strcat(path, "/asset/");
@@ -343,3 +365,23 @@ int send_auc_file(int tcp_socket, char* auc_id){
     closedir(dir);
     return -1;
 }
+
+
+int get_next_auction_id() {
+    DIR* dir = opendir("auctions");
+    struct dirent *entry;
+    int max = 0;
+    while ((entry = readdir(dir)) != NULL) {
+        // Exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            int auc_id = atoi(entry->d_name);
+            if (auc_id > max) {
+                max = auc_id;
+            }
+        }
+    }
+    closedir(dir);
+    return max + 1;
+}
+
+

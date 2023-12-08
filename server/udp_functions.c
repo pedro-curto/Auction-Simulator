@@ -13,14 +13,14 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char *buffer, 
             strcat(status, "NOK\n");
         }
     } else {
-        printf("before password\n");
+        //printf("before password\n");
         if (!verify_password_correct(uid, password)) {
             strcat(status, "NOK\n");
         } else if (is_user_login(uid)) {
             printf("User %s already logged in\n", uid);
             strcat(status, "NOK\n");
         } else {
-            printf("before change_user_login\n");
+            //printf("before change_user_login\n");
             change_user_login(uid);
             strcat(status, "OK\n");
         }
@@ -108,7 +108,7 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char *buffer, s
 
     if (!exists_auctions()) {
         strcat(status, "NOK\n");
-    } else{
+    } else {
         strcat(status, "OK");
         append_auctions(status);
     }

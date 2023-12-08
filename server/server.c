@@ -28,7 +28,6 @@ int main(int argc, char *argv[]) {
     socklen_t client_addr_len = sizeof(client_addr);
     char buffer[MAX_BUFFER_SIZE];
     char *as_port;
-    int auction_id = 0;
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -147,7 +146,7 @@ int main(int argc, char *argv[]) {
                 if (verbose_mode) {
                     print_verbose_info(client_addr, "TCP");
                 }
-                process_tcp_request(client_socket, &auction_id);
+                process_tcp_request(client_socket);
                 /*if (recv(client_socket, buffer, sizeof(buffer), 0) == -1) {
                     perror("TCP receive error");
                 } else {
@@ -189,10 +188,9 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         printf("Invalid command.\n");
     }
 
-
 }
 
-void process_tcp_request(int tcp_socket, int *auction_id) {
+void process_tcp_request(int tcp_socket) {
     char command[5];
     read_field(tcp_socket, command, 4); // faz diferença ser 3 ou 4? acho que precisa de ser 4 pra consumir o espaço
     /*int bytes_read = 0;
@@ -201,7 +199,7 @@ void process_tcp_request(int tcp_socket, int *auction_id) {
     }*/
     printf("command: %s\n", command);
     if (!strncmp(command, "OPA", 3)) {
-        handle_open(tcp_socket, auction_id);
+        handle_open(tcp_socket);
     // } else if (!strcmp(command,"CLS")) {
     //     handle_close(tcp_socket);
     } else if (!strcmp(command,"SAS")){
