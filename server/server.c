@@ -147,7 +147,7 @@ int main(int argc, char *argv[]) {
                 if (verbose_mode) {
                     print_verbose_info(client_addr, "TCP");
                 }
-                process_tcp_request(client_socket, buffer, &auction_id);
+                process_tcp_request(client_socket, &auction_id);
                 /*if (recv(client_socket, buffer, sizeof(buffer), 0) == -1) {
                     perror("TCP receive error");
                 } else {
@@ -181,8 +181,8 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
     // } else if (!strcmp(command,"LMB")){
     //     handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"LST")){11111111
-    //     handle_list(udp_socket, client_addr, buffer, client_addr_len);
+    } else if (!strcmp(command,"LST")){
+        handle_list(udp_socket, client_addr, buffer, client_addr_len);
     // } else if (!strcmp(command,"SRC")){
     //     handle_show_record(udp_socket, client_addr, buffer, client_addr_len);
     } else {
@@ -192,23 +192,23 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 
 }
 
-void process_tcp_request(int tcp_socket, char *buffer, int *auction_id) {
+void process_tcp_request(int tcp_socket, int *auction_id) {
     char command[5];
-    read_field(tcp_socket, command, 3); 
+    read_field(tcp_socket, command, 4); // faz diferença ser 3 ou 4? acho que precisa de ser 4 pra consumir o espaço
     /*int bytes_read = 0;
     while (bytes_read < 4) {
         bytes_read += read(tcp_socket, command + bytes_read, 4 - bytes_read);
     }*/
     printf("command: %s\n", command);
     if (!strncmp(command, "OPA", 3)) {
-        handle_open(tcp_socket, buffer, auction_id);
-    } /*else if (!strcmp(command,"CLS")) {
-        handle_close(tcp_socket, buffer);
+        handle_open(tcp_socket, auction_id);
+    // } else if (!strcmp(command,"CLS")) {
+    //     handle_close(tcp_socket);
     } else if (!strcmp(command,"SAS")){
-        handle_show_asset(tcp_socket, buffer);
-    } else if (!strcmp(command,"BID")) {
-        handle_bid(tcp_socket, buffer);
-    }*/ else {
+        handle_show_asset(tcp_socket);
+    // } else if (!strcmp(command,"BID")) {
+    //     handle_bid(tcp_socket);
+    } else {
         printf("Invalid command.\n");
     }
 

@@ -1,14 +1,19 @@
 #include "server.h"
 
-int create_user(char* uid, char* password){
-    char path[50] = "users/";
+int create_user(char* uid, char* password) {
+    char path[50] = "users/"; //users/uid/hosted
     char path2[50];
+    char path3[50];
+    char path4[50];
     strcat(path, uid);
     strcpy(path2, path);
 
     printf("path1: %s\n", path);
-
+    strcat(path3, "/bidded");
+    strcat(path4, "/hosted");
     mkdir(path, 0777);
+    mkdir(path3, 0777);
+    mkdir(path4, 0777);
 
     strcat(path, "/pass.txt");
     strcat(path2, "/login.txt");
@@ -154,8 +159,6 @@ int is_auc_active(char* auc_uid){
     return 0;
 }
 
-
-// usa isto
 int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
     ssize_t n;
@@ -168,11 +171,14 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
             return 0;
         }
         bytes_read += n;
-        // at any time, if we read a space we stop
-        if (buffer[bytes_read-1] == ' ') { // 103091  11111111 abcdefgh
+        // at any time, if we read a space or \n we stop
+        if (buffer[bytes_read-1] == ' ') {
             break;
-        } 
+        }
     }
+    // if (buffer[bytes_read-1] != '\n' && buffer[bytes_read-1] != ' '){
+    //     return -1;
+    // }
     buffer[bytes_read-1] = '\0';
     return bytes_read;
 }
@@ -211,9 +217,9 @@ int create_auction(char* uid, char* name, char* asset_fname, int start_value, in
     char path[50] = "users/";
     char path2[50] = "auctions/";
     // creates txt in users directory first
-    sprintf(path, "%s%s/hosted", path, uid);
-    mkdir(path, 0777); // users/uid/hosted
-    sprintf(path, "%s/%d", path, *auction_id);
+    sprintf(path, "%03d", *auction_id);
+    sprintf(path2, "%03d", *auction_id); // alterei cenas nesta func pra dar make, dps continua TODO
+
     FILE *auction_file = fopen(path, "w");
     if (auction_file == NULL) {
         perror("Could not create auction file in user directory.\n");
@@ -232,36 +238,108 @@ int create_auction(char* uid, char* name, char* asset_fname, int start_value, in
 }
 
 
-/*int is_user_login(char* uid) {
-    char path[50] = "users/";
-    struct stat st;
-    strcat(path, uid);
-    strcat(path, "/login.txt");
-    if (!stat(path, &st)) { //0 = file exists
-        return 1;
-    }
-    return 0;
-}*/
-/*int create_user(char* uid, char* password){
-    char path[50] = "users/";
-    char path2[50];
-    strcat(path, uid);
-    strcpy(path2, path);
 
-    printf("path1: %s\n", path);
-
-    mkdir(path, 0777);
-
-    strcat(path, "/pass.txt");
-    strcat(path2, "/login.txt");
-    FILE *pass_file = fopen(path, "w");
-    if (pass_file == NULL) {
+int exists_auctions(){
+    DIR* dir = opendir("auctions");
+    
+    if (readdir(dir) == NULL){
         return 0;
     }
-    fprintf(pass_file, "%s", password);
-    fclose(pass_file);
 
-    FILE *login_file = fopen(path2, "w");
-    fclose(login_file);
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        printf("entry: %s\n", entry->d_name);
+        // Exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            closedir(dir);
+            return 1;  // Directory is not empty
+        }
+    }
+
+    closedir(dir);
+    return 0;
+}
+
+void append_auctions(char* status){
+    DIR* dir = opendir("auctions");
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // Exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            strcat(status, " ");
+            strcat(status, entry->d_name);
+            if (is_auc_active(entry->d_name)){
+                strcat(status, " 1");
+            }
+            else{
+                strcat(status, " 0");
+            }
+        }
+    }
+    closedir(dir);
+    strcat(status, "\n");
+}
+
+int exists_auction(char* auc_id){
+    char path[50] = "auctions/";
+    strcat(path, auc_id);
+    DIR* dir = opendir(path);
+    if (dir == NULL){
+        return 0;
+    }
+    closedir(dir);
     return 1;
-}*/
+}
+
+int get_auc_file_info(char* auc_id, char* status){
+    char path[50] = "auctions/";
+    strcat(path, auc_id);
+    strcat(path, "/asset/");
+    DIR *dir = opendir(path);
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // Exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            strcat(status, entry->d_name);
+            strcat(status, " ");
+            strcat(path, entry->d_name);
+            struct stat st;
+            stat(path, &st);
+            sprintf(status, "%ld", st.st_size);
+            closedir(dir);
+            return 0;
+        }
+    }
+    closedir(dir);
+    return -1;
+}
+
+int send_auc_file(int tcp_socket, char* auc_id){
+    char path[50] = "auctions/";
+    strcat(path, auc_id);
+    strcat(path, "/asset/");
+    DIR *dir = opendir(path);
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // Exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            strcat(path, entry->d_name);
+            FILE *file = fopen(path, "r");
+            if (file == NULL) {
+                perror("fopen error");
+                return 0;
+            }
+            char buffer[1024];
+            size_t bytes_read;
+            while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
+                write(tcp_socket, buffer, bytes_read);
+            }
+            write(tcp_socket, "\n", 1);
+            fclose(file);
+            closedir(dir);
+            return 1;
+        }
+    }
+    closedir(dir);
+    return -1;
+}

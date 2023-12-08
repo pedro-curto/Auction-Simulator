@@ -99,7 +99,7 @@ identifiers AID and state for all auctions, separated by single spaces, is sent
 by the AS. state takes value 1 if the auction is active, or 0 otherwise. 
 */
 void listAllAuctions(char* IP, char* port) { // uses UDP protocol
-    char buffer[4096], *list_request = "LST\n"; // FIXME buffer size? 4096?
+    char buffer[8096], *list_request = "LST\n"; // FIXME buffer size? 4096?
     // memset(.., .., n*sizeof(char)) substituir por isto?
     memset(buffer, 0, sizeof(buffer));
     // establishes UDP connection with server and sends request

@@ -22,7 +22,7 @@ void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME i
     if (n == -1) perror("Error sending request.");
     addrlen = sizeof(addr);
     // usar sempre este buffer size? talvez só no list
-    n = recvfrom(fd, buffer, 4095, 0, (struct sockaddr*) &addr, &addrlen);
+    n = recvfrom(fd, buffer, 8095, 0, (struct sockaddr*) &addr, &addrlen);
     if (n == -1) perror("Error receiving response.");
     buffer[n] = '\0';
     freeaddrinfo(res);
