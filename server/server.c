@@ -170,7 +170,7 @@ int main(int argc, char *argv[]) {
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
     char command[10];
     sscanf(buffer, "%s",command);
-
+    printf("command: %s\n", command);
     if (!strcmp(command,"LIN")) {
         handle_login(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"LOU")) {
@@ -194,13 +194,13 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 
 void process_tcp_request(int tcp_socket, char *buffer, int *auction_id) {
     char command[5];
-    read_field(tcp_socket, command, 4);
-    int bytes_read = 0;
+    read_field(tcp_socket, command, 3); 
+    /*int bytes_read = 0;
     while (bytes_read < 4) {
         bytes_read += read(tcp_socket, command + bytes_read, 4 - bytes_read);
-    }
+    }*/
     printf("command: %s\n", command);
-    if (!strncmp(command,"OPA ",4)) {
+    if (!strncmp(command, "OPA", 3)) {
         handle_open(tcp_socket, buffer, auction_id);
     } /*else if (!strcmp(command,"CLS")) {
         handle_close(tcp_socket, buffer);
