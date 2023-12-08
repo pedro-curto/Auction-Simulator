@@ -99,9 +99,22 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buf
 // void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
 
 // }
-// void handle_list(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
+void handle_list(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
+    char uid[100];
+    char status[9999] = "RLS ";
 
-// }
+    sscanf(buffer, "UNR %s", uid);
+    uid[strlen(uid)] = '\0';
+
+    if (!exists_auctions()) {
+        strcat(status, "NOK\n");
+    } else{
+        strcat(status, "OK");
+        append_auctions(status);
+    }
+
+    reply_msg(udp_socket, client_addr, client_addr_len, status);
+}
 // void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
     
 // }

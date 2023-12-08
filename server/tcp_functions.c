@@ -1,6 +1,6 @@
 #include "server.h"
 
-void handle_open(int tcp_socket, char *buffer, int *auction_id) {
+void handle_open(int tcp_socket, int *auction_id) {
     // FIXME melhorar bastante as verificações, só quero testar se consigo abrir um auction bem
     (void) auction_id;
     //char uid[7], password[9], name[11], asset_fname[25], start_valueStr[7], timeactiveStr[6], fsizeStr[9];
@@ -55,4 +55,21 @@ void handle_open(int tcp_socket, char *buffer, int *auction_id) {
 
 }
 
-
+void handle_show_asset(int tcp_socket) {
+    char auc_id[5];
+    int fsize;
+    char status[50] = "RSA ";
+    (void) fsize; (void) status;
+    read_field(tcp_socket, auc_id, 3);
+    
+    if (!exists_auction(auc_id)){
+        strcat(status, "NOK\n");
+        write(tcp_socket, status, strlen(status));
+        return;
+    }
+    strcat(status, "OK");
+    get_auc_file_info(auc_id, status);
+    strcat(status, " ");
+    write(tcp_socket, status, strlen(status));
+    send_auc_file(tcp_socket, auc_id);
+}
