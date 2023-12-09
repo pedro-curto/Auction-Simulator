@@ -50,6 +50,7 @@ void user_auc_status(char* uid, char* status);
 void fetch_auctions(char* path, char* status);
 int is_auc_active(char* auc_uid);
 int read_field(int tcp_socket, char *buffer, size_t size);
+int store_file(int tcp_socket, int size, char* path);
 int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int start_value, int timeactive, int fsize);
 int folder_exists(char* path);
 void append_auctions(char* status);
@@ -61,4 +62,5 @@ int get_next_auction_id();
 int bid_accepted(int auction_id, int value);
 int ongoing_auction(int auction_id);
 int hosted_by_self(int auction_id, char* uid);
+void write_tcp(int tcp_socket, char* status);
 #endif

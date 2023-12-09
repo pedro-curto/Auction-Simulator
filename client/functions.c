@@ -377,21 +377,23 @@ void showAsset(char* IP, char* port, int aid) {
     char status1[5], status2[5], fname[ASSET_FNAME_SIZE + 1], fsize[9], fdata[512];
     char path[50] = "assets/";
     //mudar isto sff TODO
-    if (!read_field(tcp_socket, status1, sizeof(status1))) {
+    if (!read_field(tcp_socket, status1, 3)) {
         printf("Error reading server response.\n");
         return;
     }
-    if (!read_field(tcp_socket, status2, sizeof(status2))) {
+    if (!read_field(tcp_socket, status2, 3)) {
+        printf("field1: %s\n", status1);
+        printf("field2: %s\n", status2);
         printf("Error reading server response.\n");
         return;
     }
     printf("status1: %s\nstatus2: %s\n", status1, status2);
-    if (!strncmp(status2, "NOK", 7)) {
+    if (!strncmp(status2, "NOK", 3)) {
         printf("Error showing asset: no such auction.\n");
         return;
-    } else if (!strncmp(status2, "OK", 6)) {
+    } else if (!strncmp(status2, "OK", 2)) {
         printf("Asset successfully shown!\n");
-    } else if (!strncmp(status2, "ERR", 7)) {
+    } else if (!strncmp(status2, "ERR", 3)) {
         printf("Server responded with an error when trying to show asset.\n");
         return;
     } else printf("Badly formatted server response: %s\n", status1);
