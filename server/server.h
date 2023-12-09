@@ -20,9 +20,9 @@
 
 
 //int GetBidList(int AID, BIDLIST *list);
-void UDPServer();
-void TCPServer();
-void *GetInAddr(struct sockaddr *sa);
+//void UDPServer();
+//void TCPServer();
+//void *GetInAddr(struct sockaddr *sa);
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
 void process_tcp_request(int tcp_socket);
 void print_verbose_info(struct sockaddr_in client_addr, const char *protocol);
@@ -33,7 +33,8 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buf
 void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
 void handle_list(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
 void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
-void handle_open(int udp_socket);
+void handle_open(int tcp_socket);
+void handle_close(int tcp_socket);
 void handle_show_asset(int tcp_socket);
 void handle_bid(int tcp_socket);
 void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_addr_len, char* status);
@@ -46,7 +47,7 @@ int is_user_login(char* uid);
 int verify_user_exists(char* uid);
 int verify_password_correct(char* uid, char* password);
 void delete_user(char* uid);
-void user_auc_status(char* uid, char* status);
+int user_auc_status(char* uid, char* status);
 void fetch_auctions(char* path, char* status);
 int is_auc_active(char* auc_uid);
 int read_field(int tcp_socket, char *buffer, size_t size);
@@ -62,9 +63,8 @@ int get_next_auction_id();
 int bid_accepted(int auction_id, int value, char* uid);
 int ongoing_auction(int auction_id);
 int hosted_by_self(int auction_id, char* uid);
-<<<<<<< HEAD
 int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime);
-=======
+int close_auction(int auction_id);
 void write_tcp(int tcp_socket, char* status);
->>>>>>> f470361966647cbde970d1435e8e69ca33e582c1
+int is_directory_empty(char* path);
 #endif

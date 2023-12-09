@@ -71,6 +71,7 @@ void handle_show_asset(int tcp_socket) {
     send_auc_file(tcp_socket, auc_id);
 }
 
+
 void handle_bid(int tcp_socket) {
     /*g) BID UID password AID value
     Following the bid command the User application opens a TCP connection
@@ -78,7 +79,7 @@ void handle_bid(int tcp_socket) {
     auction AID.*/
     char uid[7], password[9], aucIdStr[4], valueStr[7];
     char status[50] = "RBD ";
-    int value, ret_val, auction_id;
+    int value, auction_id;
     read_field(tcp_socket, uid, 6);
     read_field(tcp_socket, password, 8);
     read_field(tcp_socket, aucIdStr, 3);
@@ -95,35 +96,39 @@ void handle_bid(int tcp_socket) {
     auction hosted by himself.
     After receiving the reply message, the User closes the TCP connection with the
     AS.*/
-    // TODO falta implementar o bid_accepted
+    // FIXME está aqui algum erro de raciocínio? São estas todas as condições possíveis? Deve-se ver se o auction existe?
     if (!is_user_login(uid)) { // must be logged in
         strcat(status, "NLG\n");
     } else if (!ongoing_auction(auction_id)) { // must be ongoing (active)
         strcat(status, "NOK\n");
     } else if (hosted_by_self(auction_id, uid)) { // must not be hosted by self
         strcat(status, "ILG\n");
-    } else if ((ret_val = bid_accepted(auction_id, value, uid)) == 1) { // must be accepted (bigger than a previous one)
-        strcat(status, "ACC\n");
-        if (ret_val == 0) strcat(status, "REF\n");
-
     } else {
-        strcat(status, "ERR\n");
+        if (bid_accepted(auction_id, value, uid)) {
+            strcat(status, "ACC\n");
+        } else {
+            strcat(status, "REF\n");
+        }
     }
 
     write(tcp_socket, status, strlen(status));
 }
 
+
 void handle_close(int tcp_socket) {
-    (void) tcp_socket;
     /*c) CLS UID password AID
     Following the close command the User application opens a TCP connection
     with the AS and sends a request to close the auction with identifier AID, which
-    had been opened by the logged in user, whose ID is UID.
-
-
-
-
-    d) RCL status
+    had been opened by the logged in user, whose ID is UID.*/
+    char uid[7], password[9], aucIdStr[4];
+    int auction_id;
+    char status[50] = "RCL ";
+    read_field(tcp_socket, uid, 6);
+    read_field(tcp_socket, password, 8);
+    read_field(tcp_socket, aucIdStr, 3);
+    auction_id = atoi(aucIdStr);
+    printf("uid: %s\npassword: %s\nauction_id: %d\n", uid, password, auction_id);
+    /*d) RCL status
     In reply to a CLS request the AS replies informing whether it was able to close
     auction AID. The reply status is OK, if auction AID was ongoing, it was
     started by user UID, and could be successfully closed by the AS. If the user was
@@ -132,7 +137,22 @@ void handle_close(int tcp_socket) {
     and status is END, if auction AID owned by user UID has already finished.
     After receiving the reply message, the User closes the TCP connection with the
     AS.*/
+    if (!is_user_login(uid)) { // must be logged in
+        strcat(status, "NLG\n");
+    } else if (!exists_auction(aucIdStr)) { // must exist
+        strcat(status, "EAU\n");
+    } else if (!hosted_by_self(auction_id, uid)) { // must be hosted by self
+        strcat(status, "EOW\n");
+    } else if (!ongoing_auction(auction_id)) { // must be ongoing (active)
+        strcat(status, "END\n");
+    } else {
+        if (close_auction(auction_id)) {
+            strcat(status, "OK\n");
+        } else {
+            strcat(status, "NOK\n");
+        }
+    }
 
-    
+    write(tcp_socket, status, strlen(status));
 }
 

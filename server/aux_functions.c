@@ -23,6 +23,7 @@ int create_user(char* uid, char* password) {
     return 1;
 }
 
+// FIXME ???? isto tem uma linha boy wtf, põe isto direto lá não
 void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_addr_len, char* status) {
     if (sendto(udp_socket, status, strlen(status), 0, (struct sockaddr *)&client_addr, client_addr_len) == -1) {
         perror("UDP send error");
@@ -106,43 +107,54 @@ void delete_user(char* uid) {
     remove(path2);
 }
 
-void user_auc_status(char* uid, char* status) {
+int user_auc_status(char* uid, char* status) {
     char user_auctions[9999];
-    char path[50] = "users/";
-
-    strcat(path, uid);
+    char path[50];
+    sprintf(path, "users/%s/hosted/", uid);
+    if (is_directory_empty(path)) {
+        return 0;
+    }
     fetch_auctions(path, user_auctions);
 
     char* auc_uid = strtok(user_auctions, " ");
-    while (auc_uid != NULL){
+    while (auc_uid != NULL) {
         strcat(status, " ");
         strcat(status, auc_uid);
-        if (is_auc_active(auc_uid)){
+        if (ongoing_auction(atoi(auc_uid))){
             strcat(status, " 1");
-        }
-        else{
+        } else {
             strcat(status, " 0");
         }
         auc_uid = strtok(NULL, " ");
     }
+    return 1;
 }
 
+
 void fetch_auctions(char* path, char* auctions) {
-    char auc_uid[50];
+    char auc_id[4]; // FIXME mudei isto para 4 porque caso contrário tinha lixo, mas não sei se é a melhor maneira de o fazer
     DIR* hosted_dir = opendir(path);
 
     struct dirent* hosted_file;
     while ((hosted_file = readdir(hosted_dir)) != NULL) {
-        scanf(hosted_file->d_name, "%s.txt", auc_uid);
-        strcat(auctions, auc_uid);
-        strcat(auctions, " ");
-        memset(auc_uid, 0, sizeof(auc_uid));
+        // Exclude "." and ".." entries
+        if (strcmp(hosted_file->d_name, ".") && strcmp(hosted_file->d_name, "..")) {
+            // auctions/auction_id.txt so we must get the auction_id section
+            strncpy(auc_id, hosted_file->d_name, strlen(hosted_file->d_name) - 4); // FIXME double check if we can make this in another way
+            auc_id[strlen(auc_id)] = '\0';
+            strcat(auctions, auc_id);
+            strcat(auctions, " ");
+            memset(auc_id, 0, sizeof(auc_id));
+        }
+
     }
     auctions[strlen(auctions) - 1] = '\n';
     closedir(hosted_dir);
 }
 
-int is_auc_active(char* auc_uid){
+
+// FIXME ya não é assim que funciona, acho que posso apagar isto não
+/*int is_auc_active(char* auc_uid) {
     char path[50] = "auctions/";
     struct stat st;
     strcat(path, auc_uid);
@@ -151,7 +163,7 @@ int is_auc_active(char* auc_uid){
         return 1;
     }
     return 0;
-}
+}*/
 
 int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
@@ -276,14 +288,12 @@ current_time->tm_year + 1900, current_time->tm_mon + 1, current_time->tm_mday,
 current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
 */
 
-
+// generalizar para exists path
 int exists_auctions() {
     DIR* dir = opendir("auctions");
-    
     if (readdir(dir) == NULL) {
         return 0;
     }
-
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
         printf("entry: %s\n", entry->d_name);
@@ -299,6 +309,25 @@ int exists_auctions() {
 }
 
 
+int is_directory_empty(char *path) {
+    DIR* dir = opendir(path);
+    if (dir == NULL) {
+        perror("Error opening directory");
+        return -1;
+    }
+    struct dirent *entry;
+    while ((entry = readdir(dir)) != NULL) {
+        // Exclude "." and ".." entries
+        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            closedir(dir);
+            return 0;  // Directory is not empty
+        }
+    }
+    closedir(dir);
+    return 1;  // Directory is empty
+}
+
+
 void append_auctions(char* status) {
     DIR* dir = opendir("auctions");
     struct dirent *entry;
@@ -307,7 +336,7 @@ void append_auctions(char* status) {
         if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
             strcat(status, " ");
             strcat(status, entry->d_name);
-            if (is_auc_active(entry->d_name)){
+            if (ongoing_auction(atoi(entry->d_name))){
                 strcat(status, " 1");
             }
             else{
@@ -421,7 +450,7 @@ int ongoing_auction(int auction_id) {
     char path[50];
     time_t current_time, start_fulltime, timeactive;
     struct tm *current_datetime;
-    char time_str[25];
+    char time_str[20];
     // checks if there exists an END.txt file
     sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
     if (access(path, F_OK) != -1) {
@@ -514,6 +543,8 @@ int bid_accepted(int auction_id, int value, char* uid) {
     fclose(start_file);
     // if max_bid is 0, it takes the value of start_value, else it stays the same
     max_bid = max_bid > start_value ? max_bid : start_value;
+    printf("max_bid: %d\n", max_bid);
+    printf("value: %d\n", value);
     if (value > max_bid) {
         // create file with bid value
         if (create_bid_files(auction_id, value, uid, start_fulltime)) {
@@ -530,7 +561,7 @@ int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime
     char path[50];
     time_t current_fulltime;
     struct tm *current_datetime;
-    char time_str[25];
+    char time_str[20]; // YYYY-MM-DD HH:MM:SS (19 bytes) + \0
     // creates file on auctions directory (auctions/aid/bids)
     sprintf(path, "auctions/%03d/bids/%d.txt", auction_id, value);
     FILE *bid_file = fopen(path, "w");
@@ -553,6 +584,40 @@ int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime
     fclose(bidded_file);
     return 1;
 }
+
+
+int close_auction(int auction_id) {
+    // creates an END file in the directory auctions/auction_id
+    // since it's being closed prematurely, we need to subtract current time from start_fulltime
+    char path[50];
+    time_t current_fulltime, start_fulltime;
+    struct tm *current_datetime;
+    char time_str[20];
+    sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
+    FILE *start_file = fopen(path, "r");
+    if (start_file == NULL) {
+        perror("fopen error");
+        return 0;
+    }
+    // START.txt contents: UID name asset_fname start_value timeactive start datetime (two fields) start_fulltime
+    fscanf(start_file, "%*s %*s %*s %*s %*s %*s %*s %ld", &start_fulltime);
+    fclose(start_file);
+    time(&current_fulltime);
+    sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
+    // creates an END.txt with contents: end_datetime end_sec_time
+    FILE *end_file = fopen(path, "w");
+    if (end_file == NULL) {
+        perror("fopen error");
+        return 0;
+    }
+    current_datetime = localtime(&current_fulltime);
+    strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_datetime);
+    fprintf(end_file, "%s %ld", time_str, current_fulltime-start_fulltime);
+    fclose(end_file);
+    return 1;
+}
+
+
 
 
 // TODO fix compile errors in function below
