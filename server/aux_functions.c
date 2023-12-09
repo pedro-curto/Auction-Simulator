@@ -177,8 +177,8 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
     return bytes_read;
 }
 
-// FIXME read_file? isto não é bem o melhor nome de sempre né
-int read_file(int tcp_socket, int size, char* path) {
+
+int store_file(int tcp_socket, int size, char* path) {
     char buffer[1024];
     int bytes_read = 0;
     ssize_t n;
@@ -257,7 +257,7 @@ int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int
     fclose(auction_file);
     // creates and stores asset file
     sprintf(path, "auctions/%03d/asset/%s", auction_id, asset_fname);
-    if (!read_file(tcp_socket, fsize, path)) {
+    if (!store_file(tcp_socket, fsize, path)) {
         perror("Could not create and store asset file.\n");
         return 0;
     }
@@ -330,8 +330,10 @@ int exists_auction(char* auc_id) {
     return 1;
 }
 
+
 int get_auc_file_info(char* auc_id, char* status) {
     char path[50] = "auctions/";
+    char size[10];
     strcat(path, auc_id);
     strcat(path, "/asset/");
     DIR *dir = opendir(path);
@@ -339,18 +341,28 @@ int get_auc_file_info(char* auc_id, char* status) {
     while ((entry = readdir(dir)) != NULL) {
         // Exclude "." and ".." entries
         if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+            strcat(status, " ");
             strcat(status, entry->d_name);
             strcat(status, " ");
             strcat(path, entry->d_name);
             struct stat st;
             stat(path, &st);
-            sprintf(status, "%ld", st.st_size);
+            sprintf(size, "%d", (int) st.st_size);
+            strcat(status, size);
             closedir(dir);
             return 0;
         }
     }
     closedir(dir);
     return -1;
+}
+
+void write_tcp(int tcp_socket, char* status) {
+    printf("status: %s\n", status);
+    size_t n = 0;
+    while (n < strlen(status)) {
+        n += write(tcp_socket, status + n, strlen(status) - n);
+    }
 }
 
 
@@ -372,9 +384,9 @@ int send_auc_file(int tcp_socket, char* auc_id) {
             char buffer[1024];
             size_t bytes_read;
             while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-                write(tcp_socket, buffer, bytes_read);
+                write_tcp(tcp_socket, buffer);
             }
-            write(tcp_socket, "\n", 1);
+            // write(tcp_socket, "\n", 1);
             fclose(file);
             closedir(dir);
             return 1;

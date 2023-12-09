@@ -55,20 +55,19 @@ void handle_open(int tcp_socket) {
 
 void handle_show_asset(int tcp_socket) {
     char auc_id[5];
-    int fsize;
-    char status[50] = "RSA ";
-    (void) fsize; (void) status;
+    char status[200] = "RSA ";
     read_field(tcp_socket, auc_id, 3);
+    printf("auc_id: %s\n", auc_id);
     
     if (!exists_auction(auc_id)){
         strcat(status, "NOK\n");
-        write(tcp_socket, status, strlen(status));
+        write_tcp(tcp_socket, status);
         return;
     }
     strcat(status, "OK");
     get_auc_file_info(auc_id, status);
     strcat(status, " ");
-    write(tcp_socket, status, strlen(status));
+    write_tcp(tcp_socket, status);
     send_auc_file(tcp_socket, auc_id);
 }
 

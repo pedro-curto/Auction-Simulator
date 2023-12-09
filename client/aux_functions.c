@@ -127,6 +127,7 @@ int read_file(int tcp_socket, int size, char* path) {
     char buffer[1024];
     size_t bytes_read = 0;
     ssize_t n;
+    printf("path: %s\n", path);
     FILE *file = fopen(path, "w");
     if (file == NULL) {
         perror("fopen error");
@@ -174,9 +175,7 @@ int connect_tcp(char* IP, char* port) {
         close(fd);
         exit(EXIT_FAILURE);
     }
-
     freeaddrinfo(res);
-
     return fd;
 }
 
