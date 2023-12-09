@@ -58,7 +58,8 @@ int exists_auction(char* auc_id);
 int get_auc_file_info(char* auc_id, char* status);
 int send_auc_file(int tcp_socket, char* auc_id);
 int get_next_auction_id();
-int bid_accepted(int auction_id, int value);
+int bid_accepted(int auction_id, int value, char* uid);
 int ongoing_auction(int auction_id);
 int hosted_by_self(int auction_id, char* uid);
+int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime);
 #endif

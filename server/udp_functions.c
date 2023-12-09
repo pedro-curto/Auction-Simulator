@@ -96,9 +96,30 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char *buf
 }
 
 
-// void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
+void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
+    char uid[100];
+    char status[9999] = "RMB ";
 
-// }
+    sscanf(buffer, "LMB %s", uid);
+    uid[strlen(uid)] = '\0';
+
+    if (!verify_user_exists(uid)) {
+        strcat(status, "NLG\n");
+    } else{
+        if (!is_user_login(uid)){
+            strcat(status, "NLG\n");
+        } else{
+            strcat(status, "OK");
+            // TODO implement above function
+            //user_bids_status(uid, status);
+            strcat(status, "\n");
+        }
+    }
+    reply_msg(udp_socket, client_addr, client_addr_len, status);
+
+}
+
+
 void handle_list(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
     char uid[100];
     char status[9999] = "RLS ";

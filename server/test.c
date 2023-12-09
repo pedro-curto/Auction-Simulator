@@ -54,6 +54,12 @@ void test_read_field() {
 }
 
 int main() {
-    test_read_field();
+    char str[] = "103091 aucname123 Whistlers_Mother.jpg 100 3000 2023-12-09 14:31:51 1702132311";
+    // gets the last field
+    char last_field[100];
+    sscanf(str, "%*s %*s %*s %*s %*s %*s %s", last_field);
+    printf("%s\n", last_field);
+    //test_read_field();
     return 0;
 }
+
