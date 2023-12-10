@@ -13,6 +13,8 @@
 #include <sys/select.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT "58011"
@@ -67,4 +69,5 @@ int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime
 int close_auction(int auction_id);
 void write_tcp(int tcp_socket, char* status);
 int is_directory_empty(char* path);
+int user_bids_status(char* uid, char* status);
 #endif

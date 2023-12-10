@@ -134,7 +134,11 @@ int read_file(int tcp_socket, int size, char* path) {
         return 0;
     }
     while (bytes_read < size) {
-        n = read(tcp_socket, buffer, 1024); // read in chunks
+        if (size - bytes_read < 1024) {
+            n = read(tcp_socket, buffer, size - bytes_read); // read the remaining bytes
+        } else {
+            n = read(tcp_socket, buffer, 1024); // read in chunks
+        }
         if (n <= 0) {
             perror("TCP read error");
             return 0;
@@ -142,10 +146,16 @@ int read_file(int tcp_socket, int size, char* path) {
         bytes_read += n;
 
         // write to file
-        
         fwrite(buffer, 1, n, file);
     }
     fclose(file);
+
+    read(tcp_socket, buffer, 1); // read the last \n
+    if (buffer[0] != '\n') {
+        perror("TCP read1 error");
+        return 0;
+    }
+
     return bytes_read;
 }
 

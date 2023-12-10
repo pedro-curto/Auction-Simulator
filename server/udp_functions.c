@@ -89,7 +89,7 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char* buf
     } else {
         strcat(status, "OK");
         if (!user_auc_status(uid, status)) {
-            sprintf(status, "RMA NOK");
+            sprintf(status, "NOK");
         }
         strcat(status, "\n");
     }
@@ -99,26 +99,27 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char* buf
 
 
 void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[100];
-    char status[9999] = "RMB ";
-
-    sscanf(buffer, "LMB %s", uid);
-    uid[strlen(uid)] = '\0';
-
-    if (!verify_user_exists(uid)) {
+    char uid[7];
+    char status[9999] = "RMA ";
+    // we need to guarantee that we read exactly three characters and a space afterwards
+    sscanf(buffer, "LMB %s\n", uid);
+    // if (sscanf(buffer, "LMA %s\n", uid) != 1) {
+    //     strcat(status, "ERR\n"); // message wrongly formatted
+    //     reply_msg(udp_socket, client_addr, client_addr_len, status);
+    //     return;
+    // }
+    printf("uid: %s\n", uid);
+    if (!is_user_login(uid)) {
         strcat(status, "NLG\n");
-    } else{
-        if (!is_user_login(uid)){
-            strcat(status, "NLG\n");
-        } else{
-            strcat(status, "OK");
-            // TODO implement above function
-            //user_bids_status(uid, status);
-            strcat(status, "\n");
+    } else {
+        strcat(status, "OK");
+        if (!user_bids_status(uid, status)) {
+            sprintf(status, "NOK");
         }
+        strcat(status, "\n");
     }
+    printf("status: %s\n", status);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
-
 }
 
 

@@ -125,6 +125,31 @@ int user_auc_status(char* uid, char* status) {
         } else {
             strcat(status, " 0");
         }
+        printf("status: %s\n", status);
+        auc_uid = strtok(NULL, " ");
+    }
+    return 1;
+}
+
+// TODO fix compile errors in function below
+int user_bids_status(char* uid, char* status) {
+    char user_auctions[9999];
+    char path[50];
+    sprintf(path, "users/%s/bidded/", uid);
+    if (is_directory_empty(path)) {
+        return 0;
+    }
+    fetch_auctions(path, user_auctions);
+
+    char* auc_uid = strtok(user_auctions, " ");
+    while (auc_uid != NULL) {
+        strcat(status, " ");
+        strcat(status, auc_uid);
+        if (ongoing_auction(atoi(auc_uid))){
+            strcat(status, " 1");
+        } else {
+            strcat(status, " 0");
+        }
         auc_uid = strtok(NULL, " ");
     }
     return 1;
@@ -200,7 +225,11 @@ int store_file(int tcp_socket, int size, char* path) {
         return 0;
     }
     while (bytes_read < size) {
-        n = read(tcp_socket, buffer, 1024); // read in chunks
+        if (size - bytes_read < 1024) {
+            n = read(tcp_socket, buffer, size - bytes_read); // read the remaining bytes
+        } else {
+            n = read(tcp_socket, buffer, 1024); // read in chunks
+        }
         if (n <= 0) {
             perror("TCP read error");
             return 0;
@@ -210,6 +239,12 @@ int store_file(int tcp_socket, int size, char* path) {
         fwrite(buffer, 1, n, file);
     }
     fclose(file);
+
+    read(tcp_socket, buffer, 1); // read the last \n
+    if (buffer[0] != '\n') {
+        perror("TCP read error");
+        return 0;
+    }
     return bytes_read;
 }
 
@@ -387,7 +422,6 @@ int get_auc_file_info(char* auc_id, char* status) {
 }
 
 void write_tcp(int tcp_socket, char* status) {
-    printf("status: %s\n", status);
     size_t n = 0;
     while (n < strlen(status)) {
         n += write(tcp_socket, status + n, strlen(status) - n);
@@ -397,6 +431,7 @@ void write_tcp(int tcp_socket, char* status) {
 
 int send_auc_file(int tcp_socket, char* auc_id) {
     char path[50] = "auctions/";
+    struct stat st;
     strcat(path, auc_id);
     strcat(path, "/asset/");
     DIR *dir = opendir(path);
@@ -405,18 +440,18 @@ int send_auc_file(int tcp_socket, char* auc_id) {
         // Exclude "." and ".." entries
         if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
             strcat(path, entry->d_name);
-            FILE *file = fopen(path, "r");
-            if (file == NULL) {
+            int file = open(path, O_RDONLY);
+            if (file == -1) {
                 perror("fopen error");
                 return 0;
             }
-            char buffer[1024];
-            size_t bytes_read;
-            while ((bytes_read = fread(buffer, 1, sizeof(buffer), file)) > 0) {
-                write_tcp(tcp_socket, buffer);
-            }
-            // write(tcp_socket, "\n", 1);
-            fclose(file);
+            stat(path, &st);
+            ssize_t fsize = st.st_size;
+            off_t offset = 0;
+            ssize_t sent_bytes = sendfile(tcp_socket, file, &offset, fsize);
+            if (sent_bytes == -1) perror("Error sending file.\n");
+            write(tcp_socket, "\n", 1);
+            close(file);
             closedir(dir);
             return 1;
         }
@@ -617,32 +652,6 @@ int close_auction(int auction_id) {
     return 1;
 }
 
-
-
-
-// TODO fix compile errors in function below
-/*void user_bids_status(char* uid, char* status) {
-    char user_bids[9999];
-    char path[50] = "users/";
-
-    strcat(path, uid);
-    fetch_bids(path, user_bids);
-    
-
-    char* bid_uid = strtok(user_bids, " ");
-    while (bid_uid != NULL){
-        strcat(status, " ");
-        strcat(status, bid_uid);
-        if (is_bid_active(bid_uid)){
-            strcat(status, " 1");
-        }
-        else{
-            strcat(status, " 0");
-        }
-        bid_uid = strtok(NULL, " ");
-    }
-
-}*/
 
 
 // TODO implement
