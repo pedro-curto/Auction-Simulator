@@ -140,9 +140,11 @@ int user_bids_status(char* uid, char* status) {
         return 0;
     }
     fetch_auctions(path, user_auctions);
+    printf("user_auctions: %s\n", user_auctions);
 
     char* auc_uid = strtok(user_auctions, " ");
     while (auc_uid != NULL) {
+        printf("auc_uid: %s\n", auc_uid);
         strcat(status, " ");
         strcat(status, auc_uid);
         if (ongoing_auction(atoi(auc_uid))){
@@ -151,6 +153,7 @@ int user_bids_status(char* uid, char* status) {
             strcat(status, " 0");
         }
         auc_uid = strtok(NULL, " ");
+        printf("status: %s\n", status);
     }
     return 1;
 }
@@ -162,6 +165,7 @@ void fetch_auctions(char* path, char* auctions) {
 
     struct dirent* hosted_file;
     while ((hosted_file = readdir(hosted_dir)) != NULL) {
+            memset(auc_id, 0, sizeof(auc_id));
         // Exclude "." and ".." entries
         if (strcmp(hosted_file->d_name, ".") && strcmp(hosted_file->d_name, "..")) {
             // auctions/auction_id.txt so we must get the auction_id section
@@ -169,11 +173,10 @@ void fetch_auctions(char* path, char* auctions) {
             auc_id[strlen(auc_id)] = '\0';
             strcat(auctions, auc_id);
             strcat(auctions, " ");
-            memset(auc_id, 0, sizeof(auc_id));
         }
 
     }
-    auctions[strlen(auctions) - 1] = '\n';
+    // auctions[strlen(auctions) - 1] = '\n';
     closedir(hosted_dir);
 }
 
@@ -652,6 +655,11 @@ int close_auction(int auction_id) {
     return 1;
 }
 
+
+void get_auc_info(char* auc_id, char* status){
+    (void) auc_id;
+    (void) status;
+}
 
 
 // TODO implement

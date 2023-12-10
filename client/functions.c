@@ -322,11 +322,11 @@ void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
     } else if (!strncmp(buffer, "RMB OK", 6)) {
         // FIXME
         printf("Your current bids:\n");
-        char *token = strtok(buffer, " ");
-        token = strtok(NULL, " ");
-        while (token != NULL) {
+        char *token = strtok(buffer + 3, " "); //RMB OK?
+        while ((token = strtok(NULL, " ")) != NULL) {
             printf("%s", token);
             token = strtok(NULL, " ");
+            printf(" %s\n", token);
         }
     } else printf("Server responded with an error when trying to list bids.\n");
 }

@@ -148,6 +148,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
     char command[10];
     sscanf(buffer, "%3s", command);
     printf("command: %s\n", command);
+
     if (!strcmp(command,"LIN")) {
         handle_login(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"LOU")) {
@@ -160,8 +161,8 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"LST")){
         handle_list(udp_socket, client_addr, buffer, client_addr_len);
-    // } else if (!strcmp(command,"SRC")) {
-    //     handle_show_record(udp_socket, client_addr, buffer, client_addr_len);
+    } else if (!strcmp(command,"SRC")) {
+        handle_show_record(udp_socket, client_addr, buffer, client_addr_len);
     } else {
         printf("Invalid command.\n");
     }
