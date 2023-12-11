@@ -486,8 +486,8 @@ int ongoing_auction(int auction_id) {
     // START.txt is composed like: UID name asset_fname start value timeactive start_datetime start_fulltime
     // we need to add timeactive to start_fulltime and compare it to a call to time() (current time)
     char path[50];
-    time_t current_time, start_fulltime, timeactive;
-    struct tm *current_datetime;
+    time_t current_time, start_fulltime, timeactive, closure_fulltime;
+    struct tm *closure_datetime;
     char time_str[20];
     // checks if there exists an END.txt file
     sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
@@ -502,12 +502,15 @@ int ongoing_auction(int auction_id) {
         perror("fopen error");
         return 0;
     }
-    // START.txt: UID name asset_fname start_value timeactive start_datetime start_fulltime
+    // START.txt: UID name asset_fname start_value timeactive start_datetime (2 fields) start_fulltime
     fscanf(start_file, "%*s %*s %*s %*s %ld %*s %*s %ld", &timeactive, &start_fulltime);
     fclose(start_file);
+    closure_fulltime = start_fulltime + timeactive;
     time(&current_time);
-    if (current_time > start_fulltime + timeactive) {
+    if (current_time > closure_fulltime) {
         // auction is over -> create END.txt file: end_datetime end_sec_time
+        // end_datetime -> date of auction closure (YYYY-MM-DD HH:MM:SS)
+        // end_sec_time -> time in seconds during which the auction was active
         // here, the auction wasn't closed prematurely so end_sec_time is the same as timeactive
         sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
         FILE *end_file = fopen(path, "w");
@@ -515,8 +518,8 @@ int ongoing_auction(int auction_id) {
             perror("fopen error");
             return 0;
         }
-        current_datetime = localtime(&current_time);
-        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_datetime);
+        closure_datetime = localtime(&closure_fulltime);
+        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", closure_datetime);
         fprintf(end_file, "%s %ld", time_str, timeactive);
         fclose(end_file);
         printf("current_time: %ld\n", current_time);

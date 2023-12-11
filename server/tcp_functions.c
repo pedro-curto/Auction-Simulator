@@ -28,6 +28,14 @@ void handle_open(int tcp_socket) {
     fsize = atoi(fsizeStr);
     //printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
     // TODO missing verifications
+    /* ROA status [AID]
+    In reply to a OPA request the AS replies with status = NOK if the auction
+    could not be started. If the user was not logged in the reply status is NLG.
+    Otherwise the AS replies with status = OK, and sends a unique auction
+    identifier AID.
+    A local copy of the asset file is stored using the filename Fname.
+    After receiving the reply message, the User closes the TCP connection with the
+    AS.*/
     if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
     } else {

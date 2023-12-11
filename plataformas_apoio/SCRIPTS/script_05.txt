@@ -2,4 +2,3 @@ login 111111 abcdefgh
 open A A.txt 10 300
 logout
 exit
-
