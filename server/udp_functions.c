@@ -153,13 +153,13 @@ void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *bu
     sscanf(buffer, "SRC %s", auc_id);
     printf("auc_id: %s\n", auc_id);
     
-    if (!exists_auction(auc_id)){
+    if (!exists_auction(auc_id)) {
         strcat(status, "NOK\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
     strcat(status, "OK");
-    get_auc_info(auc_id, status);
+    get_auc_info(atoi(auc_id), status);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 

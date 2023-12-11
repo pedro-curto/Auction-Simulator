@@ -659,9 +659,46 @@ int close_auction(int auction_id) {
 }
 
 
-void get_auc_info(char* auc_id, char* status){
+void get_auc_info(char* auc_id, char* status) {
     (void) auc_id;
     (void) status;
+    char path[50];
+    char aux_buffer[100];
+    sprintf(path, "auctions/%03d/START_%03d.txt", atoi(auc_id), atoi(auc_id));
+    FILE *start_file = fopen(path, "r");
+    if (start_file == NULL) {
+        perror("fopen error");
+        return;
+    }
+    char uid[7], name[11], asset_fname[25], start_datetime[20];
+    int start_value, timeactive;
+    fscanf(start_file, "%s %s %s %d %d %s", uid, name, asset_fname, &start_value, &timeactive, start_datetime);
+    fclose(start_file);
+    sprintf(aux_buffer, " %s %s %s %d %d %s", uid, name, asset_fname, start_value, timeactive, start_datetime);
+    strcat(status, aux_buffer);
+    
+    /* RRC status [host_UID auction_name asset_fname start_value start_date-time timeactive]
+    [ B bidder_UID bid_value bid_date-time bid_sec_time]*
+    [ E end_date-time end_sec_time]
+    Information about the ID host_UID of the user that started the auction, the auction name
+    auction_name and the name of the file asset_fname with information
+    about the item being sold, the minimum bid value start_value, and the start
+    date and time start_date-time of the auction in the format YYYY-MMDD HH:MM:SS (19 bytes), as well as the duration of the auction timeactive
+    in seconds (represented using 6 digits).
+    If this auction has received bids then a description of the more recently received
+    bids (up to 50) is presented, starting with the lowest bid values. For each bid the
+    information sent starts with a B followed by the ID of the user that placed this
+    bid bidder_UID, the bid value bid_value, the bid date and time
+    bid_date-time in the format YYYY-MM-DD HH:MM:SS (19 bytes), as
+    well as the number of seconds elapsed since the beginning of the auction until
+    the bid was made bid_sec_time (represented using 6 digits).
+    In case the auction is already closed there is one last line added to the reply
+    including the date and time of the auction closing end_date-time in the
+    format YYYY-MM-DD HH:MM:SS (19 bytes), as well as the number of
+    seconds elapsed since the beginning of the auction until the bid was made
+    end_sec_time.*/
+
+
 }
 
 
