@@ -663,10 +663,18 @@ void get_auc_info(char* auc_id, char* status) {
     char path[50];
     char aux_buffer[100];
     char uid[7], name[11], asset_fname[25];
+<<<<<<< HEAD
     char datetime1[11], datetime2[9], datetime[20];
     // char end_datetime1[11], end_datetime2[9], end_datetime[20];
     int start_value, bid_value;//, num_bids;
     time_t fulltime, timeactive, bidtime, end_sec_time;
+=======
+    char start_datetime1[11], start_datetime2[9], start_datetime[20];
+    char end_datetime1[11], end_datetime2[9], end_datetime[20];
+    int start_value, num_bids;
+    bidlist bids;
+    time_t fulltime, timeactive;
+>>>>>>> 6f8962a044d0ffd81093014b88a4834e91a1e181
     //int start_value;
     //time_t timeactive, fulltime;
     sprintf(path, "auctions/%3s/START_%3s.txt", auc_id, auc_id);
@@ -720,7 +728,11 @@ void get_auc_info(char* auc_id, char* status) {
             strcat(status, aux_buffer);
             printf("STATUS INSIDE GET_AUC_INFO LOOP: %s\n", status);
         }
+<<<<<<< HEAD
     }*/
+=======
+    }
+>>>>>>> 6f8962a044d0ffd81093014b88a4834e91a1e181
     // appends info from END.txt if it exists
     // END.txt content: end_datetime end_sec_time
     sprintf(path, "auctions/%3s/END_%3s.txt", auc_id, auc_id);
@@ -730,10 +742,18 @@ void get_auc_info(char* auc_id, char* status) {
             perror("fopen error");
             return;
         }
+<<<<<<< HEAD
         fscanf(end_file, "%s %s %ld", datetime1, datetime2, &end_sec_time);
         fclose(end_file);
         sprintf(datetime, "%s %s", datetime1, datetime2);
         sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
+=======
+        long end_sec_time;
+        fscanf(end_file, "%s %s %ld", end_datetime1, end_datetime2, &end_sec_time);
+        fclose(end_file);
+        sprintf(end_datetime, "%s %s", end_datetime1, end_datetime2);
+        sprintf(aux_buffer, " E %s %ld", end_datetime, end_sec_time);
+>>>>>>> 6f8962a044d0ffd81093014b88a4834e91a1e181
         strcat(status, aux_buffer);
         printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
     }
@@ -798,7 +818,11 @@ void get_auc_info(char* auc_id, char* status) {
 
 
 // TODO you can use this to get bid lists and other stuff
+<<<<<<< HEAD
 /*int GetBidList(int auction_id, bidlist *list) {
+=======
+int GetBidList(int auction_id, bidlist *list) {
+>>>>>>> 6f8962a044d0ffd81093014b88a4834e91a1e181
     struct dirent **filelist;
     int n_entries, n_bids;//, len;
     char dirname[20];
@@ -822,10 +846,17 @@ void get_auc_info(char* auc_id, char* status) {
     }
     free(filelist);
     return n_bids;
+<<<<<<< HEAD
 }*/
 
 
 /*int loadBid(char* path, bidlist *list) {
+=======
+}
+
+
+int loadBid(char* path, bidlist *list) {
+>>>>>>> 6f8962a044d0ffd81093014b88a4834e91a1e181
     char aux_buffer1[11], aux_buffer2[9];
     FILE *bid_file = fopen(path, "r");
     if (bid_file == NULL) {
@@ -845,5 +876,9 @@ void get_auc_info(char* auc_id, char* status) {
     list->num_bids++;
     fclose(bid_file);
     return 1;
+<<<<<<< HEAD
 }*/
+=======
+}
+>>>>>>> 6f8962a044d0ffd81093014b88a4834e91a1e181
 
