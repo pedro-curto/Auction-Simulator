@@ -17,8 +17,21 @@
 #include <fcntl.h>
 
 #define MAX_BUFFER_SIZE 1024
-#define PORT "58011"
+#define PORT "58063"
 //#define IP ""
+
+typedef struct {
+    char uid[7];
+    int value;
+    char datetime[20];
+    time_t bidtime; 
+} bid;
+
+
+typedef struct {
+    bid bids[50];
+    int num_bids;
+} bidlist;
 
 
 //int GetBidList(int AID, BIDLIST *list);
@@ -71,4 +84,6 @@ void write_tcp(int tcp_socket, char* status);
 int is_directory_empty(char* path);
 int user_bids_status(char* uid, char* status);
 void get_auc_info(char* auc_id, char* status);
+int GetBidList(int AID, bidlist *list);
+int loadBid(char* path, bidlist *list);
 #endif
