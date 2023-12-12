@@ -13,6 +13,7 @@ void read_command_udp(char* input, char* command){
             break;
         }
         buffer[i] = input[i];
+        printf("buffer[%d]:%d\n",i, buffer[i])
     }
 
     if (strlen(command) != COMMAND_SIZE){
@@ -27,7 +28,7 @@ void read_uid_udp(char* input, char* uid){
     int lenght, i = 0;
     int start_pos = COMMAND_SIZE + 1;
     char buffer[UID_SIZE+1];
-    for (i = start_pos; (input[i] != SEPARATION_CHAR); i++){
+    for (i = start_pos; (input[i] != SEPARATION_CHAR); i++) {
         lenght = i - start_pos;
         if (lenght == UID_SIZE + 1){
             if (input[i] != SEPARATION_CHAR){
@@ -35,7 +36,7 @@ void read_uid_udp(char* input, char* uid){
             }
             break;
         }
-        if (!isdigit(input[i])){
+        if (!isdigit(input[i])) {
             return;
         }
         buffer[lenght] = input[i];
@@ -53,24 +54,29 @@ void read_password_udp(char* input, char* password){
     int lenght, i = 0;
     char buffer[PASSWORD_SIZE+1];
     int start_pos = COMMAND_SIZE + UID_SIZE + 2;
-    for (i = start_pos; (input[i] != SEPARATION_CHAR); i++){
+    for (i = start_pos; (input[i] != SEPARATION_CHAR) && (input[i] != '\n'); i++) {
+        printf("i:%d\n", i);
         lenght = i - start_pos;
-        if (lenght == PASSWORD_SIZE + 1){
-            if (input[i] != SEPARATION_CHAR){
-                return ;
+        if (lenght == PASSWORD_SIZE + 1) {
+            if (input[i] != SEPARATION_CHAR) {
+                return;
             }
             break;
         }
         if (!isalnum(input[i])){
-            return ;
+            return;
         }
         buffer[lenght] = input[i];
     }
 
-    if (strlen(password) != PASSWORD_SIZE){
-        return ;
+    if (strlen(password) != PASSWORD_SIZE) {
+        return;
     }
 
     buffer[PASSWORD_SIZE] = '\0';
     strcpy(password, buffer);
+
+    printf("buf:%s\n", buffer);
+    printf("pass:%s\n", password);
+
 }

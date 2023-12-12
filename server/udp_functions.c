@@ -2,19 +2,23 @@
 
 void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
     char status[50] = "RLI ";
-    char uid[UID_SIZE];
-    char password[PASSWORD_SIZE];
+    char uid[UID_SIZE + 1];
+    char password[PASSWORD_SIZE + 1];
 
-    // read_uid_udp(buffer, uid);
-    // read_password_udp(buffer, password);
-    // if (strlen(uid) == 0 || strlen(password) == 0) {
-    //     strcat(status, "ERR\n");
-    //     reply_msg(udp_socket, client_addr, client_addr_len, status);
-    //     return;
-    // }
+    read_uid_udp(buffer, uid);
+    read_password_udp(buffer, password);
 
-    sscanf(buffer, "LIN %s %s", uid, password);
-    uid[strlen(uid)] = '\0';
+    printf("uid: %s\n", uid);
+    printf("password: %s\n", password);
+
+    if (strlen(uid) == 0 || strlen(password) == 0) {
+        strcat(status, "ERR\n");
+        reply_msg(udp_socket, client_addr, client_addr_len, status);
+        return;
+    }
+
+    // sscanf(buffer, "LIN %s %s", uid, password);
+    // uid[strlen(uid)] = '\0';
 
     if (!verify_user_exists(uid)) {
         if (create_user(uid,password)) {
@@ -35,6 +39,7 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, 
             strcat(status, "OK\n");
         }
     }
+    printf("status: %s\n", status);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
