@@ -15,10 +15,34 @@
 #include <time.h>
 #include <sys/sendfile.h>
 #include <fcntl.h>
+#include <ctype.h>
 
 #define MAX_BUFFER_SIZE 1024
-#define PORT "58011"
+#define PORT "58063"
+#define SEPARATION_CHAR ' '
+#define COMMAND_SIZE 3
+#define UID_SIZE 6
+#define PASSWORD_SIZE 8
+#define EMPTY ''
+// #define MAX_AUCTION_NAME_SIZE 50;
+// #define MAX_ASSET_NAME_SIZE 50;
+// #define MAX_ASSET_SIZE 1000;              TODO: corrigir o q ta comentado aqui
+// #define MAX_TIME_ACTIVE 1000;
+// #define MAX_VALUE 1000;
 //#define IP ""
+
+typedef struct {
+    char uid[7];
+    int value;
+    char datetime[20];
+    time_t bidtime; 
+} bid;
+
+
+typedef struct {
+    bid bids[50];
+    int num_bids;
+} bidlist;
 
 
 //int GetBidList(int AID, BIDLIST *list);
@@ -71,4 +95,10 @@ void write_tcp(int tcp_socket, char* status);
 int is_directory_empty(char* path);
 int user_bids_status(char* uid, char* status);
 void get_auc_info(char* auc_id, char* status);
+int GetBidList();
+int loadBid(char* path, bidlist *list);
+void read_command_udp(char* input, char* command);
+void read_uid_udp(char* input, char* uid);
+void read_password_udp(char* input, char* password);
+
 #endif

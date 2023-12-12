@@ -83,7 +83,7 @@ int main(int argc, char *argv[]) {
         close(tcp_socket);
         exit(EXIT_FAILURE);
     }
-
+                            
     // Listen on TCP socket
     if (listen(tcp_socket, 5) == -1) {
         perror("TCP socket listen error");
@@ -145,8 +145,12 @@ int main(int argc, char *argv[]) {
 
 
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
-    char command[10];
+    char command[COMMAND_SIZE+1];
+    // é esta merda
     sscanf(buffer, "%3s", command);
+    command[strlen(command)] = '\0';
+
+    //read_command_udp(buffer, command);
     printf("command: %s\n", command);
 
     if (!strcmp(command,"LIN")) {
@@ -159,7 +163,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"LMB")) {
         handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
-    } else if (!strcmp(command,"LST")){
+    } else if (!strcmp(command,"LST")) {
         handle_list(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"SRC")) {
         handle_show_record(udp_socket, client_addr, buffer, client_addr_len);
@@ -179,11 +183,11 @@ void process_tcp_request(int tcp_socket) {
     printf("command: %s\n", command);
     if (!strncmp(command, "OPA", 3)) {
         handle_open(tcp_socket);
-    } else if (!strcmp(command,"CLS")) {
+    } else if (!strcmp(command, "CLS")) {
         handle_close(tcp_socket);
-    } else if (!strcmp(command,"SAS")){
+    } else if (!strcmp(command, "SAS")){
         handle_show_asset(tcp_socket);
-    } else if (!strcmp(command,"BID")) {
+    } else if (!strcmp(command, "BID")) {
         handle_bid(tcp_socket);
     } else {
         printf("Invalid command.\n");

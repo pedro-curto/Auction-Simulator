@@ -660,23 +660,112 @@ int close_auction(int auction_id) {
 
 
 void get_auc_info(char* auc_id, char* status) {
-    (void) auc_id;
-    (void) status;
     char path[50];
     char aux_buffer[100];
-    sprintf(path, "auctions/%03d/START_%03d.txt", atoi(auc_id), atoi(auc_id));
+    char uid[7], name[11], asset_fname[25];
+    char datetime1[11], datetime2[9], datetime[20];
+    // char end_datetime1[11], end_datetime2[9], end_datetime[20];
+    int start_value, bid_value;//, num_bids;
+    time_t fulltime, timeactive, bidtime, end_sec_time;
+    //int start_value;
+    //time_t timeactive, fulltime;
+    sprintf(path, "auctions/%3s/START_%3s.txt", auc_id, auc_id);
     FILE *start_file = fopen(path, "r");
     if (start_file == NULL) {
         perror("fopen error");
         return;
     }
-    char uid[7], name[11], asset_fname[25], start_datetime[20];
-    int start_value, timeactive;
-    fscanf(start_file, "%s %s %s %d %d %s", uid, name, asset_fname, &start_value, &timeactive, start_datetime);
+    // gets fields from the START.txt file
+    fscanf(start_file, "%s %s %s %d %ld %s %s %ld", uid, name, asset_fname, &start_value,
+    &timeactive, datetime1, datetime2, &fulltime);
     fclose(start_file);
-    sprintf(aux_buffer, " %s %s %s %d %d %s", uid, name, asset_fname, start_value, timeactive, start_datetime);
+    sprintf(datetime, "%s %s", datetime1, datetime2);
+    sprintf(aux_buffer, " %s %s %s %d %s %ld", uid, name, asset_fname, start_value, datetime, timeactive);
     strcat(status, aux_buffer);
+    printf("status after appending start.txt info: %s\n", status);
+    // gets bids
+    sprintf(path, "auctions/%3s/bids/", auc_id);
+    if (access(path, F_OK) != -1) {
+        DIR *dir = opendir(path);
+        struct dirent *entry;
+        while ((entry = readdir(dir)) != NULL) {
+            if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+                sprintf(path, "auctions/%3s/bids/", auc_id);
+                strcat(path, entry->d_name);
+                FILE *bid_file = fopen(path, "r");
+                if (bid_file == NULL) {
+                    perror("fopen error");
+                    return;
+                }
+                // BID.txt content: UID bid_value bid_datetime bid_sec_time
+                fscanf(bid_file, "%s %d %s %s %ld", uid, &bid_value, 
+                datetime1, datetime2, &bidtime);
+                fclose(bid_file);
+                sprintf(datetime, "%s %s", datetime1, datetime2);
+                sprintf(aux_buffer, " B %s %d %s %ld", uid, bid_value, datetime, bidtime);
+                strcat(status, aux_buffer);
+            }
+        }
+        closedir(dir);
+    }
+    /*RRC status [host_UID auction_name asset_fname start_value start_date-time timeactive]
+    [ B bidder_UID bid_value bid_date-time bid_sec_time]*
+    [ E end_date-time end_sec_time]*/
+    //num_bids = GetBidList(atoi(auc_id), &bids);
+    //printf("NUM BIDS: %d\n", num_bids);
+    /*if (num_bids != 0) {
+        for (int i = 0; i < num_bids; i++) {
+            sprintf(aux_buffer, " B %s %d %s %ld", bids.bids[i].uid, 
+            bids.bids[i].value, bids.bids[i].datetime, bids.bids[i].bidtime);
+            strcat(status, aux_buffer);
+            printf("STATUS INSIDE GET_AUC_INFO LOOP: %s\n", status);
+        }
+    }*/
+    // appends info from END.txt if it exists
+    // END.txt content: end_datetime end_sec_time
+    sprintf(path, "auctions/%3s/END_%3s.txt", auc_id, auc_id);
+    if (access(path, F_OK) != -1) {
+        FILE *end_file = fopen(path, "r");
+        if (end_file == NULL) {
+            perror("fopen error");
+            return;
+        }
+        fscanf(end_file, "%s %s %ld", datetime1, datetime2, &end_sec_time);
+        fclose(end_file);
+        sprintf(datetime, "%s %s", datetime1, datetime2);
+        sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
+        strcat(status, aux_buffer);
+        printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
+    }
+    printf("STATUS AT THE END OF GET_AUC_INFO: %s\n", status);
     
+
+    /*if (access(path, F_OK) != -1) {
+        DIR *dir = opendir(path);
+        struct dirent *entry;
+        while ((entry = readdir(dir)) != NULL) {
+            if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+                sprintf(path, "auctions/%3s/bids/%s", auc_id, entry->d_name);
+                FILE *bid_file = fopen(path, "r");
+                if (bid_file == NULL) {
+                    perror("fopen error");
+                    return;
+                }
+                fscanf(bid_file, "%s %d %s %s %d", uid, &bid_value,
+                start_datetime1, start_datetime2, &timeactive);
+                fclose(bid_file);
+                sprintf(start_datetime, "%s %s", start_datetime1, start_datetime2);
+                sprintf(aux_buffer, "B %s %d %s %d", uid, )
+
+
+                sprintf(aux_buffer, " %s", entry->d_name);
+                strcat(status, aux_buffer);
+                printf("status: %s\n", status);
+            }
+        }
+        closedir(dir);
+    }*/
+
     /* RRC status [host_UID auction_name asset_fname start_value start_date-time timeactive]
     [ B bidder_UID bid_value bid_date-time bid_sec_time]*
     [ E end_date-time end_sec_time]
@@ -709,25 +798,52 @@ void get_auc_info(char* auc_id, char* status) {
 
 
 // TODO you can use this to get bid lists and other stuff
-/*int GetBidList(int AID, BIDLIST *list) {
+/*int GetBidList(int auction_id, bidlist *list) {
     struct dirent **filelist;
-    int n_entries, n_bids, len;
+    int n_entries, n_bids;//, len;
     char dirname[20];
     char pathname[32];
 
-    sprintf(dirname, "AUCTIONS/%03d/BIDS/", AID);
+    sprintf(dirname, "auctions/%03d/bids/", auction_id);
     n_entries = scandir(dirname, &filelist, 0, alphasort);
-    if (n_entries <= 0) // Could test for -1 since n_entries count always with . and ..
-        return 0;
-
+    if (n_entries <= 0) return 0;
     n_bids = 0;
-    list->no_bids = 0;
+    list->num_bids = 0;
     while (n_entries--) {
-        len = strlen(filelist[n_entries]->d_name);
-        if (len == 10) // Discard '.', '..' and invalid filenames by size
-            {
-                sprintf(pathname, "AUCTIONS/%03d/BIDS/%s", AID, filelist[n_entries]->d_name);
-            }
+        //len = strlen(filelist[n_entries]->d_name);
+        printf("filelist[n_entries]->d_name: %s\n", filelist[n_entries]->d_name);
+        //if (len == 10) { FIXME esta verificação é necessária de todo?
+        // FIXME trocar o %s final para um strcat()
+        sprintf(pathname, "auctions/%03d/bids/", auction_id);
+        strcat(pathname, filelist[n_entries]->d_name);
+        if (loadBid(pathname, list)) n_bids++;
+        free(filelist[n_entries]);
+        if (n_bids == 50) break;
     }
+    free(filelist);
+    return n_bids;
+}*/
+
+
+/*int loadBid(char* path, bidlist *list) {
+    char aux_buffer1[11], aux_buffer2[9];
+    FILE *bid_file = fopen(path, "r");
+    if (bid_file == NULL) {
+        perror("fopen error");
+        return 0;
+    }
+    // if (list->num_bids < 50) // check redundante? ou necessário?
+    // BID.txt content: UID bid_value bid_datetime bid_sec_time
+    fscanf(bid_file, "%s %d %s %s %ld", list->bids[list->num_bids].uid, &list->bids[list->num_bids].value,
+    aux_buffer1, aux_buffer2, &list->bids[list->num_bids].bidtime);
+    printf("list->bids[list->num_bids].uid: %s\n", list->bids[list->num_bids].uid);
+    printf("list->bids[list->num_bids].value: %d\n", list->bids[list->num_bids].value);
+    printf("aux_buffer1: %s\n", aux_buffer1);
+    printf("aux_buffer2: %s\n", aux_buffer2);
+    sprintf(list->bids[list->num_bids].datetime, "%s %s", aux_buffer1, aux_buffer2);
+    printf("list->bids[list->num_bids].datetime: %s\n", list->bids[list->num_bids].datetime);
+    list->num_bids++;
+    fclose(bid_file);
+    return 1;
 }*/
 

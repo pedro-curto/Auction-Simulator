@@ -3,6 +3,7 @@
         "type_traits": "c",
         "client.h": "c",
         "cstdlib": "c",
-        "typeinfo": "c"
+        "typeinfo": "c",
+        "server.h": "c"
     }
 }

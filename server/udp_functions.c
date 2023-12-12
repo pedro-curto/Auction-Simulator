@@ -1,8 +1,18 @@
 #include "server.h"
 
 void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[100], password[100];
     char status[50] = "RLI ";
+    char uid[UID_SIZE];
+    char password[PASSWORD_SIZE];
+
+    // read_uid_udp(buffer, uid);
+    // read_password_udp(buffer, password);
+    // if (strlen(uid) == 0 || strlen(password) == 0) {
+    //     strcat(status, "ERR\n");
+    //     reply_msg(udp_socket, client_addr, client_addr_len, status);
+    //     return;
+    // }
+
     sscanf(buffer, "LIN %s %s", uid, password);
     uid[strlen(uid)] = '\0';
 
@@ -147,7 +157,7 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, s
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
-void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len){
+void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
     char auc_id[5];
     char status[200] = "RRC ";
     sscanf(buffer, "SRC %s", auc_id);
@@ -159,7 +169,7 @@ void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *bu
         return;
     }
     strcat(status, "OK");
-    get_auc_info(atoi(auc_id), status);
+    get_auc_info(auc_id, status);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
