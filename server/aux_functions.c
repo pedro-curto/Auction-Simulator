@@ -110,6 +110,7 @@ void delete_user(char* uid) {
 
 int user_auc_status(char* uid, char* status) {
     char user_auctions[9999];
+    memset(user_auctions, 0, sizeof(user_auctions));
     char path[50];
     sprintf(path, "users/%s/hosted/", uid);
     if (is_directory_empty(path)) {
@@ -135,6 +136,7 @@ int user_auc_status(char* uid, char* status) {
 // TODO fix compile errors in function below
 int user_bids_status(char* uid, char* status) {
     char user_auctions[9999];
+    memset(user_auctions, 0, sizeof(user_auctions));
     char path[50];
     sprintf(path, "users/%s/bidded/", uid);
     if (is_directory_empty(path)) {
@@ -170,8 +172,10 @@ void fetch_auctions(char* path, char* auctions) {
         // Exclude "." and ".." entries
         if (strcmp(hosted_file->d_name, ".") && strcmp(hosted_file->d_name, "..")) {
             // auctions/auction_id.txt so we must get the auction_id section
+            printf("aucid_fetch: %s\n", auc_id);
             strncpy(auc_id, hosted_file->d_name, strlen(hosted_file->d_name) - 4); // FIXME double check if we can make this in another way
-            auc_id[strlen(auc_id)] = '\0';
+            printf("aucid_fetch2: %s\n", auc_id);
+            auc_id[AID_SIZE] = '\0';
             strcat(auctions, auc_id);
             strcat(auctions, " ");
         }
