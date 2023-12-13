@@ -77,6 +77,8 @@ void handle_show_asset(int tcp_socket) {
     strcat(status, " ");
     write_tcp(tcp_socket, status);
     send_auc_file(tcp_socket, auc_id);
+    // falta escrever o \n 
+    write(tcp_socket, "\n", 1);
 }
 
 
@@ -89,12 +91,16 @@ void handle_bid(int tcp_socket) {
     char status[50] = "RBD ";
     int value, auction_id;
     read_field(tcp_socket, uid, 6);
+    printf("uid: %s\n", uid);
     read_field(tcp_socket, password, 8);
+    printf("password: %s\n", password);
     read_field(tcp_socket, aucIdStr, 3);
+    printf("aucIdStr: %s\n", aucIdStr);
     read_field(tcp_socket, valueStr, 6);
+    printf("valueStr: %s\n", valueStr);
     value = atoi(valueStr);
     auction_id = atoi(aucIdStr);
-    printf("uid: %s\npassword: %s\nauction_id: %d\nvalue: %d\n", uid, password, auction_id, value);
+    //printf("uid: %s\npassword: %s\nauction_id: %d\nvalue: %d\n", uid, password, auction_id, value);
     /* h) RBD status
     In reply to a BID request the AS reply status is NOK if auction AID is not
     active. If the user was not logged in the reply status is NLG. If auction AID is

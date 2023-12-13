@@ -197,7 +197,7 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
     ssize_t n;
     // check if the first character read is a space
-    
+    printf("buffer at beginning of read_field: %s\n", buffer);
     while (bytes_read <= size) {
         n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
         if (n <= 0) {
@@ -206,14 +206,16 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
         }
         bytes_read += n;
         // at any time, if we read a space or \n we stop
-        if (buffer[bytes_read-1] == ' ') {
+        if (buffer[bytes_read-1] == ' ' || buffer[bytes_read-1] == '\n') {
             break;
         }
     }
+    printf("buffer at the end of read_field: %s\n", buffer);
     // if (buffer[bytes_read-1] != '\n' && buffer[bytes_read-1] != ' '){
     //     return -1;
     // }
     buffer[bytes_read-1] = '\0';
+    printf("buffer: %s\n", buffer);
     return bytes_read;
 }
 
@@ -251,10 +253,11 @@ int store_file(int tcp_socket, int size, char* path) {
     return bytes_read;
 }
 
-
 // FIXME enviar antes uma estrutura com informações da auction? devíamos apagar o diretório em qualquer return 0?
 int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int start_value, int timeactive, int fsize) {
     int auction_id = get_next_auction_id();
+    struct tm *local_time;
+    char path[50], start_datetime[20];// YYYY-MM-DD HH-MM-SS (19 bytes)
     /*time_t fulltime;
     struct tm *current_time;
     char time_str[20];*/
@@ -262,7 +265,6 @@ int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int
     // auctions/auction_id (directory); auctions/auction_id/START_auction_id.txt; auctions/auction_id/asset (directory);
     // auctions/auction_id/bids (directory); auctions/auction_id/asset/asset_fname (5 total)
     // UID name asset_fname start value timeactive start_datetime start_fulltime
-    char path[50];
     // creates hosted file txt
     sprintf(path, "users/%s/hosted/%03d.txt", uid, auction_id); // users/uid/hosted/auction_id.txt
     FILE *hosted_file = fopen(path, "w"); // creates auction_id.txt in users/uid/hosted (1/5)
@@ -299,8 +301,7 @@ int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int
     current_time->tm_year + 1900, current_time->tm_mon + 1, current_time->tm_mday,
     current_time->tm_hour, current_time->tm_min, current_time->tm_sec);*/
     time_t t = time(NULL);
-    struct tm *local_time = localtime(&t);
-    char start_datetime[20]; // YYYY-MM-DD HH:MM:SS (19 bytes)
+    local_time = localtime(&t); 
     strftime(start_datetime, sizeof(start_datetime), "%Y-%m-%d %H:%M:%S", local_time);
     fprintf(auction_file, "%s %s %s %d %d %s %ld", uid, name, asset_fname, 
     start_value, timeactive, start_datetime, t);
@@ -659,7 +660,7 @@ int close_auction(int auction_id) {
 }
 
 
-void get_auc_info(char* auc_id, char* status) {
+void get_auc_info(int auc_id, char* status) {
     char path[50];
     char aux_buffer[100];
     char uid[7], name[11], asset_fname[25];
@@ -669,12 +670,13 @@ void get_auc_info(char* auc_id, char* status) {
     time_t fulltime, timeactive, bidtime, end_sec_time;
     //int start_value;
     //time_t timeactive, fulltime;
-    sprintf(path, "auctions/%3s/START_%3s.txt", auc_id, auc_id);
+    sprintf(path, "auctions/%03d/START_%03d.txt", auc_id, auc_id);
     FILE *start_file = fopen(path, "r");
     if (start_file == NULL) {
         perror("fopen error");
         return;
     }
+    
     // gets fields from the START.txt file
     fscanf(start_file, "%s %s %s %d %ld %s %s %ld", uid, name, asset_fname, &start_value,
     &timeactive, datetime1, datetime2, &fulltime);
@@ -684,16 +686,22 @@ void get_auc_info(char* auc_id, char* status) {
     strcat(status, aux_buffer);
     printf("status after appending start.txt info: %s\n", status);
     // gets bids
-    sprintf(path, "auctions/%3s/bids/", auc_id);
+    sprintf(path, "auctions/%03d/bids/", auc_id);
+    printf("auction id before: %d\n", auc_id);
     if (access(path, F_OK) != -1) {
         DIR *dir = opendir(path);
         struct dirent *entry;
         while ((entry = readdir(dir)) != NULL) {
+            printf("entry: %s\n", entry->d_name);
             if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-                sprintf(path, "auctions/%3s/bids/", auc_id);
+                printf("auction id: %d\n", auc_id);
+                printf("path before: %s\n", path);
+                sprintf(path, "auctions/%03d/bids/", auc_id);
                 strcat(path, entry->d_name);
+                printf("path after: %s\n", path);
                 FILE *bid_file = fopen(path, "r");
                 if (bid_file == NULL) {
+                    printf("no such path: %s\n", path);
                     perror("fopen error");
                     return;
                 }
@@ -701,7 +709,7 @@ void get_auc_info(char* auc_id, char* status) {
                 fscanf(bid_file, "%s %d %s %s %ld", uid, &bid_value, 
                 datetime1, datetime2, &bidtime);
                 fclose(bid_file);
-                sprintf(datetime, "%s %s", datetime1, datetime2);
+                snprintf(datetime, sizeof(datetime), "%s %s", datetime1, datetime2);
                 sprintf(aux_buffer, " B %s %d %s %ld", uid, bid_value, datetime, bidtime);
                 strcat(status, aux_buffer);
             }
@@ -723,8 +731,10 @@ void get_auc_info(char* auc_id, char* status) {
     }*/
     // appends info from END.txt if it exists
     // END.txt content: end_datetime end_sec_time
-    sprintf(path, "auctions/%3s/END_%3s.txt", auc_id, auc_id);
+    sprintf(path, "auctions/%03d/END_%03d.txt", auc_id, auc_id);
+    printf("PATH BEFORE END: %s\n", path);
     if (access(path, F_OK) != -1) {
+        printf("inside!\n");
         FILE *end_file = fopen(path, "r");
         if (end_file == NULL) {
             perror("fopen error");
@@ -738,14 +748,10 @@ void get_auc_info(char* auc_id, char* status) {
         printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
     }
     printf("STATUS AT THE END OF GET_AUC_INFO: %s\n", status);
-    
+}
 
     /*if (access(path, F_OK) != -1) {
-        DIR *dir = opendir(path);
-        struct dirent *entry;
-        while ((entry = readdir(dir)) != NULL) {
-            if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-                sprintf(path, "auctions/%3s/bids/%s", auc_id, entry->d_name);
+        DIR *dir = opendiRRC OK 103091 aucname123 A.txt 100 2023-12-13 09:53:34 3000 B 103092 101 2023-12-13 09:53:49 15 B 103092 102 2023-12-13 09:53:56 22 B 103092 103 2023-12-13 09:53:57 23 B 103092 104 2023-12-13 09:53:59 25 B 103092 105 2023-12-13 09:54:00 26 B 103092 106 2023-12-13 09:54:02 28 B 103093 107 2023-12-13 09:54:10 36 B 103093 2000 2023-12-13 09:54:13 39ath, "auctions/%3s/bids/%s", auc_id, entry->d_name);
                 FILE *bid_file = fopen(path, "r");
                 if (bid_file == NULL) {
                     perror("fopen error");
@@ -788,7 +794,7 @@ void get_auc_info(char* auc_id, char* status) {
     end_sec_time.*/
 
 
-}
+//}
 
 
 // TODO implement

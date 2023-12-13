@@ -142,17 +142,17 @@ int main(int argc, char *argv[]) {
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
     char command[COMMAND_SIZE+1];
     // é esta merda
-    // sscanf(buffer, "%3s ", command);
-    // command[strlen(command)] = '\0';
+    sscanf(buffer, "%3s ", command);
+    command[strlen(command)] = '\0';
 
-    read_command_udp(buffer, command);
+    /*read_command_udp(buffer, command);
     printf("command: %s\n", command);
 
 
     if (strlen(command) != 3) {
         printf("Invalid command.\n");
         return;
-    }
+    }*/
     printf("command: %s\n", command);
 
     if (!strcmp(command,"LIN")) {

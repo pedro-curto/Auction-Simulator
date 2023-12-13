@@ -94,7 +94,7 @@ int close_auction(int auction_id);
 void write_tcp(int tcp_socket, char* status);
 int is_directory_empty(char* path);
 int user_bids_status(char* uid, char* status);
-void get_auc_info(char* auc_id, char* status);
+void get_auc_info(int auc_id, char* status);
 int GetBidList();
 int loadBid(char* path, bidlist *list);
 void read_command_udp(char* input, char* command);
