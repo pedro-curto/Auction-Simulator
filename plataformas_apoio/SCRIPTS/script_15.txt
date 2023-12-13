@@ -16,7 +16,7 @@ bid 004 40
 bid 005 60
 bid 006 10
 bid 007 21010
-bid 008 30 # são todas permitidas
+bid 008 30
 logout
 show_record 001
 show_record 002
@@ -35,7 +35,7 @@ bid 004 50
 bid 005 70
 bid 006 20
 bid 007 21020
-bid 008 40 # são todas permitidas
+bid 008 40
 logout
 show_record 001
 show_record 002
@@ -46,33 +46,12 @@ show_record 006
 show_record 007
 show_record 008
 sleep 5
-show_record 001
-show_record 002
-show_record 003
-show_record 004
-show_record 005
-show_record 006
-show_record 007
-show_record 008
-sleep 5
-show_record 001
-show_record 002
-show_record 003
-show_record 004
-show_record 005
-show_record 006
-show_record 007
-show_record 008
-sleep 5
-show_record 001
-show_record 002
-show_record 003
-show_record 004
-show_record 005
-show_record 006
-show_record 007
-show_record 008
-sleep 5
+login 111111 abcdefgh
+close 001
+close 003
+close 005
+close 007
+logout
 show_record 001
 show_record 002
 show_record 003

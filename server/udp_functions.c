@@ -9,7 +9,7 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, 
         strcat(status, "NOK\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
-    }*/
+    }
 
     sscanf(buffer, "LIN %s %s", uid, password);
     uid[strlen(uid)] = '\0';

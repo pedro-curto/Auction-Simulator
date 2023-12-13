@@ -62,6 +62,15 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
+    // sets socket option to reuse address
+    int reuse = 1;
+    if (setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
+        perror("setsockopt error");
+        close(udp_socket);
+        close(tcp_socket);
+        exit(EXIT_FAILURE);
+    }
+
     // Initialize server address structure
     memset(&server_addr, 0, sizeof(server_addr));
     server_addr.sin_family = AF_INET;

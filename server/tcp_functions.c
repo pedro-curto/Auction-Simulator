@@ -61,6 +61,7 @@ void handle_open(int tcp_socket) {
 
 }
 
+
 void handle_show_asset(int tcp_socket) {
     char auc_id[5];
     char status[200] = "RSA ";

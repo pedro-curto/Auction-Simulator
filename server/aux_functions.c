@@ -509,7 +509,7 @@ int ongoing_auction(int auction_id) {
     fclose(start_file);
     closure_fulltime = start_fulltime + timeactive;
     time(&current_time);
-    if (current_time > closure_fulltime) {
+    if (current_time > closure_fulltime) { // FIXME !! é >, ou é >=?
         // auction is over -> create END.txt file: end_datetime end_sec_time
         // end_datetime -> date of auction closure (YYYY-MM-DD HH:MM:SS)
         // end_sec_time -> time in seconds during which the auction was active
@@ -732,8 +732,26 @@ void get_auc_info(int auc_id, char* status) {
     }*/
     // appends info from END.txt if it exists
     // END.txt content: end_datetime end_sec_time
-    sprintf(path, "auctions/%03d/END_%03d.txt", auc_id, auc_id);
-    printf("PATH BEFORE END: %s\n", path);
+    // need to verify if auction is over
+    if (!ongoing_auction(auc_id)) {
+        sprintf(path, "auctions/%03d/END_%03d.txt", auc_id, auc_id);
+        FILE *end_file = fopen(path, "r");
+        if (end_file == NULL) {
+            perror("fopen error");
+            return;
+        }
+        fscanf(end_file, "%s %s %ld", datetime1, datetime2, &end_sec_time);
+        fclose(end_file);
+        sprintf(datetime, "%s %s", datetime1, datetime2);
+        sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
+        strcat(status, aux_buffer);
+        printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
+
+    }
+    printf("STATUS AT THE END OF GET_AUC_INFO: %s\n", status);
+
+    
+    /*printf("PATH BEFORE END: %s\n", path);
     if (access(path, F_OK) != -1) {
         printf("inside!\n");
         FILE *end_file = fopen(path, "r");
@@ -747,8 +765,7 @@ void get_auc_info(int auc_id, char* status) {
         sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
         strcat(status, aux_buffer);
         printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
-    }
-    printf("STATUS AT THE END OF GET_AUC_INFO: %s\n", status);
+    }*/
 }
 
     /*if (access(path, F_OK) != -1) {

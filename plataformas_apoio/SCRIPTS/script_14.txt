@@ -43,17 +43,25 @@ bid 019 30
 myauctions
 mybids
 list
-sleep 10
 mybids
-list
-sleep 5
-mybids
-list
-sleep 5
-mybids
-list
-sleep 5
-mybids
-list
 logout
+list
+sleep 5
+login 111111 abcdefgh
+close 001
+close 003
+close 005
+close 007
+close 009
+close 011
+close 013
+close 015
+close 017
+close 019
+myauctions
+logout
+login 222222 hgfedcba
+mybids
+logout
+list
 exit
