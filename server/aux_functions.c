@@ -388,6 +388,7 @@ void append_auctions(char* status) {
     strcat(status, "\n");
 }
 
+
 int exists_auction(char* auc_id) {
     char path[50] = "auctions/";
     strcat(path, auc_id);

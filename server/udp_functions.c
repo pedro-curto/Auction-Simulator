@@ -149,21 +149,23 @@ void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer,
 
 
 void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[UID_SIZE + 1];
+    (void) buffer;
+    //char uid[UID_SIZE + 1];
     char status[9999] = "RLS ";
 
-    if (!read_uid_udp(buffer, uid)) {
+    /*if (!read_uid_udp(buffer, uid)) {
         strcat(status, "NOK\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
-    }
+    }*/
+
 
     if (access("auctions", F_OK) == -1) {
         strcat(status, "NOK\n");
     } else {
         strcat(status, "OK");
         append_auctions(status);
-        strcat(status, "\n");
+        //strcat(status, "\n");
     }
 
     // FIXME epa acho que o access() faz literalmente o mesmo que tu fazes no exists_auctions()
@@ -173,19 +175,15 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, s
         strcat(status, "OK");
         append_auctions(status);
     }*/
-
+    printf("status: %s", status);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
 void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
-    char auc_id[AID_SIZE + 1];
-    char status[200] = "RRC ";
-    
-    if (!read_aid_udp(buffer, auc_id)) {
-        strcat(status, "NOK\n");
-        reply_msg(udp_socket, client_addr, client_addr_len, status);
-        return;
-    }
+    char auc_id[5];
+    char status[9999] = "RRC ";
+    sscanf(buffer, "SRC %s", auc_id);
+    printf("auc_id: %s\n", auc_id);
     
     if (!exists_auction(auc_id)) {
         strcat(status, "NOK\n");
