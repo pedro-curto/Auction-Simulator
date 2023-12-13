@@ -113,6 +113,7 @@ int main(int argc, char *argv[]) {
                     print_verbose_info(client_addr, "UDP");
                 }
                 process_udp_request(udp_socket, client_addr, buffer, client_addr_len);
+                memset(buffer, 0, sizeof(buffer));
             }
         }
 
@@ -141,19 +142,16 @@ int main(int argc, char *argv[]) {
 
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
     char command[COMMAND_SIZE+1];
+    memset(command, 0, sizeof(command));
     // é esta merda
     // sscanf(buffer, "%3s ", command);
     // command[strlen(command)] = '\0';
 
-    read_command_udp(buffer, command);
-    printf("command: %s\n", command);
-
-
-    if (strlen(command) != 3) {
+    if (!read_command_udp(buffer, command)){
+        reply_msg(udp_socket, client_addr, client_addr_len, "ERR\n");
         printf("Invalid command.\n");
         return;
     }
-    printf("command: %s\n", command);
 
     if (!strcmp(command,"LIN")) {
         handle_login(udp_socket, client_addr, buffer, client_addr_len);
@@ -170,6 +168,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
     } else if (!strcmp(command,"SRC")) {
         handle_show_record(udp_socket, client_addr, buffer, client_addr_len);
     } else {
+        reply_msg(udp_socket, client_addr, client_addr_len, "ERR\n");
         printf("Invalid command.\n");
     }
 }
@@ -177,6 +176,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 
 void process_tcp_request(int tcp_socket) {
     char command[5];
+    memset(command, 0, sizeof(command));
     read_field(tcp_socket, command, 4); // faz diferença ser 3 ou 4? acho que precisa de ser 4 pra consumir o espaço
     /*int bytes_read = 0;
     while (bytes_read < 4) {
@@ -192,6 +192,7 @@ void process_tcp_request(int tcp_socket) {
     } else if (!strcmp(command, "BID")) {
         handle_bid(tcp_socket);
     } else {
+        write_tcp(tcp_socket, "ERR\n");
         printf("Invalid command.\n");
     }
 

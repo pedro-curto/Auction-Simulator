@@ -44,6 +44,7 @@ int verify_user_exists(char* uid) {
     if (!stat(path, &st)) { //0 = file exists
         return 1;
     }
+    printf("User %s does not exist\n", uid);
     return 0;
 }
 

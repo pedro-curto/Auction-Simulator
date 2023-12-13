@@ -5,14 +5,8 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, 
     char uid[UID_SIZE + 1];
     char password[PASSWORD_SIZE + 1];
 
-    read_uid_udp(buffer, uid);
-    read_password_udp(buffer, password);
-
-    printf("uid: %s\n", uid);
-    printf("password: %s\n", password);
-
-    if (strlen(uid) == 0 || strlen(password) == 0) {
-        strcat(status, "ERR\n");
+    if (!read_uid_udp(buffer, uid) || !read_password_udp(buffer, password)) {
+        strcat(status, "NOK\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
@@ -45,17 +39,30 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, 
 
 
 void handle_logout(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[20], password[20];
+    char uid[UID_SIZE + 1], password[PASSWORD_SIZE + 1];
     char status[50] = "RLO ";
-    sscanf(buffer, "LOU %s %s", uid, password);
-    uid[strlen(uid)] = '\0';
+    // sscanf(buffer, "LOU %s %s", uid, password);
+    // uid[strlen(uid)] = '\0';
+    // password[strlen(password)] = '\0';
+
+    if (!read_uid_udp(buffer, uid) || !read_password_udp(buffer, password)) {
+        strcat(status, "NOK\n");
+        reply_msg(udp_socket, client_addr, client_addr_len, status);
+        return;
+    }
+
+    printf("uid: %s\n", uid);
+    printf("password: %s\n", password);
 
     if(!verify_user_exists(uid)){
+        printf("User %s does not exist\n", uid);
         strcat(status, "UNR\n");
     } else{
         if (!verify_password_correct(uid, password)){
+            printf("Wrong password for user %s\n", uid);
             strcat(status, "NOK\n");
         } else if (!is_user_login(uid)){
+            printf("User %s not logged in\n", uid);
             strcat(status, "NOK\n");
         } else{
             change_user_login(uid);
@@ -67,10 +74,16 @@ void handle_logout(int udp_socket, struct sockaddr_in client_addr, char* buffer,
 
 
 void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[100], password[50];
+    char uid[UID_SIZE + 1], password[PASSWORD_SIZE + 1];
     char status[50] = "RUR ";
-    sscanf(buffer, "UNR %s %s", uid, password);
-    uid[strlen(uid)] = '\0';
+    // sscanf(buffer, "UNR %s %s", uid, password);
+    // uid[strlen(uid)] = '\0';
+
+    if (!read_uid_udp(buffer, uid) || !read_password_udp(buffer, password)) {
+        strcat(status, "NOK\n");
+        reply_msg(udp_socket, client_addr, client_addr_len, status);
+        return;
+    }
 
     if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
@@ -90,15 +103,14 @@ void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char* buf
 
 
 void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[7];
+    char uid[UID_SIZE + 1];
     char status[9999] = "RMA ";
     // we need to guarantee that we read exactly three characters and a space afterwards
-    if (sscanf(buffer, "LMA %6[0-9]\n", uid) != 1) {
-        strcat(status, "ERR\n"); // message wrongly formatted
+    if (!read_uid_udp(buffer, uid)) {
+        strcat(status, "NOK\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
-    printf("uid: %s\n", uid);
     if (!is_user_login(uid)) {
         strcat(status, "NLG\n");
     } else {
@@ -114,15 +126,14 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char* buf
 
 
 void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[7];
+    char uid[UID_SIZE + 1];
     char status[9999] = "RMB ";
     // we need to guarantee that we read exactly three characters and a space afterwards
-    sscanf(buffer, "LMB %s\n", uid);
-    // if (sscanf(buffer, "LMA %s\n", uid) != 1) {
-    //     strcat(status, "ERR\n"); // message wrongly formatted
-    //     reply_msg(udp_socket, client_addr, client_addr_len, status);
-    //     return;
-    // }
+    if (!read_uid_udp(buffer, uid)) {
+        strcat(status, "NOK\n");
+        reply_msg(udp_socket, client_addr, client_addr_len, status);
+        return;
+    }
     if (!is_user_login(uid)) {
         strcat(status, "NLG\n");
     } else {
@@ -138,11 +149,15 @@ void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer,
 
 
 void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    char uid[100];
+    char uid[UID_SIZE + 1];
     char status[9999] = "RLS ";
 
-    sscanf(buffer, "UNR %s", uid);
-    uid[strlen(uid)] = '\0';
+    if (!read_uid_udp(buffer, uid)) {
+        strcat(status, "NOK\n");
+        reply_msg(udp_socket, client_addr, client_addr_len, status);
+        return;
+    }
+
     if (access("auctions", F_OK) == -1) {
         strcat(status, "NOK\n");
     } else {
@@ -163,10 +178,14 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, s
 }
 
 void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
-    char auc_id[5];
+    char auc_id[AID_SIZE + 1];
     char status[200] = "RRC ";
-    sscanf(buffer, "SRC %s", auc_id);
-    printf("auc_id: %s\n", auc_id);
+    
+    if (!read_aid_udp(buffer, auc_id)) {
+        strcat(status, "NOK\n");
+        reply_msg(udp_socket, client_addr, client_addr_len, status);
+        return;
+    }
     
     if (!exists_auction(auc_id)) {
         strcat(status, "NOK\n");

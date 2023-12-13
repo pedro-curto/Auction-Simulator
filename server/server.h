@@ -23,7 +23,7 @@
 #define COMMAND_SIZE 3
 #define UID_SIZE 6
 #define PASSWORD_SIZE 8
-#define EMPTY ''
+#define AID_SIZE 3
 // #define MAX_AUCTION_NAME_SIZE 50;
 // #define MAX_ASSET_NAME_SIZE 50;
 // #define MAX_ASSET_SIZE 1000;              TODO: corrigir o q ta comentado aqui
@@ -97,8 +97,9 @@ int user_bids_status(char* uid, char* status);
 void get_auc_info(char* auc_id, char* status);
 int GetBidList();
 int loadBid(char* path, bidlist *list);
-void read_command_udp(char* input, char* command);
-void read_uid_udp(char* input, char* uid);
-void read_password_udp(char* input, char* password);
+int read_command_udp(char* input, char* command);
+int read_uid_udp(char* input, char* uid);
+int read_password_udp(char* input, char* password);
+int read_aid_udp(char* input, char* aid);
 
 #endif
