@@ -486,26 +486,110 @@ end_sec_time.*/
 void showRecord(char* IP, char* port, int aid) {
     // FIXME properly calculate the size of the buffer
     char buffer[1024], showrecord_request[10]; // SRC AID\n
+    char token[25]; //max token size is Fname = 24chars + 1 for \0
+    char token2[25];
+    int message_part = 0;
     snprintf(showrecord_request, sizeof(showrecord_request), "SRC %03d\n", aid);
     connect_UDP(IP, port, showrecord_request, buffer);
-    printf("showrecord_request: %s\n", showrecord_request);
-    printf("buffer: %s\n", buffer);
+
     // handles server response
     if (!strncmp(buffer, "RRC NOK", 7)) {
         printf("Error showing record: no such auction.\n");
-    } else if (!strncmp(buffer, "RRC OK", 6)) {
+    } else if (!strncmp(buffer, "RRC OK ", 7)) {
         // FIXME: precisa de ser feito corretamente
-        printf("Auction record:\n");
-        /*char *token = strtok(buffer, " "); // skips RRC
-        token = strtok(NULL, " ");
-        token = strtok(NULL, " ");
-        if (token != NULL) {
-            // Extract filename, size, and data
-            char *filename = strtok(NULL, " "); // fname
-            char *size = strtok(NULL, " "); // fsize
-            char *data = strtok(NULL, "\0"); // fdata
-            printf("Filename: %s\nSize: %s\n", filename, size);
-        }*/
+        printf("----------------Auction record---------------\n");
+        for (int i = 7; i > 0; i++) { //7 = strlen("RRC OK ")
+            memset(token, 0, sizeof(token));
+            i = read_buffer_token(buffer, token, i);
+            switch(message_part) {
+                case 0: // Auction details
+                    printf("Host UID: %s\n", token);
+                    message_part++;
+                    break;
+                case 1:
+                    printf("Auction Name: %s\n", token);
+                    message_part++;
+                    break;
+                case 2:
+                    printf("Asset Filename: %s\n", token);
+                    message_part++;
+                    break;
+                case 3:
+                    printf("Start Value: %s\n", token);
+                    message_part++;
+                    break;
+                case 4:
+                    i = read_buffer_token(buffer, token2, ++i);
+                    printf("Start Date-Time: %s %s\n", token, token2);
+                    memset(token2, 0, sizeof(token2));
+                    message_part++;
+                    break;
+                case 5:
+                    printf("Time Active: %s\n", token);
+                    message_part++;
+                    break;
+                case 6: // Bids
+                    if (strlen(token) != 1){
+                        printf("Error parsing server response.\n");
+                        i = -1;
+                        break;
+                    }
+                    if (token[0] == 'B') {
+                        message_part = 7;
+                    } else if (token[0] == 'E') {
+                        message_part = 8;
+                    } else {
+                        printf("Error parsing server response.\n");
+                        i = -1;
+                    }
+                    break;
+                case 7: // bids information: only if there are bids
+                    printf("--------------------BIDS---------------------\n");
+                    printf("Bidder UID: %s\n", token);
+                    i = read_buffer_token(buffer, token, ++i);
+                    printf("Bid Value: %s\n", token);
+                    i = read_buffer_token(buffer, token, ++i);
+                    i = read_buffer_token(buffer, token2, ++i);
+                    printf("Bid Date-Time: %s %s\n", token, token2);
+                    i = read_buffer_token(buffer, token, ++i);
+                    printf("Bid Sec Time: %s\n", token);
+                    message_part = 6;
+                    break;
+                case 8: // Closing information: only if the auction is closed
+                    printf("------------Closing Information--------------\n");
+                    i = read_buffer_token(buffer, token2, ++i);
+                    printf("End Date-Time: %s %s\n", token, token2);
+                    memset(token2, 0, sizeof(token2));
+                    i = read_buffer_token(buffer, token, ++i);
+                    printf("End Sec Time: %s\n", token);
+                    i = -1;
+                    break;
+                default:
+                    printf("Error parsing server response.\n");
+                    break;
+            }
+        }
+
+    } else printf("Server responded with an error when trying to show record.\n");
+}
+
+int read_buffer_token(char* buffer, char* token, int start_pos){
+    int i,j;
+    for (i = start_pos, j = 0; buffer[i] != ' ' && i < 1024 && i > -1; i++,j++){
+        if (buffer[i] == '\n'){
+            token[j] = '\0';
+            return -1;
+        }
+        token[j] = buffer[i];
+    }
+    token[j] = '\0';
+    if (i == 1024) return -1;
+    return i;
+}
+
+
+
+        /*
         printf("buffer: %s\n", buffer);
         char *token = strtok(buffer, " "); // skips RRC
         printf("skipped token1: %s\n", token);
@@ -539,8 +623,5 @@ void showRecord(char* IP, char* port, int aid) {
             printf("Closing Information:\n");
             printf("End Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
             printf("End Sec Time: %s\n", strtok(NULL, " "));
-        } else printf("Auction is still ongoing!\n");
+        } else printf("Auction is still ongoing!\n");*/
             
-    } else printf("Server responded with an error when trying to show record.\n");
-}
-

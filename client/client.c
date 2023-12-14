@@ -40,6 +40,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         // gets stdin into input buffer
+        printf(">> ");
         scanf("%s", command); // FIXME scanf not safe
         fgets(input, sizeof(input), stdin);
         if (input[strlen(input)-1] == '\n') input[strlen(input)-1] = '\0';
