@@ -1,7 +1,7 @@
 #include "server.h"
 
 
-int read_command_udp(char* input, char* command){
+int read_command_udp(char* input, char* command) {
     // Read command from buffer input until SEPARATION_CHAR appears
     int i = 0;
     char buffer[COMMAND_SIZE+1];
@@ -13,7 +13,7 @@ int read_command_udp(char* input, char* command){
 
     for (i = 0; i < default_size; i++){
         if (i == default_size - 1) {
-            if (input[i] != SEPARATION_CHAR && input[i] != '\n'){
+            if (input[i] != SEPARATION_CHAR && input[i] != '\n') {
                 return 0;
             }
             break;
@@ -30,6 +30,7 @@ int read_command_udp(char* input, char* command){
     return 1;
 }
 
+
 int read_uid_udp(char* input, char* uid) {
     int lenght, i = 0;
     int start_pos = COMMAND_SIZE + 1;
@@ -43,7 +44,7 @@ int read_uid_udp(char* input, char* uid) {
     for (i = start_pos; i < default_size; i++) {
         lenght = i - start_pos;
         if (i == default_size - 1) {
-            if (input[i] != SEPARATION_CHAR && input[i] != '\n'){
+            if (input[i] != SEPARATION_CHAR && input[i] != '\n') {
                 return 0;
             }
             break;
@@ -63,7 +64,8 @@ int read_uid_udp(char* input, char* uid) {
     return 1;
 }
 
-int read_password_udp(char* input, char* password){
+
+int read_password_udp(char* input, char* password) {
     int lenght, i = 0;
     char buffer[PASSWORD_SIZE+1];
     int start_pos = COMMAND_SIZE + UID_SIZE + 2; //2 separation chars
@@ -96,7 +98,7 @@ int read_password_udp(char* input, char* password){
     return 1;
 }
 
-int read_aid_udp(char* input, char* aid){
+int read_aid_udp(char* input, char* aid) {
     int i, l = 0;
     char buffer[AID_SIZE+1];
     int start_pos = COMMAND_SIZE + 1;

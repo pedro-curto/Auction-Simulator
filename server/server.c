@@ -62,9 +62,17 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // sets socket option to reuse address
+    // sets TCP socket option to reuse address
     int reuse = 1;
     if (setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
+        perror("setsockopt error");
+        close(udp_socket);
+        close(tcp_socket);
+        exit(EXIT_FAILURE);
+    }
+
+    // sets UDP socket option to reuse address
+    if (setsockopt(udp_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
         perror("setsockopt error");
         close(udp_socket);
         close(tcp_socket);
@@ -224,7 +232,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
     sscanf(buffer, "%3s ", command);
     command[strlen(command)] = '\0';
 
-    if (!read_command_udp(buffer, command)){
+    if (!read_command_udp(buffer, command)) {
         reply_msg(udp_socket, client_addr, client_addr_len, "ERR\n");
         printf("Invalid command.\n");
         return;
