@@ -1,9 +1,11 @@
 {
     "files.associations": {
+        "*.asm": "p4",
         "type_traits": "c",
         "client.h": "c",
         "cstdlib": "c",
         "typeinfo": "c",
-        "server.h": "c"
+        "server.h": "c",
+        "unistd.h": "c"
     }
 }
