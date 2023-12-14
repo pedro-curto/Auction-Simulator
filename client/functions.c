@@ -320,14 +320,21 @@ void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
     } else if (!strncmp(buffer, "RMB NLG", 7)) {
         printf("Bid listing error: user is not logged in.\n");
     } else if (!strncmp(buffer, "RMB OK", 6)) {
-        // FIXME
         printf("Your current bids:\n");
-        char *token = strtok(buffer + 3, " "); //RMB OK?
-        while ((token = strtok(NULL, " ")) != NULL) {
-            printf("%s", token);
-            token = strtok(NULL, " ");
-            printf(" %s\n", token);
+        char token[4];
+        for (int i = 7; i > 0; i++) { // 7 = strlen("RMB OK ")
+            i = read_buffer_token(buffer, token, sizeof(token), i);
+            printf("%s ", token);
+            i = read_buffer_token(buffer, token, sizeof(token), ++i);
+            printf("%s\n", token);
         }
+
+        // char *token = strtok(buffer + 3, " "); //RMB OK?
+        // while ((token = strtok(NULL, " ")) != NULL) {
+        //     printf("%s", token);
+        //     token = strtok(NULL, " ");
+        //     printf(" %s\n", token);
+        // }
     } else printf("Server responded with an error when trying to list bids.\n");
 }
 
@@ -500,7 +507,7 @@ void showRecord(char* IP, char* port, int aid) {
         printf("----------------Auction record---------------\n");
         for (int i = 7; i > 0; i++) { //7 = strlen("RRC OK ")
             memset(token, 0, sizeof(token));
-            i = read_buffer_token(buffer, token, i);
+            i = read_buffer_token(buffer, token, sizeof token, i);
             switch(message_part) {
                 case 0: // Auction details
                     printf("Host UID: %s\n", token);
@@ -519,7 +526,7 @@ void showRecord(char* IP, char* port, int aid) {
                     message_part++;
                     break;
                 case 4:
-                    i = read_buffer_token(buffer, token2, ++i);
+                    i = read_buffer_token(buffer, token2, sizeof token2, ++i);
                     printf("Start Date-Time: %s %s\n", token, token2);
                     memset(token2, 0, sizeof(token2));
                     message_part++;
@@ -537,7 +544,7 @@ void showRecord(char* IP, char* port, int aid) {
                     if (token[0] == 'B') {
                         message_part = 7;
                     } else if (token[0] == 'E') {
-                        message_part = 8;
+                        message_part = 11;
                     } else {
                         printf("Error parsing server response.\n");
                         i = -1;
@@ -546,21 +553,30 @@ void showRecord(char* IP, char* port, int aid) {
                 case 7: // bids information: only if there are bids
                     printf("--------------------BIDS---------------------\n");
                     printf("Bidder UID: %s\n", token);
-                    i = read_buffer_token(buffer, token, ++i);
+                    message_part++;
+                    break;
+                case 8:
                     printf("Bid Value: %s\n", token);
-                    i = read_buffer_token(buffer, token, ++i);
-                    i = read_buffer_token(buffer, token2, ++i);
+                    message_part++;
+                    break;
+                case 9:
+                    i = read_buffer_token(buffer, token2, sizeof token2, ++i);
                     printf("Bid Date-Time: %s %s\n", token, token2);
-                    i = read_buffer_token(buffer, token, ++i);
+                    memset(token2, 0, sizeof(token2));
+                    message_part++;
+                    break;
+                case 10:
                     printf("Bid Sec Time: %s\n", token);
                     message_part = 6;
                     break;
-                case 8: // Closing information: only if the auction is closed
+                case 11: // Closing information: only if the auction is closed
                     printf("------------Closing Information--------------\n");
-                    i = read_buffer_token(buffer, token2, ++i);
+                    i = read_buffer_token(buffer, token2, sizeof token2, ++i);
                     printf("End Date-Time: %s %s\n", token, token2);
                     memset(token2, 0, sizeof(token2));
-                    i = read_buffer_token(buffer, token, ++i);
+                    message_part++;
+                    break;
+                case 12:
                     printf("End Sec Time: %s\n", token);
                     i = -1;
                     break;
@@ -571,20 +587,6 @@ void showRecord(char* IP, char* port, int aid) {
         }
 
     } else printf("Server responded with an error when trying to show record.\n");
-}
-
-int read_buffer_token(char* buffer, char* token, int start_pos){
-    int i,j;
-    for (i = start_pos, j = 0; buffer[i] != ' ' && i < 1024 && i > -1; i++,j++){
-        if (buffer[i] == '\n'){
-            token[j] = '\0';
-            return -1;
-        }
-        token[j] = buffer[i];
-    }
-    token[j] = '\0';
-    if (i == 1024) return -1;
-    return i;
 }
 
 
