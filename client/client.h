@@ -57,6 +57,6 @@ int sendImage(char *filename, char *buffer, int size);
 int read_file(int tcp_socket, int size, char* path);
 int read_field(int tcp_socket, char *buffer, size_t size);
 int connect_tcp(char* IP, char* port);
-int read_buffer_token(char* buffer, char* token, int start_pos);
+int read_buffer_token(char* buffer, char* token, ssize_t token_size, int start_pos);
 
 #endif

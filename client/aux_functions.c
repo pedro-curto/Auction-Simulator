@@ -189,6 +189,21 @@ int connect_tcp(char* IP, char* port) {
     return fd;
 }
 
+int read_buffer_token(char* buffer, char* token, ssize_t token_size, int start_pos){
+    int i,j;
+    int size = (int)token_size -1;
+    for (i = start_pos, j = 0; buffer[i] != ' ' && j < size && i > -1; i++,j++){
+        if (buffer[i] == '\n'){
+            token[j] = '\0';
+            return -1;
+        }
+        token[j] = buffer[i];
+    }
+    token[j] = '\0';
+    if (i == 1024) return -1;
+    return i;
+}
+
 
 /*void SA_connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size) {
     int fd, asset_fd, fsize, to_read, to_write;//,  errcode;

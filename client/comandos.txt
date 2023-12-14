@@ -1,4 +1,0 @@
-login 103091 11111111
-open aucname123 A.txt 100 3000
-open aucname123 thescream.jpg 100 3000
-open aucname123 Whistlers_Mother.jpg 100 3000
