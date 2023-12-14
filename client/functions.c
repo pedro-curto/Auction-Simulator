@@ -491,13 +491,13 @@ void showRecord(char* IP, char* port, int aid) {
     int message_part = 0;
     snprintf(showrecord_request, sizeof(showrecord_request), "SRC %03d\n", aid);
     connect_UDP(IP, port, showrecord_request, buffer);
-    
+
     // handles server response
     if (!strncmp(buffer, "RRC NOK", 7)) {
         printf("Error showing record: no such auction.\n");
     } else if (!strncmp(buffer, "RRC OK ", 7)) {
         // FIXME: precisa de ser feito corretamente
-        printf("Auction record----------------------------\n");
+        printf("----------------Auction record---------------\n");
         for (int i = 7; i > 0; i++) { //7 = strlen("RRC OK ")
             memset(token, 0, sizeof(token));
             i = read_buffer_token(buffer, token, i);
@@ -544,7 +544,7 @@ void showRecord(char* IP, char* port, int aid) {
                     }
                     break;
                 case 7: // bids information: only if there are bids
-                    printf("Bids--------------------------------------\n");
+                    printf("--------------------BIDS---------------------\n");
                     printf("Bidder UID: %s\n", token);
                     i = read_buffer_token(buffer, token, ++i);
                     printf("Bid Value: %s\n", token);
@@ -556,7 +556,7 @@ void showRecord(char* IP, char* port, int aid) {
                     message_part = 6;
                     break;
                 case 8: // Closing information: only if the auction is closed
-                    printf("Closing Information-----------------------\n");
+                    printf("------------Closing Information--------------\n");
                     i = read_buffer_token(buffer, token2, ++i);
                     printf("End Date-Time: %s %s\n", token, token2);
                     memset(token2, 0, sizeof(token2));
