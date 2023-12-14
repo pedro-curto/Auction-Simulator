@@ -31,6 +31,9 @@
 // #define MAX_VALUE 1000;
 //#define IP ""
 
+// verbose_mode global variable
+extern int verbose_mode;
+
 typedef struct {
     char uid[7];
     int value;

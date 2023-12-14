@@ -51,12 +51,10 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     if (getaddrinfo(IP, port, &hints, &res) != 0) printf("Error getting address info.\n");
     if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) printf("Error connecting.\n");
     // writes the header in open
-    printf("Request: %s\n", request);
     if (write(fd, request, strlen(request)) == -1) perror("Error writing.\n");
     if (!strncmp(request, "OPA", 3)) {
         sscanf(request, "OPA %*s %*s %*s %*d %*d %s %d", asset_fname, &fsize); 
         // uses sendfile() to send the image
-        printf("asset_fname: %s\n", asset_fname);
         asset_fd = open(asset_fname, O_RDONLY);
         if (asset_fd == -1) perror("Error opening file.\n");
         off_t offset = 0;
@@ -127,7 +125,6 @@ int read_file(int tcp_socket, int size, char* path) {
     char buffer[1024];
     size_t bytes_read = 0;
     ssize_t n;
-    printf("path: %s\n", path);
     FILE *file = fopen(path, "w");
     if (file == NULL) {
         perror("fopen error");
