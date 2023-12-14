@@ -51,6 +51,8 @@ typedef struct {
 //void *GetInAddr(struct sockaddr *sa);
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
 void process_tcp_request(int tcp_socket);
+void* process_udp_thread(void* arg);
+void* process_tcp_thread(void* arg);
 void print_verbose_info(struct sockaddr_in client_addr, const char *protocol);
 void handle_login(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);
 void handle_logout(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len);

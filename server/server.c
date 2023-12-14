@@ -115,28 +115,68 @@ int main(int argc, char *argv[]) {
         }
 
         if (FD_ISSET(udp_socket, &read_fds)) {
-            if (recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr *)&client_addr, &client_addr_len) == -1) {
+            struct sockaddr_in client_addr;
+            socklen_t client_addr_len = sizeof(client_addr);
+
+            if (recvfrom(udp_socket, buffer, sizeof(buffer), 0, (struct sockaddr*)&client_addr, &client_addr_len) == -1) {
                 perror("UDP receive error");
             } else {
                 if (verbose_mode) {
                     print_verbose_info(client_addr, "UDP");
                 }
+
+                // // Create a new thread for processing UDP request
+                // pthread_t udp_thread;
+                // struct {
+                //     int udp_socket;
+                //     struct sockaddr_in client_addr;
+                //     char buffer[MAX_BUFFER_SIZE];
+                //     socklen_t client_addr_len;
+                // }* thread_arg = malloc(sizeof(*thread_arg));
+
+                // thread_arg->udp_socket = udp_socket;
+                // thread_arg->client_addr = client_addr;
+                // thread_arg->client_addr_len = client_addr_len;
+                // memcpy(thread_arg->buffer, buffer, sizeof(buffer));
+
+                // pthread_create(&udp_thread, NULL, process_udp_thread, thread_arg);
+
                 process_udp_request(udp_socket, client_addr, buffer, client_addr_len);
                 memset(buffer, 0, sizeof(buffer));
             }
         }
 
         if (FD_ISSET(tcp_socket, &read_fds)) {
-            int client_socket = accept(tcp_socket, (struct sockaddr *)&client_addr, &client_addr_len);
+            int client_socket = accept(tcp_socket, (struct sockaddr*)&client_addr, &client_addr_len);
             if (client_socket == -1) {
                 perror("TCP accept error");
             } else {
                 if (verbose_mode) {
                     print_verbose_info(client_addr, "TCP");
                 }
-                process_tcp_request(client_socket);
+                pid_t pid;
+                if ((pid = fork()) == -1) {
+                    perror("fork error");
+                    exit(EXIT_FAILURE);
+                } else if (pid == 0) {
+                    close(tcp_socket);
+                    process_tcp_request(client_socket);
+                    exit(EXIT_SUCCESS);
+                }
+                // int ret;
+                // do ret = close(client_socket); while (ret==-1 && errno == EINTR);
+                // if (ret == -1) {
+                //     perror("close error");
+                //     exit(EXIT_FAILURE);
+                // }
 
                 close(client_socket);
+                // // Create a new thread for processing TCP request
+                // pthread_t tcp_thread;
+                // int* thread_arg = malloc(sizeof(int));
+                // *thread_arg = client_socket;
+
+                // pthread_create(&tcp_thread, NULL, process_tcp_thread, thread_arg);
             }
         }
     }
@@ -147,6 +187,34 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
+// void* process_udp_thread(void* arg) {
+//     // Cast the argument to the required type
+//     struct {
+//         int udp_socket;
+//         struct sockaddr_in client_addr;
+//         char buffer[MAX_BUFFER_SIZE];
+//         socklen_t client_addr_len;
+//     }* thread_arg = (struct { /* ... */ }*)arg;
+
+//     process_udp_request(thread_arg->udp_socket, thread_arg->client_addr, thread_arg->buffer, thread_arg->client_addr_len);
+
+//     // Cleanup and exit the thread
+//     free(thread_arg);
+//     pthread_exit(NULL);
+// }
+
+// void* process_tcp_thread(void* arg) {
+//     // Cast the argument to the required type
+//     int client_socket = *((int*)arg);
+
+//     process_tcp_request(client_socket);
+
+//     // Cleanup and exit the thread
+//     close(client_socket);
+//     free(arg);
+//     pthread_exit(NULL);
+// }
 
 
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
