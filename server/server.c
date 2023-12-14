@@ -47,6 +47,7 @@ int main(int argc, char *argv[]) {
             printf("Invalid arguments.\n");
             return -1;
     }
+    
     // Create UDP socket
     udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (udp_socket == -1) {
