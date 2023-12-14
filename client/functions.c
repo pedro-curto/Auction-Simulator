@@ -273,21 +273,14 @@ void myAuctions(char* IP, char* port, char* uid) {
     } else if (!strncmp(buffer, "RMA NLG", 7)) {
         printf("User is not logged in.\n");
     } else if (!strncmp(buffer, "RMA OK", 6)) { 
-    // FIXME isto precisa de ser repensado quando os opens começarem a funcionar e pudermos testar isto a sério
-    // não sei se tá certo mas quis skippar o OK e assim parece estar a funcionar (?)
+        
         printf("User %6s auctions:\n", uid);
-        char *token = strtok(buffer, "RMA OK");
-        //token = strtok(NULL, " ");
-        //token = strtok(NULL, " ");
-        while (token != NULL) {
+        char token[4];
+        for (int i = 7; i > 0; i++) { // 7 = strlen("RMB OK ")
+            i = read_buffer_token(buffer, token, sizeof(token), i);
             printf("%s ", token);
-            // Move to the next token
-            token = strtok(NULL, " \n");
-            if (token != NULL) {
-                printf("%s\n", token);
-            }
-            // Move to the next token
-            token = strtok(NULL, " \n");
+            i = read_buffer_token(buffer, token, sizeof(token), ++i);
+            printf("%s\n", token);
         }
     } else printf("Server responded with an error when trying to list auctions.\n"); // in this case we got ERR
 
@@ -328,13 +321,6 @@ void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
             i = read_buffer_token(buffer, token, sizeof(token), ++i);
             printf("%s\n", token);
         }
-
-        // char *token = strtok(buffer + 3, " "); //RMB OK?
-        // while ((token = strtok(NULL, " ")) != NULL) {
-        //     printf("%s", token);
-        //     token = strtok(NULL, " ");
-        //     printf(" %s\n", token);
-        // }
     } else printf("Server responded with an error when trying to list bids.\n");
 }
 
