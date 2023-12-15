@@ -16,7 +16,7 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, 
     }
 
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (!verify_user_exists(uid)) {
         if (create_user(uid,password)) {
             strcat(status, "REG\n");
@@ -35,7 +35,7 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, 
             strcat(status, "OK\n");
         }
     }
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
@@ -57,7 +57,7 @@ void handle_logout(int udp_socket, struct sockaddr_in client_addr, char* buffer,
         printf("Request type: Logout\nuid: %s\n", uid);
     }
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if(!verify_user_exists(uid)){
         strcat(status, "UNR\n");
     } else{
@@ -70,7 +70,7 @@ void handle_logout(int udp_socket, struct sockaddr_in client_addr, char* buffer,
             strcat(status, "OK\n");
         }
     }
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
@@ -91,7 +91,7 @@ void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char* buf
         printf("Request type: Unregister\nuid: %s\n", uid);
     }
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
     } else {
@@ -104,7 +104,7 @@ void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char* buf
             strcat(status, "OK\n");
         }
     }
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
@@ -124,7 +124,7 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char* buf
         printf("Request type: Show user auctions\nuid: %s\n", uid);
     }
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) {
         strcat(status, "NLG\n");
     } else {
@@ -134,7 +134,7 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char* buf
         }
         strcat(status, "\n");
     }
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
@@ -153,7 +153,7 @@ void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer,
         printf("Request type: Show user bids\nuid: %s\n", uid);
     }
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) {
         strcat(status, "NLG\n");
     } else {
@@ -163,7 +163,7 @@ void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer,
         }
         strcat(status, "\n");
     }
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
@@ -176,7 +176,7 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, s
         printf("Request type: List auctions\n");
     }
 
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (access("auctions", F_OK) == -1) {
         strcat(status, "NOK\n");
     } else {
@@ -184,7 +184,7 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, s
         append_auctions(status);
         //strcat(status, "\n");
     }
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 
@@ -202,7 +202,7 @@ void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *bu
         printf("Request type: Show record\naid: %s\n", auc_id);
     }
     
-    pthread_mutex_lock(&mutex);
+    //pthread_mutex_lock(&mutex);
     if (!exists_auction(auc_id)) {
         strcat(status, "NOK\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
@@ -211,7 +211,7 @@ void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *bu
     strcat(status, "OK");
     get_auc_info(atoi(auc_id), status);
     strcat(status, "\n");
-    pthread_mutex_unlock(&mutex);
+    //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
 

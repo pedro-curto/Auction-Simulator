@@ -32,7 +32,7 @@ void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME i
 
 void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size) {
     int fd, asset_fd, fsize, to_read;//,  errcode;
-    char asset_fname[ASSET_FNAME_SIZE + 1];
+    char asset_fname[ASSET_FNAME_SIZE + 1], path[50];
     ssize_t n;
     struct addrinfo hints, *res;
     //socklen_t addrlen;
@@ -55,7 +55,8 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     if (!strncmp(request, "OPA", 3)) {
         sscanf(request, "OPA %*s %*s %*s %*d %*d %s %d", asset_fname, &fsize); 
         // uses sendfile() to send the image
-        asset_fd = open(asset_fname, O_RDONLY);
+        sprintf(path, "local_assets/%s", asset_fname);
+        asset_fd = open(path, O_RDONLY);
         if (asset_fd == -1) perror("Error opening file.\n");
         off_t offset = 0;
         ssize_t sent_bytes = sendfile(fd, asset_fd, &offset, fsize);

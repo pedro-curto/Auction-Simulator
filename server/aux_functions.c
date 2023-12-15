@@ -186,14 +186,6 @@ void fetch_auctions(char *path, char *auctions) {
 
 
 
-<<<<<<< HEAD
-
-
-
-// FIXME criar uma função para ler o ultimo campo do protocolo
-
-
-=======
 int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
     ssize_t n;
@@ -216,7 +208,6 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
     buffer[bytes_read-1] = '\0';
     return bytes_read;
 }
->>>>>>> a71f7450a7edf206c77f73c8cf041e1ec09d6351
 
 
 int store_file(int tcp_socket, int size, char* path) {
@@ -326,7 +317,7 @@ current_time->tm_year + 1900, current_time->tm_mon + 1, current_time->tm_mday,
 current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
 */
 
-// FIXME generalizar para exists_path?
+// generalizar para exists path
 int exists_auctions() {
     DIR* dir = opendir("auctions");
     if (readdir(dir) == NULL) {
@@ -711,7 +702,10 @@ void get_auc_info(int auc_id, char* status) {
         }
         closedir(dir);
     }
-    // checks if the auctions is closed, to append end information
+    
+    // appends info from END.txt if it exists
+    // END.txt content: end_datetime end_sec_time
+    // need to verify if auction is over
     if (!ongoing_auction(auc_id)) {
         sprintf(path, "auctions/%03d/END_%03d.txt", auc_id, auc_id);
         FILE *end_file = fopen(path, "r");
@@ -725,34 +719,30 @@ void get_auc_info(int auc_id, char* status) {
         sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
         strcat(status, aux_buffer);
     }
-<<<<<<< HEAD
-    printf("STATUS AT THE END OF GET_AUC_INFO: %s\n", status);
-=======
-
-    
-    /*printf("PATH BEFORE END: %s\n", path);
-    if (access(path, F_OK) != -1) {
-        printf("inside!\n");
-        FILE *end_file = fopen(path, "r");
-        if (end_file == NULL) {
-            perror("fopen error");
-            return;
-        }
-        fscanf(end_file, "%s %s %ld", datetime1, datetime2, &end_sec_time);
-        fclose(end_file);
-        sprintf(datetime, "%s %s", datetime1, datetime2);
-        sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
-        strcat(status, aux_buffer);
-        printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
-    }*/
->>>>>>> a71f7450a7edf206c77f73c8cf041e1ec09d6351
 }
 
 
+int lock_dir(char* path) {
+    int dir_fd = open(path, O_RDONLY);
+    if (dir_fd == -1) {
+        perror("open error");
+        return 0;
+    }
+    if (flock(dir_fd, LOCK_EX) == -1) {
+        perror("flock error");
+        return 0;
+    }
+    return dir_fd;
+}
 
 
-
-
+int unlock_dir(int dir_fd) {
+    if (flock(dir_fd, LOCK_UN) == -1) {
+        perror("flock error");
+        return 0;
+    }
+    return 1;
+}
 
 
 

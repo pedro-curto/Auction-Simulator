@@ -17,6 +17,8 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <sys/file.h>
+#include <errno.h>
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT "58063"
@@ -109,13 +111,7 @@ int read_command_udp(char* input, char* command);
 int read_uid_udp(char* input, char* uid);
 int read_password_udp(char* input, char* password);
 int read_aid_udp(char* input, char* aid);
-
-int valid_uid(char* uid);
-int valid_password(char* password);
-int valid_auction_name(char* name);
-int valid_asset_name(char* name);
-int valid_start_value(int value);
-int valid_time_active(int timeactive);
-int valid_bid_value(int value);
+int lock_dir(char* path);
+int unlock_dir(int dir_fd);
 
 #endif

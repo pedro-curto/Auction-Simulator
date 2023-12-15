@@ -5,7 +5,8 @@
 int verbose_mode = 0;
 
 //mutex
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t mutex;
+
 
 int main(int argc, char *argv[]) {
     int udp_socket, tcp_socket, max_socket;
@@ -13,6 +14,10 @@ int main(int argc, char *argv[]) {
     socklen_t client_addr_len = sizeof(client_addr);
     char buffer[MAX_BUFFER_SIZE];
     char *as_port;
+
+    // need to initialize a mutex with pthread_mutex_init()
+    pthread_mutex_init(&mutex, NULL);
+
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -53,7 +58,6 @@ int main(int argc, char *argv[]) {
             printf("Invalid arguments.\n");
             return -1;
     }
-    
     // Create UDP socket
     udp_socket = socket(AF_INET, SOCK_DGRAM, 0);
     if (udp_socket == -1) {
@@ -69,17 +73,9 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // sets TCP socket option to reuse address
+    // sets socket option to reuse address
     int reuse = 1;
     if (setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
-        perror("setsockopt error");
-        close(udp_socket);
-        close(tcp_socket);
-        exit(EXIT_FAILURE);
-    }
-
-    // sets UDP socket option to reuse address
-    if (setsockopt(udp_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
         perror("setsockopt error");
         close(udp_socket);
         close(tcp_socket);
@@ -175,10 +171,14 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 } else if (pid == 0) {
                     close(tcp_socket);
-                    // locks the auctions and the users directories
-                    flock(2, LOCK_EX);
-                    flock(3, LOCK_EX);
+                    //int auc_fd = lock_dir("auctions");
+                    //int users_fd = lock_dir("users");
+                    pthread_mutex_lock(&mutex);
                     process_tcp_request(client_socket);
+                    pthread_mutex_unlock(&mutex);
+                    //unlock_dir(auc_fd);
+                    //unlock_dir(users_fd);
+                    // FIXME temos de fechar o client_socket aqui? 
                     exit(EXIT_SUCCESS);
                 }
                 // int ret;
@@ -198,7 +198,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-
+    pthread_mutex_destroy(&mutex);
     // Cleanup (not reached in this example)
     close(udp_socket);
     close(tcp_socket);
@@ -242,7 +242,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
     sscanf(buffer, "%3s ", command);
     command[strlen(command)] = '\0';
 
-    if (!read_command_udp(buffer, command)) {
+    if (!read_command_udp(buffer, command)){
         reply_msg(udp_socket, client_addr, client_addr_len, "ERR\n");
         printf("Invalid command.\n");
         return;
@@ -290,6 +290,8 @@ void process_tcp_request(int tcp_socket) {
         write_tcp(tcp_socket, "ERR\n");
         printf("Invalid command.\n");
     }
+
+    
 }
 
 void print_verbose_info(struct sockaddr_in client_addr, const char *protocol) {

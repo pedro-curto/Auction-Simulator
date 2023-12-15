@@ -162,11 +162,14 @@ with the AS and asks to open a new auction. The information sent includes:
 
 void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     char name[NAME_SIZE + 1], asset_fname[ASSET_FNAME_SIZE + 1]; //uid[7], password[9];
-    char buffer[1024], request_header[100];//, fsizeStr[9];
+    char buffer[1024], request_header[100], path[50];//, fsizeStr[9];
     int start_value, timeactive, aid;
     sscanf(input, "%s %s %d %d", name, asset_fname, &start_value, &timeactive);
-    int fsize = getFileSize(asset_fname);
-    // necessary checks 
+    sprintf(path, "local_assets/%s", asset_fname);
+    printf("path: %s\n", path);
+    int fsize = getFileSize(path);
+    printf("fsize: %d\n", fsize);
+    // necessary checks
     if (fsize == -1) {
         printf("Error opening file; couldn't get file size.\n");
         return;
@@ -345,7 +348,7 @@ After receiving the reply message, the User closes the TCP connection with the
 AS.
 
 */
-// Falta guardar o ficheiro
+
 void showAsset(char* IP, char* port, int aid) {
     char showasset_request[SA_BUFFER_SIZE];//, char *buffer; | SAS AID\n
     char buffer[1000], asset_fname[ASSET_FNAME_SIZE + 1];

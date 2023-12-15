@@ -14,6 +14,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
+#include <errno.h>
 
 #define SERVER_name "tejo.tecnico.ulisboa.pt"
 #define SERVER_IP "193.136.138.142"
