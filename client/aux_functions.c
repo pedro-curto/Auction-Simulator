@@ -51,7 +51,8 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     if (getaddrinfo(IP, port, &hints, &res) != 0) printf("Error getting address info.\n");
     if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) printf("Error connecting.\n");
     // writes the header in open
-    if (write(fd, request, strlen(request)) == -1) perror("Error writing.\n");
+    write_tcp(fd, request);
+
     if (!strncmp(request, "OPA", 3)) {
         sscanf(request, "OPA %*s %*s %*s %*d %*d %s %d", asset_fname, &fsize); 
         // uses sendfile() to send the image
@@ -124,7 +125,7 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
 
 int read_file(int tcp_socket, int size, char* path) {
     char buffer[1024];
-    size_t bytes_read = 0;
+    int bytes_read = 0;
     ssize_t n;
     FILE *file = fopen(path, "w");
     if (file == NULL) {
@@ -202,96 +203,9 @@ int read_buffer_token(char* buffer, char* token, ssize_t token_size, int start_p
     return i;
 }
 
-
-/*void SA_connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size) {
-    int fd, asset_fd, fsize, to_read, to_write;//,  errcode;
-    char asset_fname[ASSET_FNAME_SIZE + 1];
-    ssize_t n;
-    struct addrinfo hints, *res;
-    // OPA UID password name start_value timeactive Fname Fsize Fdata OPA %s %s %s %d %d %s %d\n
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == -1) perror("Error creating socket.\n");
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET; // IPv4
-    hints.ai_socktype = SOCK_STREAM; // TCP socket
-    if (getaddrinfo(IP, port, &hints, &res) != 0) printf("Error getting address info.\n");
-    if (connect(fd, res->ai_addr, res->ai_addrlen) == -1) printf("Error connecting.\n");
-    // writes the header in open
-    to_write = strlen(request);
-    while (to_write > 0) {
-        n = write(fd, request, to_write);
-        if (n == -1) perror("Error writing.\n");
-        to_write -= n;
-        request += n;
+void write_tcp(int tcp_socket, char* status) {
+    size_t n = 0;
+    while (n < strlen(status)) {
+        n += write(tcp_socket, status + n, strlen(status) - n);
     }
-    // reads the first four bytes, guaranteed to be SAS and a space
-    to_read = 4;
-    while (to_read > 0) {
-        n = read(fd, buffer, to_read);
-        if (n == -1) perror("Error reading.\n");
-        to_read -= n;
-        buffer += n;
-    }
-    printf("SA_connect_TCP buffer after 4 bytes: %s\n", buffer);
-    if (!strncmp(buffer, "SAS ", 4)) {
-        to_read = 3;
-        while (to_read > 0) {
-            n = read(fd, buffer, to_read);
-            if (n == -1) perror("Error reading.\n");
-            to_read -= n;
-            buffer += n;
-        }
-        printf("SA_connect_TCP buffer after 7 bytes: %s\n", buffer);
-        if (!strncmp(buffer, ))
-
-    }
-    
-
-    n = read(fd, buffer, buffer_size - 1);
-    if (n == -1) perror("Error reading.\n");
-    buffer[n] = '\0';
-    freeaddrinfo(res);
-    close(fd);
-    //return buffer;
-}*/
-
-
-/*int readFile(char *filename, char *buffer, int size) {
-    //size_t bufferSize = 100;
-    int fd = open(filename, O_RDONLY);
-    if (fd == -1) { 
-        perror("Error opening file");
-        return -1;
-    }
-    ssize_t n = read(fd, buffer, size);
-    close(fd);
-    if (n == -1) {
-        perror("Error reading file");
-        return -1;
-    }
-    return 0;
-}*/
-
-
-/*
-nleft = nbytes;
-while (nleft > 0) {
-    nwritten = write(fd, ptr, nleft);
-    if (nwritten <= 0) perror("Error writing.\n");
-    nleft -= nwritten;
-    ptr += nwritten;
 }
-nleft = nbytes2; 
-ptr = buffer;
-
-while (nleft > 0) {
-    nread = read(fd, ptr, nleft);
-    if (nread == -1) perror("Error reading.\n");
-    else if (nread == 0) break;
-    nleft -= nread;
-    ptr += nread;
-}
-nread = nbytes2 - nleft;
-
-
-*/

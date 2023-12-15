@@ -1,5 +1,6 @@
 #ifndef SERVER_H
 #define SERVER_H
+
 #include <dirent.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,14 +35,8 @@
 #define MAX_ASSET_FSIZE 10000000
 #define ASSET_FSIZE_SIZE 8
 #define NAME_SIZE 10
-// #define DATETIME_SIZE 6
 
 
-// #define MAX_AUCTION_NAME_SIZE 50;
-// #define MAX_ASSET_NAME_SIZE 50;
-// #define MAX_ASSET_SIZE 1000;              TODO: corrigir o q ta comentado aqui
-// #define MAX_TIME_ACTIVE 1000;
-// #define MAX_VALUE 1000;
 //#define IP ""
 
 // verbose_mode global variable
