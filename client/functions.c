@@ -263,7 +263,6 @@ is sent by the AS. state takes value 1 if the auction is active, or 0 otherwise.
 */
 void myAuctions(char* IP, char* port, char* uid) {
     char buffer[MA_BUFFER_SIZE], myauctions_request[12]; // LMA UID---\n
-    printf("uid: %s\n", uid);
     snprintf(myauctions_request, sizeof(myauctions_request), "LMA %6s\n", uid);
     // FIXME este strncmp não faz sentido nenhum, o connect_UDP e connect_TCP deveriam funcionar sendo void
     connect_UDP(IP, port, myauctions_request, buffer);
@@ -273,7 +272,6 @@ void myAuctions(char* IP, char* port, char* uid) {
     } else if (!strncmp(buffer, "RMA NLG", 7)) {
         printf("User is not logged in.\n");
     } else if (!strncmp(buffer, "RMA OK", 6)) { 
-        
         printf("User %6s auctions:\n", uid);
         char token[4];
         for (int i = 7; i > 0; i++) { // 7 = strlen("RMB OK ")

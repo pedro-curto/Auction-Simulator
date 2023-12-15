@@ -22,6 +22,7 @@ void handle_open(int tcp_socket) {
         printf("Request type: Open auction\nuid: %s\n", uid);
     }
 
+    pthread_mutex_lock(&mutex);
     if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
     } else {
@@ -38,6 +39,7 @@ void handle_open(int tcp_socket) {
             }
         }
     }
+    pthread_mutex_unlock(&mutex);
 
     //reply_msg(tcp_socket, status); O reply_msg aqui vai ser fazer um write do status no socket
     // FIXME colocar isto num loop
@@ -56,7 +58,8 @@ void handle_show_asset(int tcp_socket) {
     if (verbose_mode){
         printf("Request type: Show asset\nauc_id: %s\n", auc_id);
     }
-    
+
+    pthread_mutex_lock(&mutex);
     if (!exists_auction(auc_id)){
         strcat(status, "NOK\n");
         write_tcp(tcp_socket, status);
@@ -65,6 +68,8 @@ void handle_show_asset(int tcp_socket) {
 
     strcat(status, "OK");
     get_auc_file_info(auc_id, status);
+    pthread_mutex_unlock(&mutex);
+
     strcat(status, " ");
     write_tcp(tcp_socket, status);
     send_auc_file(tcp_socket, auc_id);
@@ -93,6 +98,7 @@ void handle_bid(int tcp_socket) {
     }
 
     // FIXME está aqui algum erro de raciocínio? São estas todas as condições possíveis? Deve-se ver se o auction existe?
+    pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) { // must be logged in
         strcat(status, "NLG\n");
     } else if (!ongoing_auction(auction_id)) { // must be ongoing (active)
@@ -107,6 +113,7 @@ void handle_bid(int tcp_socket) {
         }
     }
 
+    pthread_mutex_unlock(&mutex);
     write(tcp_socket, status, strlen(status));
 }
 
@@ -128,6 +135,7 @@ void handle_close(int tcp_socket) {
         printf("Request type: Close auction\nuid: %s\n", uid);
     }
 
+    pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) { // must be logged in
         strcat(status, "NLG\n");
     } else if (!exists_auction(aucIdStr)) { // must exist
@@ -144,6 +152,7 @@ void handle_close(int tcp_socket) {
         }
     }
 
+    pthread_mutex_unlock(&mutex);
     write(tcp_socket, status, strlen(status));
 }
 

@@ -16,6 +16,7 @@
 #include <sys/sendfile.h>
 #include <fcntl.h>
 #include <ctype.h>
+#include <pthread.h>
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT "58063"
@@ -33,6 +34,8 @@
 
 // verbose_mode global variable
 extern int verbose_mode;
+//mutex
+extern pthread_mutex_t mutex;
 
 typedef struct {
     char uid[7];

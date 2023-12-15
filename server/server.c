@@ -4,6 +4,9 @@
 //verbose_mode global variable
 int verbose_mode = 0;
 
+//mutex
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int main(int argc, char *argv[]) {
     int udp_socket, tcp_socket, max_socket;
     struct sockaddr_in server_addr, client_addr;

@@ -2,7 +2,7 @@
 
 int create_user(char* uid, char* password) {
     char path[50]; //users/uid/hosted
-
+    
     sprintf(path, "users/%s", uid);
     mkdir(path, 0777); // creates users/uid
     sprintf(path, "users/%s/hosted", uid);
@@ -131,7 +131,6 @@ int user_auc_status(char* uid, char* status) {
     return 1;
 }
 
-// TODO fix compile errors in function below
 int user_bids_status(char* uid, char* status) {
     char user_auctions[9999];
     memset(user_auctions, 0, sizeof(user_auctions));
@@ -156,40 +155,36 @@ int user_bids_status(char* uid, char* status) {
     return 1;
 }
 
+void fetch_auctions(char *path, char *auctions) {
+    struct dirent **auctions_list;
 
-void fetch_auctions(char* path, char* auctions) {
-    char auc_id[4]; // FIXME mudei isto para 4 porque caso contrário tinha lixo, mas não sei se é a melhor maneira de o fazer
-    DIR* hosted_dir = opendir(path);
+    int num_entries = scandir(path, &auctions_list, NULL, alphasort);
 
-    struct dirent* hosted_file;
-    while ((hosted_file = readdir(hosted_dir)) != NULL) {
+    if (num_entries < 0) {
+        perror("scandir error");
+        return;
+    }
+
+    for (int i = 0; i < num_entries; ++i) {
+        if (strcmp(auctions_list[i]->d_name, ".") && strcmp(auctions_list[i]->d_name, "..")) {
+            char auc_id[4];
             memset(auc_id, 0, sizeof(auc_id));
-        // Exclude "." and ".." entries
-        if (strcmp(hosted_file->d_name, ".") && strcmp(hosted_file->d_name, "..")) {
-            // auctions/auction_id.txt so we must get the auction_id section
-            strncpy(auc_id, hosted_file->d_name, strlen(hosted_file->d_name) - 4); // FIXME double check if we can make this in another way
+
+            // auctions/auction_id.txt, so we must get the auction_id section
+            strncpy(auc_id, auctions_list[i]->d_name, strlen(auctions_list[i]->d_name) - 4);
             auc_id[AID_SIZE] = '\0';
+
             strcat(auctions, auc_id);
             strcat(auctions, " ");
-        }
 
+            free(auctions_list[i]);
+        }
     }
-    // auctions[strlen(auctions) - 1] = '\n';
-    closedir(hosted_dir);
+
+    free(auctions_list);
 }
 
 
-// FIXME ya não é assim que funciona, acho que posso apagar isto não
-/*int is_auc_active(char* auc_uid) {
-    char path[50] = "auctions/";
-    struct stat st;
-    strcat(path, auc_uid);
-    strcat(path, "START.txt");
-    if (!stat(path, &st)) {
-        return 1;
-    }
-    return 0;
-}*/
 
 int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
@@ -361,23 +356,31 @@ int is_directory_empty(char *path) {
 }
 
 
-void append_auctions(char* status) {
-    DIR* dir = opendir("auctions");
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        // Exclude "." and ".." entries
-        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+void append_auctions(char *status) {
+    struct dirent **auctions_list;
+    int num_entries = scandir("auctions", &auctions_list, NULL, alphasort);
+
+    if (num_entries < 0) {
+        perror("scandir error");
+        return;
+    }
+
+    for (int i = 0; i < num_entries; ++i) {
+        if (strcmp(auctions_list[i]->d_name, ".") && strcmp(auctions_list[i]->d_name, "..")) {
             strcat(status, " ");
-            strcat(status, entry->d_name);
-            if (ongoing_auction(atoi(entry->d_name))){
+            strcat(status, auctions_list[i]->d_name);
+
+            if (ongoing_auction(atoi(auctions_list[i]->d_name))) {
                 strcat(status, " 1");
-            }
-            else{
+            } else {
                 strcat(status, " 0");
             }
+
+            free(auctions_list[i]);
         }
     }
-    closedir(dir);
+
+    free(auctions_list);
     strcat(status, "\n");
 }
 
@@ -442,6 +445,7 @@ int send_auc_file(int tcp_socket, char* auc_id) {
             int file = open(path, O_RDONLY);
             if (file == -1) {
                 perror("fopen error");
+                closedir(dir);
                 return 0;
             }
             stat(path, &st);
@@ -726,7 +730,6 @@ void get_auc_info(int auc_id, char* status) {
         sprintf(datetime, "%s %s", datetime1, datetime2);
         sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
         strcat(status, aux_buffer);
-
     }
 
     
