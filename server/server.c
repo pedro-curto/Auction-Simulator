@@ -169,6 +169,9 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 } else if (pid == 0) {
                     close(tcp_socket);
+                    // locks the auctions and the users directories
+                    flock(2, LOCK_EX);
+                    flock(3, LOCK_EX);
                     process_tcp_request(client_socket);
                     exit(EXIT_SUCCESS);
                 }
@@ -281,8 +284,6 @@ void process_tcp_request(int tcp_socket) {
         write_tcp(tcp_socket, "ERR\n");
         printf("Invalid command.\n");
     }
-
-    
 }
 
 void print_verbose_info(struct sockaddr_in client_addr, const char *protocol) {

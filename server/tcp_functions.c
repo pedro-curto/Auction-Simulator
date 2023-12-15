@@ -3,7 +3,6 @@
 void handle_open(int tcp_socket) {
     // FIXME melhorar bastante as verificações, só quero testar se consigo abrir um auction bem
     char uid[7], password[9], name[11], asset_fname[25], start_valueStr[7], timeactiveStr[6], fsizeStr[9];
-    //char uid[30], password[30], name[30], asset_fname[30], start_valueStr[30], timeactiveStr[30], fsizeStr[30];
     char status[50] = "ROA ";
     int start_value, timeactive, fsize, auction_id;
     // OPA uid password name start_value timeactive Fname Fsize
@@ -17,6 +16,11 @@ void handle_open(int tcp_socket) {
     • the filename where an image of the asst to be sold is included: Fname
     • the file size in bytes: Fsize */
     read_field(tcp_socket, uid, 6);
+    if (!valid_uid(uid)) {
+        strcat(status, "ERR\n");
+        write(tcp_socket, status, strlen(status));
+        return;
+    }
     read_field(tcp_socket, password, 8);
     read_field(tcp_socket, name, 10);
     read_field(tcp_socket, start_valueStr, 6);
@@ -26,7 +30,7 @@ void handle_open(int tcp_socket) {
     start_value = atoi(start_valueStr);
     timeactive = atoi(timeactiveStr);
     fsize = atoi(fsizeStr);
-    //printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
+    printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
     // TODO missing verifications
     /* ROA status [AID]
     In reply to a OPA request the AS replies with status = NOK if the auction
@@ -54,7 +58,7 @@ void handle_open(int tcp_socket) {
     }
 
     //reply_msg(tcp_socket, status); O reply_msg aqui vai ser fazer um write do status no socket
-    // FIXME colocar isto num loop
+    // FIXME alterar os writes para o fazerem em loop, algo do género write_tcp
     if (write(tcp_socket, status, strlen(status)) == -1) {
         perror("TCP write error");
     }

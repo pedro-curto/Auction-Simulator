@@ -104,4 +104,12 @@ int read_uid_udp(char* input, char* uid);
 int read_password_udp(char* input, char* password);
 int read_aid_udp(char* input, char* aid);
 
+int valid_uid(char* uid);
+int valid_password(char* password);
+int valid_auction_name(char* name);
+int valid_asset_name(char* name);
+int valid_start_value(int value);
+int valid_time_active(int timeactive);
+int valid_bid_value(int value);
+
 #endif

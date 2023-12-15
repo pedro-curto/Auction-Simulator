@@ -160,9 +160,6 @@ with the AS and asks to open a new auction. The information sent includes:
 • the contents of the selected file: Fdata
 */
 
-// escrever o cabeçalho todo, e só depois enviar os dados através de uma função à parte em que envio 512 a 512
-// exemplo de função para enviar o ficheiro depois à parte: sendfile() (procurar a entry do man)
-
 void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     char name[NAME_SIZE + 1], asset_fname[ASSET_FNAME_SIZE + 1]; //uid[7], password[9];
     char buffer[1024], request_header[100];//, fsizeStr[9];

@@ -198,31 +198,12 @@ void fetch_auctions(char* path, char* auctions) {
     return 0;
 }*/
 
-int read_field(int tcp_socket, char *buffer, size_t size) {
-    size_t bytes_read = 0;
-    ssize_t n;
-    // check if the first character read is a space
-    printf("buffer at beginning of read_field: %s\n", buffer);
-    while (bytes_read <= size) {
-        n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
-        if (n <= 0) {
-            perror("TCP read error");
-            return 0;
-        }
-        bytes_read += n;
-        // at any time, if we read a space or \n we stop
-        if (buffer[bytes_read-1] == ' ' || buffer[bytes_read-1] == '\n') {
-            break;
-        }
-    }
-    printf("buffer at the end of read_field: %s\n", buffer);
-    // if (buffer[bytes_read-1] != '\n' && buffer[bytes_read-1] != ' '){
-    //     return -1;
-    // }
-    buffer[bytes_read-1] = '\0';
-    printf("buffer: %s\n", buffer);
-    return bytes_read;
-}
+
+
+
+// FIXME criar uma função para ler o ultimo campo do protocolo
+
+
 
 
 int store_file(int tcp_socket, int size, char* path) {
@@ -722,22 +703,7 @@ void get_auc_info(int auc_id, char* status) {
         }
         closedir(dir);
     }
-    /*RRC status [host_UID auction_name asset_fname start_value start_date-time timeactive]
-    [ B bidder_UID bid_value bid_date-time bid_sec_time]*
-    [ E end_date-time end_sec_time]*/
-    //num_bids = GetBidList(atoi(auc_id), &bids);
-    //printf("NUM BIDS: %d\n", num_bids);
-    /*if (num_bids != 0) {
-        for (int i = 0; i < num_bids; i++) {
-            sprintf(aux_buffer, " B %s %d %s %ld", bids.bids[i].uid, 
-            bids.bids[i].value, bids.bids[i].datetime, bids.bids[i].bidtime);
-            strcat(status, aux_buffer);
-            printf("STATUS INSIDE GET_AUC_INFO LOOP: %s\n", status);
-        }
-    }*/
-    // appends info from END.txt if it exists
-    // END.txt content: end_datetime end_sec_time
-    // need to verify if auction is over
+    // checks if the auctions is closed, to append end information
     if (!ongoing_auction(auc_id)) {
         sprintf(path, "auctions/%03d/END_%03d.txt", auc_id, auc_id);
         FILE *end_file = fopen(path, "r");
@@ -754,24 +720,25 @@ void get_auc_info(int auc_id, char* status) {
 
     }
     printf("STATUS AT THE END OF GET_AUC_INFO: %s\n", status);
-
-    
-    /*printf("PATH BEFORE END: %s\n", path);
-    if (access(path, F_OK) != -1) {
-        printf("inside!\n");
-        FILE *end_file = fopen(path, "r");
-        if (end_file == NULL) {
-            perror("fopen error");
-            return;
-        }
-        fscanf(end_file, "%s %s %ld", datetime1, datetime2, &end_sec_time);
-        fclose(end_file);
-        sprintf(datetime, "%s %s", datetime1, datetime2);
-        sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
-        strcat(status, aux_buffer);
-        printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
-    }*/
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     /*if (access(path, F_OK) != -1) {
         DIR *dir = opendiRRC OK 103091 aucname123 A.txt 100 2023-12-13 09:53:34 3000 B 103092 101 2023-12-13 09:53:49 15 B 103092 102 2023-12-13 09:53:56 22 B 103092 103 2023-12-13 09:53:57 23 B 103092 104 2023-12-13 09:53:59 25 B 103092 105 2023-12-13 09:54:00 26 B 103092 106 2023-12-13 09:54:02 28 B 103093 107 2023-12-13 09:54:10 36 B 103093 2000 2023-12-13 09:54:13 39ath, "auctions/%3s/bids/%s", auc_id, entry->d_name);
