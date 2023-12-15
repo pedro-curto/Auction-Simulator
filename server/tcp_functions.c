@@ -5,16 +5,7 @@ void handle_open(int tcp_socket) {
     char uid[7], password[9], name[11], asset_fname[25], start_valueStr[7], timeactiveStr[6], fsizeStr[9];
     char status[50] = "ROA ";
     int start_value, timeactive, fsize, auction_id;
-    // OPA uid password name start_value timeactive Fname Fsize
-    /* a) OPA UID password name start_value timeactive Fname
-    Fsize Fdata
-    Following the open command the User application opens a TCP connection
-    with the AS and asks to open a new auction. The information sent includes:
-    • a short description name (a single word): name
-    • the minimum selling value for the asset: start_value
-    • the duration of the auction in minutes: timeactive
-    • the filename where an image of the asst to be sold is included: Fname
-    • the file size in bytes: Fsize */
+    
     read_field(tcp_socket, uid, 6);
     if (!valid_uid(uid)) {
         strcat(status, "ERR\n");
@@ -30,16 +21,12 @@ void handle_open(int tcp_socket) {
     start_value = atoi(start_valueStr);
     timeactive = atoi(timeactiveStr);
     fsize = atoi(fsizeStr);
-    printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
-    // TODO missing verifications
-    /* ROA status [AID]
-    In reply to a OPA request the AS replies with status = NOK if the auction
-    could not be started. If the user was not logged in the reply status is NLG.
-    Otherwise the AS replies with status = OK, and sends a unique auction
-    identifier AID.
-    A local copy of the asset file is stored using the filename Fname.
-    After receiving the reply message, the User closes the TCP connection with the
-    AS.*/
+    
+    if (verbose_mode){
+        printf("Request type: Open auction\nuid: %s\n", uid);
+    }
+
+    pthread_mutex_lock(&mutex);
     if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
     } else {
@@ -56,6 +43,7 @@ void handle_open(int tcp_socket) {
             }
         }
     }
+    pthread_mutex_unlock(&mutex);
 
     //reply_msg(tcp_socket, status); O reply_msg aqui vai ser fazer um write do status no socket
     // FIXME alterar os writes para o fazerem em loop, algo do género write_tcp
@@ -70,15 +58,22 @@ void handle_show_asset(int tcp_socket) {
     char auc_id[5];
     char status[200] = "RSA ";
     read_field(tcp_socket, auc_id, 3);
-    printf("auc_id: %s\n", auc_id);
-    
+
+    if (verbose_mode){
+        printf("Request type: Show asset\nauc_id: %s\n", auc_id);
+    }
+
+    pthread_mutex_lock(&mutex);
     if (!exists_auction(auc_id)){
         strcat(status, "NOK\n");
         write_tcp(tcp_socket, status);
         return;
     }
+
     strcat(status, "OK");
     get_auc_file_info(auc_id, status);
+    pthread_mutex_unlock(&mutex);
+
     strcat(status, " ");
     write_tcp(tcp_socket, status);
     send_auc_file(tcp_socket, auc_id);
@@ -96,26 +91,18 @@ void handle_bid(int tcp_socket) {
     char status[50] = "RBD ";
     int value, auction_id;
     read_field(tcp_socket, uid, 6);
-    printf("uid: %s\n", uid);
     read_field(tcp_socket, password, 8);
-    printf("password: %s\n", password);
     read_field(tcp_socket, aucIdStr, 3);
-    printf("aucIdStr: %s\n", aucIdStr);
     read_field(tcp_socket, valueStr, 6);
-    printf("valueStr: %s\n", valueStr);
     value = atoi(valueStr);
     auction_id = atoi(aucIdStr);
-    //printf("uid: %s\npassword: %s\nauction_id: %d\nvalue: %d\n", uid, password, auction_id, value);
-    /* h) RBD status
-    In reply to a BID request the AS reply status is NOK if auction AID is not
-    active. If the user was not logged in the reply status is NLG. If auction AID is
-    ongoing the reply status is ACC if the bid was accepted. The reply status is
-    REF if the bid was refused because a larger bid has already been placed
-    previously. The reply status is ILG if the user tries to make a bid in an
-    auction hosted by himself.
-    After receiving the reply message, the User closes the TCP connection with the
-    AS.*/
+    
+    if (verbose_mode){
+        printf("Request type: Bid\nuid: %s\n", uid);
+    }
+
     // FIXME está aqui algum erro de raciocínio? São estas todas as condições possíveis? Deve-se ver se o auction existe?
+    pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) { // must be logged in
         strcat(status, "NLG\n");
     } else if (!ongoing_auction(auction_id)) { // must be ongoing (active)
@@ -130,6 +117,7 @@ void handle_bid(int tcp_socket) {
         }
     }
 
+    pthread_mutex_unlock(&mutex);
     write(tcp_socket, status, strlen(status));
 }
 
@@ -146,16 +134,12 @@ void handle_close(int tcp_socket) {
     read_field(tcp_socket, password, 8);
     read_field(tcp_socket, aucIdStr, 3);
     auction_id = atoi(aucIdStr);
-    printf("uid: %s\npassword: %s\nauction_id: %d\n", uid, password, auction_id);
-    /*d) RCL status
-    In reply to a CLS request the AS replies informing whether it was able to close
-    auction AID. The reply status is OK, if auction AID was ongoing, it was
-    started by user UID, and could be successfully closed by the AS. If the user was
-    not logged in the reply status is NLG. The status is EAU, if the auction
-    AID does not exist. status is EOW, if the auction is not owned by user UID,
-    and status is END, if auction AID owned by user UID has already finished.
-    After receiving the reply message, the User closes the TCP connection with the
-    AS.*/
+    
+    if (verbose_mode){
+        printf("Request type: Close auction\nuid: %s\n", uid);
+    }
+
+    pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) { // must be logged in
         strcat(status, "NLG\n");
     } else if (!exists_auction(aucIdStr)) { // must exist
@@ -172,6 +156,7 @@ void handle_close(int tcp_socket) {
         }
     }
 
+    pthread_mutex_unlock(&mutex);
     write(tcp_socket, status, strlen(status));
 }
 

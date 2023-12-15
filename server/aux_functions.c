@@ -2,7 +2,7 @@
 
 int create_user(char* uid, char* password) {
     char path[50]; //users/uid/hosted
-
+    
     sprintf(path, "users/%s", uid);
     mkdir(path, 0777); // creates users/uid
     sprintf(path, "users/%s/hosted", uid);
@@ -44,7 +44,6 @@ int verify_user_exists(char* uid) {
     if (!stat(path, &st)) { //0 = file exists
         return 1;
     }
-    printf("User %s does not exist\n", uid);
     return 0;
 }
 
@@ -127,13 +126,11 @@ int user_auc_status(char* uid, char* status) {
         } else {
             strcat(status, " 0");
         }
-        printf("status: %s\n", status);
         auc_uid = strtok(NULL, " ");
     }
     return 1;
 }
 
-// TODO fix compile errors in function below
 int user_bids_status(char* uid, char* status) {
     char user_auctions[9999];
     memset(user_auctions, 0, sizeof(user_auctions));
@@ -143,11 +140,9 @@ int user_bids_status(char* uid, char* status) {
         return 0;
     }
     fetch_auctions(path, user_auctions);
-    printf("user_auctions: %s\n", user_auctions);
 
     char* auc_uid = strtok(user_auctions, " ");
     while (auc_uid != NULL) {
-        printf("auc_uid: %s\n", auc_uid);
         strcat(status, " ");
         strcat(status, auc_uid);
         if (ongoing_auction(atoi(auc_uid))){
@@ -156,54 +151,72 @@ int user_bids_status(char* uid, char* status) {
             strcat(status, " 0");
         }
         auc_uid = strtok(NULL, " ");
-        printf("status: %s\n", status);
     }
     return 1;
 }
 
+void fetch_auctions(char *path, char *auctions) {
+    struct dirent **auctions_list;
 
-void fetch_auctions(char* path, char* auctions) {
-    char auc_id[4]; // FIXME mudei isto para 4 porque caso contrário tinha lixo, mas não sei se é a melhor maneira de o fazer
-    DIR* hosted_dir = opendir(path);
+    int num_entries = scandir(path, &auctions_list, NULL, alphasort);
 
-    struct dirent* hosted_file;
-    while ((hosted_file = readdir(hosted_dir)) != NULL) {
+    if (num_entries < 0) {
+        perror("scandir error");
+        return;
+    }
+
+    for (int i = 0; i < num_entries; ++i) {
+        if (strcmp(auctions_list[i]->d_name, ".") && strcmp(auctions_list[i]->d_name, "..")) {
+            char auc_id[4];
             memset(auc_id, 0, sizeof(auc_id));
-        // Exclude "." and ".." entries
-        if (strcmp(hosted_file->d_name, ".") && strcmp(hosted_file->d_name, "..")) {
-            // auctions/auction_id.txt so we must get the auction_id section
-            printf("aucid_fetch: %s\n", auc_id);
-            strncpy(auc_id, hosted_file->d_name, strlen(hosted_file->d_name) - 4); // FIXME double check if we can make this in another way
-            printf("aucid_fetch2: %s\n", auc_id);
+
+            // auctions/auction_id.txt, so we must get the auction_id section
+            strncpy(auc_id, auctions_list[i]->d_name, strlen(auctions_list[i]->d_name) - 4);
             auc_id[AID_SIZE] = '\0';
+
             strcat(auctions, auc_id);
             strcat(auctions, " ");
-        }
 
+            free(auctions_list[i]);
+        }
     }
-    // auctions[strlen(auctions) - 1] = '\n';
-    closedir(hosted_dir);
+
+    free(auctions_list);
 }
 
 
-// FIXME ya não é assim que funciona, acho que posso apagar isto não
-/*int is_auc_active(char* auc_uid) {
-    char path[50] = "auctions/";
-    struct stat st;
-    strcat(path, auc_uid);
-    strcat(path, "START.txt");
-    if (!stat(path, &st)) {
-        return 1;
-    }
-    return 0;
-}*/
 
+<<<<<<< HEAD
 
 
 
 // FIXME criar uma função para ler o ultimo campo do protocolo
 
 
+=======
+int read_field(int tcp_socket, char *buffer, size_t size) {
+    size_t bytes_read = 0;
+    ssize_t n;
+    // check if the first character read is a space
+    while (bytes_read <= size) {
+        n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
+        if (n <= 0) {
+            perror("TCP read error");
+            return 0;
+        }
+        bytes_read += n;
+        // at any time, if we read a space or \n we stop
+        if (buffer[bytes_read-1] == ' ' || buffer[bytes_read-1] == '\n') {
+            break;
+        }
+    }
+    // if (buffer[bytes_read-1] != '\n' && buffer[bytes_read-1] != ' '){
+    //     return -1;
+    // }
+    buffer[bytes_read-1] = '\0';
+    return bytes_read;
+}
+>>>>>>> a71f7450a7edf206c77f73c8cf041e1ec09d6351
 
 
 int store_file(int tcp_socket, int size, char* path) {
@@ -321,7 +334,6 @@ int exists_auctions() {
     }
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
-        printf("entry: %s\n", entry->d_name);
         // Exclude "." and ".." entries
         if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
             closedir(dir);
@@ -353,23 +365,31 @@ int is_directory_empty(char *path) {
 }
 
 
-void append_auctions(char* status) {
-    DIR* dir = opendir("auctions");
-    struct dirent *entry;
-    while ((entry = readdir(dir)) != NULL) {
-        // Exclude "." and ".." entries
-        if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
+void append_auctions(char *status) {
+    struct dirent **auctions_list;
+    int num_entries = scandir("auctions", &auctions_list, NULL, alphasort);
+
+    if (num_entries < 0) {
+        perror("scandir error");
+        return;
+    }
+
+    for (int i = 0; i < num_entries; ++i) {
+        if (strcmp(auctions_list[i]->d_name, ".") && strcmp(auctions_list[i]->d_name, "..")) {
             strcat(status, " ");
-            strcat(status, entry->d_name);
-            if (ongoing_auction(atoi(entry->d_name))){
+            strcat(status, auctions_list[i]->d_name);
+
+            if (ongoing_auction(atoi(auctions_list[i]->d_name))) {
                 strcat(status, " 1");
-            }
-            else{
+            } else {
                 strcat(status, " 0");
             }
+
+            free(auctions_list[i]);
         }
     }
-    closedir(dir);
+
+    free(auctions_list);
     strcat(status, "\n");
 }
 
@@ -434,6 +454,7 @@ int send_auc_file(int tcp_socket, char* auc_id) {
             int file = open(path, O_RDONLY);
             if (file == -1) {
                 perror("fopen error");
+                closedir(dir);
                 return 0;
             }
             stat(path, &st);
@@ -480,7 +501,6 @@ int ongoing_auction(int auction_id) {
     // checks if there exists an END.txt file
     sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
     if (access(path, F_OK) != -1) {
-        printf("END.txt file exists\n");
         return 0;
     }
     // if there is no END.txt file, we check if we need to create one
@@ -510,9 +530,6 @@ int ongoing_auction(int auction_id) {
         strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", closure_datetime);
         fprintf(end_file, "%s %ld", time_str, timeactive);
         fclose(end_file);
-        printf("current_time: %ld\n", current_time);
-        printf("start_fulltime: %ld\n", start_fulltime);
-        printf("timeactive: %ld\n", timeactive);
         return 0;
     }
     return 1;
@@ -572,8 +589,6 @@ int bid_accepted(int auction_id, int value, char* uid) {
     fclose(start_file);
     // if max_bid is 0, it takes the value of start_value, else it stays the same
     max_bid = max_bid > start_value ? max_bid : start_value;
-    printf("max_bid: %d\n", max_bid);
-    printf("value: %d\n", value);
     if (value > max_bid) {
         // create file with bid value
         if (create_bid_files(auction_id, value, uid, start_fulltime)) {
@@ -671,24 +686,17 @@ void get_auc_info(int auc_id, char* status) {
     sprintf(datetime, "%s %s", datetime1, datetime2);
     sprintf(aux_buffer, " %s %s %s %d %s %ld", uid, name, asset_fname, start_value, datetime, timeactive);
     strcat(status, aux_buffer);
-    printf("status after appending start.txt info: %s\n", status);
     // gets bids
     sprintf(path, "auctions/%03d/bids/", auc_id);
-    printf("auction id before: %d\n", auc_id);
     if (access(path, F_OK) != -1) {
         DIR *dir = opendir(path);
         struct dirent *entry;
         while ((entry = readdir(dir)) != NULL) {
-            printf("entry: %s\n", entry->d_name);
             if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-                printf("auction id: %d\n", auc_id);
-                printf("path before: %s\n", path);
                 sprintf(path, "auctions/%03d/bids/", auc_id);
                 strcat(path, entry->d_name);
-                printf("path after: %s\n", path);
                 FILE *bid_file = fopen(path, "r");
                 if (bid_file == NULL) {
-                    printf("no such path: %s\n", path);
                     perror("fopen error");
                     return;
                 }
@@ -716,10 +724,28 @@ void get_auc_info(int auc_id, char* status) {
         sprintf(datetime, "%s %s", datetime1, datetime2);
         sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
         strcat(status, aux_buffer);
-        printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
-
     }
+<<<<<<< HEAD
     printf("STATUS AT THE END OF GET_AUC_INFO: %s\n", status);
+=======
+
+    
+    /*printf("PATH BEFORE END: %s\n", path);
+    if (access(path, F_OK) != -1) {
+        printf("inside!\n");
+        FILE *end_file = fopen(path, "r");
+        if (end_file == NULL) {
+            perror("fopen error");
+            return;
+        }
+        fscanf(end_file, "%s %s %ld", datetime1, datetime2, &end_sec_time);
+        fclose(end_file);
+        sprintf(datetime, "%s %s", datetime1, datetime2);
+        sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
+        strcat(status, aux_buffer);
+        printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
+    }*/
+>>>>>>> a71f7450a7edf206c77f73c8cf041e1ec09d6351
 }
 
 

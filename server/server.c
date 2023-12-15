@@ -1,5 +1,12 @@
 #include "server.h"
 
+
+//verbose_mode global variable
+int verbose_mode = 0;
+
+//mutex
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 int main(int argc, char *argv[]) {
     int udp_socket, tcp_socket, max_socket;
     struct sockaddr_in server_addr, client_addr;
@@ -11,7 +18,6 @@ int main(int argc, char *argv[]) {
     FD_ZERO(&read_fds);
 
     as_port = PORT;
-    int verbose_mode = 0;
     mkdir("users", 0777);
     mkdir("auctions", 0777);
     
@@ -101,7 +107,7 @@ int main(int argc, char *argv[]) {
         close(tcp_socket);
         exit(EXIT_FAILURE);
     }
-                            
+
     // Listen on TCP socket
     if (listen(tcp_socket, 5) == -1) {
         perror("TCP socket listen error");
