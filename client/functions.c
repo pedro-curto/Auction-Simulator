@@ -351,7 +351,7 @@ AS.
 // Falta guardar o ficheiro
 void showAsset(char* IP, char* port, int aid) {
     char showasset_request[SA_BUFFER_SIZE];//, char *buffer; | SAS AID\n
-    char buffer[1000], asset_fname[ASSET_FNAME_SIZE + 1];
+    char buffer[1000];
     //int fsize, fd;
     memset(buffer, 0, sizeof(buffer));
     
@@ -359,13 +359,10 @@ void showAsset(char* IP, char* port, int aid) {
 
     int tcp_socket = connect_tcp(IP, port);
     // sends request to server
-    if (write(tcp_socket, showasset_request, strlen(showasset_request)) < 0) {
-        printf("Error sending request to server.\n");
-        return;
-    }
+    write_tcp(tcp_socket, showasset_request);
 
     // receives server response
-    char status1[5], status2[5], fname[ASSET_FNAME_SIZE + 1], fsize[9], fdata[512];
+    char status1[5], status2[5], fname[ASSET_FNAME_SIZE + 1], fsize[9];
     char path[50] = "assets/";
     //mudar isto sff TODO
     if (!read_field(tcp_socket, status1, 3)) {
@@ -479,7 +476,7 @@ void showRecord(char* IP, char* port, int aid) {
     char buffer[1024], showrecord_request[10]; // SRC AID\n
     char token[25]; //max token size is Fname = 24chars + 1 for \0
     char token2[25];
-    int message_part = 0;
+    int message_part = 0, first_bid = 1;
     snprintf(showrecord_request, sizeof(showrecord_request), "SRC %03d\n", aid);
     connect_UDP(IP, port, showrecord_request, buffer);
 
@@ -535,7 +532,11 @@ void showRecord(char* IP, char* port, int aid) {
                     }
                     break;
                 case 7: // bids information: only if there are bids
-                    printf("--------------------BIDS---------------------\n");
+                    if (first_bid) {
+                        printf("--------------------BIDS---------------------\n");
+                        first_bid = 0;
+                    } else printf("\n");
+
                     printf("Bidder UID: %s\n", token);
                     message_part++;
                     break;
