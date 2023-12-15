@@ -125,3 +125,139 @@ int read_aid_udp(char* input, char* aid){
     sprintf(aid, "%03d", id);
     return 1;
 }
+
+int verify_uid(char* uid){
+    int i;
+    if (strlen(uid) != UID_SIZE){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(uid); i++){
+        if (!isdigit(uid[i])){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int verify_password(char* password){
+    int i;
+    if (strlen(password) != PASSWORD_SIZE){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(password); i++){
+        if (!isalnum(password[i])){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int verify_aid(char* aid){
+    int i;
+    
+    for (i = 0; i < (int)strlen(aid); i++){
+        if (!isdigit(aid[i])){
+            return 0;
+        }
+    }
+    if (atoi(aid) < 0 || atoi(aid) > 999){
+        return 0;
+    }
+    return 1;
+}
+
+int verify_name(char* name){
+    int i;
+    if (strlen(name) > NAME_SIZE || strlen(name) < 1){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(name); i++){
+        if (!isalnum(name[i])){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int verify_start_value(char* start_value){
+    int i;
+    if (strlen(start_value) > VALUE_SIZE || strlen(start_value) < 1){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(start_value); i++){
+        if (!isdigit(start_value[i])){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int verify_timeactive(char* timeactive){
+    int i;
+    if (strlen(timeactive) > TIMEACTIVE_SIZE || strlen(timeactive) < 1){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(timeactive); i++){
+        if (!isdigit(timeactive[i])){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int verify_asset_fname(char* asset_fname){
+    int i;
+    if (strlen(asset_fname) > ASSET_FNAME_SIZE || strlen(asset_fname) < 1){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(asset_fname); i++){
+        if (!isalnum(asset_fname[i]) && asset_fname[i] != '.' && asset_fname[i] != '_' && asset_fname[i] != '-'){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int verify_asset_fsize(char* asset_fsize){
+    int i;
+    if (strlen(asset_fsize) > ASSET_FSIZE_SIZE || strlen(asset_fsize) < 1){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(asset_fsize); i++){
+        if (!isdigit(asset_fsize[i])){
+            return 0;
+        }
+    }
+    if (atoi(asset_fsize) < 0 || atoi(asset_fsize) > MAX_ASSET_FSIZE){
+        return 0;
+    }
+    return 1;
+}
+
+
+int verify_bid_value(char* bid_value){
+    int i;
+    if (strlen(bid_value) > VALUE_SIZE || strlen(bid_value) < 1){
+        return 0;
+    }
+    for (i = 0; i < (int)strlen(bid_value); i++){
+        if (!isdigit(bid_value[i])){
+            return 0;
+        }
+    }
+    return 1;
+}
+
+// int verify_bid_datetime(char* bid_datetime){
+//     int i;
+//     if (strlen(bid_datetime) != DATETIME_SIZE){
+//         return 0;
+//     }
+//     for (i = 0; i < (int)strlen(bid_datetime); i++){
+//         if (!isdigit(bid_datetime[i])){
+//             return 0;
+//         }
+//     }
+//     return 1;
+// }
+

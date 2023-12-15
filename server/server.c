@@ -5,7 +5,7 @@
 int verbose_mode = 0;
 
 //mutex
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+// pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int main(int argc, char *argv[]) {
     int udp_socket, tcp_socket, max_socket;
