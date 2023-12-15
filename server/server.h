@@ -27,6 +27,15 @@
 #define UID_SIZE 6
 #define PASSWORD_SIZE 8
 #define AID_SIZE 3
+#define VALUE_SIZE 6
+#define TIMEACTIVE_SIZE 5
+#define ASSET_FNAME_SIZE 24
+#define MAX_ASSET_FSIZE 10000000
+#define ASSET_FSIZE_SIZE 8
+#define NAME_SIZE 10
+// #define DATETIME_SIZE 6
+
+
 // #define MAX_AUCTION_NAME_SIZE 50;
 // #define MAX_ASSET_NAME_SIZE 50;
 // #define MAX_ASSET_SIZE 1000;              TODO: corrigir o q ta comentado aqui
@@ -107,10 +116,25 @@ int user_bids_status(char* uid, char* status);
 void get_auc_info(int auc_id, char* status);
 int GetBidList();
 int loadBid(char* path, bidlist *list);
+
+//input_funcs
 int read_command_udp(char* input, char* command);
 int read_uid_udp(char* input, char* uid);
 int read_password_udp(char* input, char* password);
 int read_aid_udp(char* input, char* aid);
+int verify_uid(char* uid);
+int verify_password(char* password);
+int verify_aid(char* aid);
+int verify_name(char* name);
+int verify_start_value(char* start_value);
+int verify_timeactive(char* timeactive);
+int verify_asset_fname(char* asset_fname);
+int verify_asset_fsize(char* fsize);
+int verify_bid_value(char* value);
+// int verify_bid_datetime(char* datetime);
+int verify_open_args(char* uid, char* password, char* name, char* start_valueStr, char* timeactiveStr, char* asset_fname, char* fsizeStr);
+int verify_bid_args(char* uid, char* password, char* aid, char* value);
+int verify_close_args(char* uid, char* password, char* aid);
 int lock_dir(char* path);
 int unlock_dir(int dir_fd);
 

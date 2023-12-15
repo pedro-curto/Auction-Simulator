@@ -182,7 +182,6 @@ void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, s
     } else {
         strcat(status, "OK");
         append_auctions(status);
-        //strcat(status, "\n");
     }
     //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);

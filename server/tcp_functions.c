@@ -14,6 +14,13 @@ void handle_open(int tcp_socket) {
     read_field(tcp_socket, timeactiveStr, 5);
     read_field(tcp_socket, asset_fname, 24);
     read_field(tcp_socket, fsizeStr, 8);
+
+    if (!verify_open_args(uid, password, name, start_valueStr, timeactiveStr, asset_fname, fsizeStr)){
+        strcat(status, "ERR\n");
+        write_tcp(tcp_socket, status);
+        return;
+    }
+
     start_value = atoi(start_valueStr);
     timeactive = atoi(timeactiveStr);
     fsize = atoi(fsizeStr);
@@ -54,6 +61,11 @@ void handle_show_asset(int tcp_socket) {
     char auc_id[5];
     char status[200] = "RSA ";
     read_field(tcp_socket, auc_id, 3);
+    if (verify_aid(auc_id)){
+        strcat(status, "NOK\n");
+        write_tcp(tcp_socket, status);
+        return;
+    }
 
     if (verbose_mode){
         printf("Request type: Show asset\nauc_id: %s\n", auc_id);
@@ -90,6 +102,13 @@ void handle_bid(int tcp_socket) {
     read_field(tcp_socket, password, 8);
     read_field(tcp_socket, aucIdStr, 3);
     read_field(tcp_socket, valueStr, 6);
+
+    if (!verify_bid_args(uid, password, aucIdStr, valueStr)){
+        strcat(status, "ERR\n");
+        write_tcp(tcp_socket, status);
+        return;
+    }
+
     value = atoi(valueStr);
     auction_id = atoi(aucIdStr);
     
@@ -129,6 +148,13 @@ void handle_close(int tcp_socket) {
     read_field(tcp_socket, uid, 6);
     read_field(tcp_socket, password, 8);
     read_field(tcp_socket, aucIdStr, 3);
+
+    if (!verify_close_args(uid, password, aucIdStr)){
+        strcat(status, "ERR\n");
+        write_tcp(tcp_socket, status);
+        return;
+    }
+
     auction_id = atoi(aucIdStr);
     
     if (verbose_mode){
@@ -155,4 +181,61 @@ void handle_close(int tcp_socket) {
     //pthread_mutex_unlock(&mutex);
     write(tcp_socket, status, strlen(status));
 }
+<<<<<<< HEAD
     
+=======
+
+int verify_open_args(char* uid, char* password, char* name, char* start_valueStr, char* timeactiveStr, char* asset_fname, char* fsizeStr){
+    if (!verify_uid(uid)) {
+        return 0;
+    }
+    if (!verify_password(password)) {
+        return 0;
+    }
+    if (!verify_name(name)) {
+        return 0;
+    }
+    if (!verify_start_value(start_valueStr)) {
+        return 0;
+    }
+    if (!verify_timeactive(timeactiveStr)) {
+        return 0;
+    }
+    if (!verify_asset_fname(asset_fname)) {
+        return 0;
+    }
+    if (!verify_asset_fsize(fsizeStr)) {
+        return 0;
+    }
+    return 1;
+}
+
+int verify_bid_args(char* uid, char* password, char* aid, char* value){
+    if (!verify_uid(uid)) {
+        return 0;
+    }
+    if (!verify_password(password)) {
+        return 0;
+    }
+    if (!verify_aid(aid)) {
+        return 0;
+    }
+    if (!verify_bid_value(value)) {
+        return 0;
+    }
+    return 1;
+}
+
+int verify_close_args(char* uid, char* password, char* aid){
+    if (!verify_uid(uid)) {
+        return 0;
+    }
+    if (!verify_password(password)) {
+        return 0;
+    }
+    if (!verify_aid(aid)) {
+        return 0;
+    }
+    return 1;
+}
+>>>>>>> a28aa852d8cfbc8cd5904a922b20218a40c890c9
