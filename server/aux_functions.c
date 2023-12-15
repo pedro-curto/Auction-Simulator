@@ -60,6 +60,7 @@ int is_user_login(char* uid) {
     return 0;
 }
 
+
 void change_user_login(char* uid) {
     char path[50] = "users/";
     strcat(path, uid);
@@ -75,6 +76,7 @@ void change_user_login(char* uid) {
 
 
 int verify_password_correct(char* uid, char* password) {
+    // checks if the given uid and password match the ones in the file
     char path[50] = "users/";
     strcat(path, uid);
     strcat(path, "/pass.txt");
@@ -389,7 +391,7 @@ int exists_auction(char* auc_id) {
     char path[50] = "auctions/";
     strcat(path, auc_id);
     DIR* dir = opendir(path);
-    if (dir == NULL){
+    if (dir == NULL) {
         return 0;
     }
     closedir(dir);

@@ -1,7 +1,7 @@
 # server/Makefile
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -pedantic
+CFLAGS = -Wall -Wextra -Werror -pedantic -pthread
 SRC = *.c
 TARGET = server
 

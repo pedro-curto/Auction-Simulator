@@ -5,19 +5,33 @@
 int verbose_mode = 0;
 
 //mutex
-pthread_mutex_t mutex;
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 int main(int argc, char *argv[]) {
+    struct sigaction act;
     int udp_socket, tcp_socket, max_socket;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     char buffer[MAX_BUFFER_SIZE];
     char *as_port;
 
-    // need to initialize a mutex with pthread_mutex_init()
-    pthread_mutex_init(&mutex, NULL);
+    // sets necessary signal handlers
+    act.sa_handler = SIG_IGN;
+    if (sigaction(SIGCHLD, &act, NULL) == -1) {
+        perror("sigaction error");
+        exit(EXIT_FAILURE);
+    }
 
+    // FIXME sigpipe faz sentido no server?
+    if (sigaction(SIGPIPE, &act, NULL) == -1) {
+        perror("sigaction error");
+        exit(EXIT_FAILURE);
+    }
+
+    // initializes the mutex
+    //pthread_mutex_init(&mutex, NULL);
+    
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -181,6 +195,7 @@ int main(int argc, char *argv[]) {
                     // FIXME temos de fechar o client_socket aqui? 
                     exit(EXIT_SUCCESS);
                 }
+
                 // int ret;
                 // do ret = close(client_socket); while (ret==-1 && errno == EINTR);
                 // if (ret == -1) {

@@ -39,7 +39,8 @@ void handle_open(int tcp_socket) {
             strcat(status, "NLG\n");
         } else {
             // OPA uid password name start_value timeactive Fname Fsize
-            if ((auction_id = create_auction(tcp_socket, uid, name, asset_fname, start_value, timeactive, fsize))) {
+            // FIXME isto é sempre verdade 
+            if ((auction_id = create_auction(tcp_socket, uid, name, asset_fname, start_value, timeactive, fsize)) != 0) {
                 sprintf(status, "ROA OK %03d\n", auction_id);
             } else {
                 strcat(status, "NOK\n");
@@ -120,6 +121,8 @@ void handle_bid(int tcp_socket) {
     //pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) { // must be logged in
         strcat(status, "NLG\n");
+    } else if (!verify_password_correct(uid, password)) {
+        strcat(status, "NOK\n");
     } else if (!ongoing_auction(auction_id)) { // must be ongoing (active)
         strcat(status, "NOK\n");
     } else if (hosted_by_self(auction_id, uid)) { // must not be hosted by self
@@ -164,6 +167,8 @@ void handle_close(int tcp_socket) {
     //pthread_mutex_lock(&mutex);
     if (!is_user_login(uid)) { // must be logged in
         strcat(status, "NLG\n");
+    } else if (!verify_password_correct(uid, password)) {
+        strcat(status, "NOK\n");
     } else if (!exists_auction(aucIdStr)) { // must exist
         strcat(status, "EAU\n");
     } else if (!hosted_by_self(auction_id, uid)) { // must be hosted by self
@@ -181,9 +186,7 @@ void handle_close(int tcp_socket) {
     //pthread_mutex_unlock(&mutex);
     write(tcp_socket, status, strlen(status));
 }
-<<<<<<< HEAD
-    
-=======
+
 
 int verify_open_args(char* uid, char* password, char* name, char* start_valueStr, char* timeactiveStr, char* asset_fname, char* fsizeStr){
     if (!verify_uid(uid)) {
@@ -238,4 +241,3 @@ int verify_close_args(char* uid, char* password, char* aid){
     }
     return 1;
 }
->>>>>>> a28aa852d8cfbc8cd5904a922b20218a40c890c9

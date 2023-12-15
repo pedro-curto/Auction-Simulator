@@ -19,6 +19,7 @@
 #include <pthread.h>
 #include <sys/file.h>
 #include <errno.h>
+#include <signal.h>
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT "58063"
