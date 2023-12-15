@@ -5,7 +5,7 @@
 int verbose_mode = 0;
 
 //mutex
-pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 int main(int argc, char *argv[]) {
@@ -91,6 +91,17 @@ int main(int argc, char *argv[]) {
     int reuse = 1;
     if (setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
         perror("setsockopt error");
+        close(udp_socket);
+        close(tcp_socket);
+        exit(EXIT_FAILURE);
+    }
+
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // 5 seconds
+    timeout.tv_usec = 0;
+
+    if (setsockopt(tcp_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+        perror("Error setting receive timeout");
         close(udp_socket);
         close(tcp_socket);
         exit(EXIT_FAILURE);
@@ -185,13 +196,13 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 } else if (pid == 0) {
                     close(tcp_socket);
-                    //int auc_fd = lock_dir("auctions");
-                    //int users_fd = lock_dir("users");
-                    pthread_mutex_lock(&mutex);
+                    int auc_fd = lock_dir("auctions");
+                    int users_fd = lock_dir("users");
+                    //pthread_mutex_lock(&mutex);
                     process_tcp_request(client_socket);
-                    pthread_mutex_unlock(&mutex);
-                    //unlock_dir(auc_fd);
-                    //unlock_dir(users_fd);
+                    //pthread_mutex_unlock(&mutex);
+                    unlock_dir(auc_fd);
+                    unlock_dir(users_fd);
                     // FIXME temos de fechar o client_socket aqui? 
                     exit(EXIT_SUCCESS);
                 }
@@ -213,7 +224,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    pthread_mutex_destroy(&mutex);
+    //pthread_mutex_destroy(&mutex);
     // Cleanup (not reached in this example)
     close(udp_socket);
     close(tcp_socket);

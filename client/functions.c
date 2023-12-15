@@ -22,7 +22,7 @@ int login(char* IP, char* port, char* uid, char* password, char* input) { // use
     }
 
     snprintf(login_request, sizeof(login_request), "LIN %s %s\n", uid, password);
-    
+
     //if (!strncmp(connect_UDP(IP, port, login_request, buffer), "Error", 5)) return 0; //FIXME acho q o "else" la em baixo trata do assunto se der erro aqui
     connect_UDP(IP, port, login_request, buffer);
     if (!strncmp(buffer, "RLI OK", 6)) {
@@ -38,6 +38,7 @@ int login(char* IP, char* port, char* uid, char* password, char* input) { // use
     }
     return 0;
 }
+
 
 int logout(char* IP, char* port, char* uid, char* password) {
     char buffer[128], logout_request[100];
@@ -108,24 +109,12 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     // checks server response
     if (!strncmp(buffer, "RLS OK", 6)) {
         printf("Auctions currently open:\n");
-        char *token = strtok(buffer+7, "OK ");
-        // FIXME comparar as duas implementações abaixo. a primeira tem dois \ns e a segunda um, not sure
-        /*while (token != NULL) {
+        char token[4];
+        for (int i = 7; i > 0; i++) { // 7 = strlen("RMB OK ")
+            i = read_buffer_token(buffer, token, sizeof(token), i);
             printf("%s ", token);
-            token = strtok(NULL, " ");
+            i = read_buffer_token(buffer, token, sizeof(token), ++i);
             printf("%s\n", token);
-            if (token != NULL)
-            token = strtok(NULL, " ");
-        }*/
-        while (token != NULL) {
-            printf("%s ", token);
-            // Move to the next token
-            token = strtok(NULL, " \n");
-            if (token != NULL) {
-                printf("%s\n", token);
-            }
-            // Move to the next token
-            token = strtok(NULL, " \n");
         }
     }
     else if (!strncmp(buffer, "RLS NOK", 7)) {
@@ -174,7 +163,7 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
         printf("Error opening file; couldn't get file size.\n");
         return;
     }
-    if (fsize > MAX_FILESIZE) { 
+    if (fsize > MAX_FILESIZE) {
         printf("File size exceeds allowed limit.\n");
         return;
     }
@@ -380,24 +369,23 @@ void showAsset(char* IP, char* port, int aid) {
         printf("Error showing asset: no such auction.\n");
         return;
     } else if (!strncmp(status2, "OK", 2)) {
-        printf("Asset successfully shown!\n");
-    } else if (!strncmp(status2, "ERR", 3)) {
-        printf("Server responded with an error when trying to show asset.\n");
-        return;
-    } else printf("Badly formatted server response: %s\n", status1);
-
-    if (!read_field(tcp_socket, fname, sizeof(fname))) {
-        printf("Error reading server response.\n");
-        return;
-    }
-    if (!read_field(tcp_socket, fsize, sizeof(fsize))) {
-        printf("Error reading server response.\n");
-        return;
-    }
-    strcat(path, fname);
-    printf("fname: %s\n", fname);
-    printf("fsize: %s\n", fsize);
-    read_file(tcp_socket, atoi(fsize), path);
+        if (!read_field(tcp_socket, fname, sizeof(fname))) {
+            printf("Error reading server response.\n");
+            return;
+        }
+        if (!read_field(tcp_socket, fsize, sizeof(fsize))) {
+            printf("Error reading server response.\n");
+            return;
+        }
+        strcat(path, fname);
+        printf("Asset %s with size %s succesfully stored in the assets folder!\n", fname, fsize);
+        //printf("Asset filename: %s\n", fname);
+        //printf("fsize: %s\n", fsize);
+        read_file(tcp_socket, atoi(fsize), path);
+        } else if (!strncmp(status2, "ERR", 3)) {
+            printf("Server responded with an error when trying to show asset.\n");
+            return;
+        } else printf("Badly formatted server response: %s\n", status1);
 
 }
 
@@ -573,42 +561,3 @@ void showRecord(char* IP, char* port, int aid) {
 
     } else printf("Server responded with an error when trying to show record.\n");
 }
-
-
-
-        /*
-        printf("buffer: %s\n", buffer);
-        char *token = strtok(buffer, " "); // skips RRC
-        printf("skipped token1: %s\n", token);
-        token = strtok(NULL, " "); // skips OK
-        printf("skipped token2: %s\n", token);
-        // Auction details
-        printf("Auction details:\n");
-        printf("Host UID: %s\n", strtok(NULL, " "));
-        printf("Auction Name: %s\n", strtok(NULL, " "));
-        printf("Asset Filename: %s\n", strtok(NULL, " "));
-        printf("Start Value: %s\n", strtok(NULL, " "));
-        printf("Start Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
-        printf("Time Active: %s\n", strtok(NULL, " "));
-        // Bids
-        // FIXME parsing is being done incorrectly! check this. Consider the token "B"
-        printf("Bids:\n");
-        while (1) {
-            // Format is: [ B bidder_UID bid_value bid_date-time bid_sec_time]* so I need to skip the initial "B"
-            token = strtok(NULL, " "); // skips B
-            if (token == NULL || !strcmp(token, "E")) {
-                break; // Exit the loop when 'E' is encountered or when there are no more tokens
-            }
-            printf("Bidder UID: %s\n", strtok(NULL, " "));
-            //printf("Bidder UID: %s\n", token);
-            printf("Bid Value: %s\n", strtok(NULL, " "));
-            printf("Bid Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
-            printf("Bid Sec Time: %s\n", strtok(NULL, " "));
-        }
-        // Closing information: only makes sense if the auction is closed
-        if (token != NULL && !strcmp(token, "E")) {
-            printf("Closing Information:\n");
-            printf("End Date-Time: %s %s\n", strtok(NULL, " "), strtok(NULL, " "));
-            printf("End Sec Time: %s\n", strtok(NULL, " "));
-        } else printf("Auction is still ongoing!\n");*/
-            

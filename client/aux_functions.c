@@ -12,6 +12,17 @@ void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME i
     // TODO devemos permitir que a função continue se qualquer um dos perrors ocorrer?
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1) perror("Error creating socket.");
+
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // 5 seconds
+    timeout.tv_usec = 0;
+
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+        perror("Error setting receive timeout");
+        close(fd);
+        return;
+    }
+
     memset(&hints, 0, sizeof hints);
     memset(&addr, 0, sizeof addr);
     hints.ai_family = AF_INET; // IPv4
@@ -45,6 +56,17 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     }*/
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1) perror("Error creating socket.\n");
+
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // 5 seconds
+    timeout.tv_usec = 0;
+
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+        perror("Error setting receive timeout");
+        close(fd);
+        return;
+    }
+
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // IPv4
     hints.ai_socktype = SOCK_STREAM; // TCP socket
@@ -58,6 +80,7 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
         // uses sendfile() to send the image
         sprintf(path, "local_assets/%s", asset_fname);
         asset_fd = open(path, O_RDONLY);
+        printf("path in tcp_connect: %s\n", path);
         if (asset_fd == -1) perror("Error opening file.\n");
         off_t offset = 0;
         ssize_t sent_bytes = sendfile(fd, asset_fd, &offset, fsize);
@@ -114,7 +137,7 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
         }
         bytes_read += n;
         // at any time, if we read a space we stop
-        if (buffer[bytes_read-1] == ' ') { // 103091  11111111 abcdefgh
+        if (buffer[bytes_read-1] == ' ') { // 103091 11111111 abcdefgh
             break;
         } 
     }
@@ -167,6 +190,16 @@ int connect_tcp(char* IP, char* port) {
     if (fd == -1) {
         perror("Error creating socket.\n");
         exit(EXIT_FAILURE);
+    }
+
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // 5 seconds
+    timeout.tv_usec = 0;
+
+    if (setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+        perror("Error setting receive timeout");
+        close(fd);
+        return 0;
     }
 
     memset(&hints, 0, sizeof hints);

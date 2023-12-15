@@ -51,29 +51,28 @@ void handle_open(int tcp_socket) {
 
     //reply_msg(tcp_socket, status); O reply_msg aqui vai ser fazer um write do status no socket
     // FIXME colocar isto num loop
-    if (write(tcp_socket, status, strlen(status)) == -1) {
-        perror("TCP write error");
-    }
-
+    write_tcp(tcp_socket, status);
 }
 
 
 void handle_show_asset(int tcp_socket) {
+    printf("entering SA\n");
     char auc_id[5];
     char status[200] = "RSA ";
     read_field(tcp_socket, auc_id, 3);
-    if (verify_aid(auc_id)){
+    if (!verify_aid(auc_id)) {
         strcat(status, "NOK\n");
         write_tcp(tcp_socket, status);
         return;
     }
 
-    if (verbose_mode){
+    if (verbose_mode) {
         printf("Request type: Show asset\nauc_id: %s\n", auc_id);
     }
 
     //pthread_mutex_lock(&mutex);
-    if (!exists_auction(auc_id)){
+    printf("auc_id: %s\n", auc_id);
+    if (!exists_auction(auc_id)) {
         strcat(status, "NOK\n");
         write_tcp(tcp_socket, status);
         return;
@@ -87,7 +86,7 @@ void handle_show_asset(int tcp_socket) {
     send_auc_file(tcp_socket, auc_id);
     //pthread_mutex_unlock(&mutex);
     // falta escrever o \n 
-    write(tcp_socket, "\n", 1);
+    write_tcp(tcp_socket, "\n");
 }
 
 
@@ -136,7 +135,7 @@ void handle_bid(int tcp_socket) {
     }
 
     //pthread_mutex_unlock(&mutex);
-    write(tcp_socket, status, strlen(status));
+    write_tcp(tcp_socket, status);
 }
 
 
@@ -184,11 +183,12 @@ void handle_close(int tcp_socket) {
     }
 
     //pthread_mutex_unlock(&mutex);
-    write(tcp_socket, status, strlen(status));
+    write_tcp(tcp_socket, status);
 }
 
 
-int verify_open_args(char* uid, char* password, char* name, char* start_valueStr, char* timeactiveStr, char* asset_fname, char* fsizeStr){
+int verify_open_args(char* uid, char* password, char* name, char* start_valueStr, char* timeactiveStr, char* asset_fname, char* fsizeStr) {
+
     if (!verify_uid(uid)) {
         return 0;
     }
@@ -213,7 +213,8 @@ int verify_open_args(char* uid, char* password, char* name, char* start_valueStr
     return 1;
 }
 
-int verify_bid_args(char* uid, char* password, char* aid, char* value){
+int verify_bid_args(char* uid, char* password, char* aid, char* value) {
+
     if (!verify_uid(uid)) {
         return 0;
     }
@@ -229,7 +230,7 @@ int verify_bid_args(char* uid, char* password, char* aid, char* value){
     return 1;
 }
 
-int verify_close_args(char* uid, char* password, char* aid){
+int verify_close_args(char* uid, char* password, char* aid) {
     if (!verify_uid(uid)) {
         return 0;
     }
