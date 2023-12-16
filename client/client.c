@@ -7,10 +7,17 @@ int main(int argc, char *argv[]) {
     char input[100], command[12];
     char uid[UID_SIZE+1], password[PASSWORD_SIZE+1];
     int user_loggedin = 0;
+    struct sigaction act;
     memset(uid, 0, sizeof(uid));
     memset(password, 0, sizeof(password));
     //strcpy(uid, "000000");
     //strcpy(password, "00000000");
+
+    // handles sigpipes
+    act.sa_handler = SIG_IGN;
+    sigaction(SIGPIPE, &act, NULL);
+
+
     switch(argc) {
         case 1:
             break;

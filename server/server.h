@@ -18,6 +18,9 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <pthread.h>
+#include <sys/file.h>
+#include <errno.h>
+#include <signal.h>
 
 #define MAX_BUFFER_SIZE 1024
 #define PORT "58063"
@@ -128,6 +131,7 @@ int verify_bid_value(char* value);
 int verify_open_args(char* uid, char* password, char* name, char* start_valueStr, char* timeactiveStr, char* asset_fname, char* fsizeStr);
 int verify_bid_args(char* uid, char* password, char* aid, char* value);
 int verify_close_args(char* uid, char* password, char* aid);
-
+int lock_dir(char* path);
+int unlock_dir(int dir_fd);
 
 #endif

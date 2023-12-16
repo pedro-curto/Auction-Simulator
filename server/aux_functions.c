@@ -60,6 +60,7 @@ int is_user_login(char* uid) {
     return 0;
 }
 
+
 void change_user_login(char* uid) {
     char path[50] = "users/";
     strcat(path, uid);
@@ -75,6 +76,7 @@ void change_user_login(char* uid) {
 
 
 int verify_password_correct(char* uid, char* password) {
+    // checks if the given uid and password match the ones in the file
     char path[50] = "users/";
     strcat(path, uid);
     strcat(path, "/pass.txt");
@@ -389,7 +391,7 @@ int exists_auction(char* auc_id) {
     char path[50] = "auctions/";
     strcat(path, auc_id);
     DIR* dir = opendir(path);
-    if (dir == NULL){
+    if (dir == NULL) {
         return 0;
     }
     closedir(dir);
@@ -702,19 +704,7 @@ void get_auc_info(int auc_id, char* status) {
         }
         closedir(dir);
     }
-    /*RRC status [host_UID auction_name asset_fname start_value start_date-time timeactive]
-    [ B bidder_UID bid_value bid_date-time bid_sec_time]*
-    [ E end_date-time end_sec_time]*/
-    //num_bids = GetBidList(atoi(auc_id), &bids);
-    //printf("NUM BIDS: %d\n", num_bids);
-    /*if (num_bids != 0) {
-        for (int i = 0; i < num_bids; i++) {
-            sprintf(aux_buffer, " B %s %d %s %ld", bids.bids[i].uid, 
-            bids.bids[i].value, bids.bids[i].datetime, bids.bids[i].bidtime);
-            strcat(status, aux_buffer);
-            printf("STATUS INSIDE GET_AUC_INFO LOOP: %s\n", status);
-        }
-    }*/
+    
     // appends info from END.txt if it exists
     // END.txt content: end_datetime end_sec_time
     // need to verify if auction is over
@@ -731,24 +721,42 @@ void get_auc_info(int auc_id, char* status) {
         sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
         strcat(status, aux_buffer);
     }
-
-    
-    /*printf("PATH BEFORE END: %s\n", path);
-    if (access(path, F_OK) != -1) {
-        printf("inside!\n");
-        FILE *end_file = fopen(path, "r");
-        if (end_file == NULL) {
-            perror("fopen error");
-            return;
-        }
-        fscanf(end_file, "%s %s %ld", datetime1, datetime2, &end_sec_time);
-        fclose(end_file);
-        sprintf(datetime, "%s %s", datetime1, datetime2);
-        sprintf(aux_buffer, " E %s %ld", datetime, end_sec_time);
-        strcat(status, aux_buffer);
-        printf("STATUS INSIDE GET_AUC_INFO END: %s\n", status);
-    }*/
 }
+
+
+int lock_dir(char* path) {
+    int dir_fd = open(path, O_RDONLY);
+    if (dir_fd == -1) {
+        perror("open error");
+        return 0;
+    }
+    if (flock(dir_fd, LOCK_EX) == -1) {
+        perror("flock error");
+        return 0;
+    }
+    return dir_fd;
+}
+
+
+int unlock_dir(int dir_fd) {
+    if (flock(dir_fd, LOCK_UN) == -1) {
+        perror("flock error");
+        return 0;
+    }
+    return 1;
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
     /*if (access(path, F_OK) != -1) {
         DIR *dir = opendiRRC OK 103091 aucname123 A.txt 100 2023-12-13 09:53:34 3000 B 103092 101 2023-12-13 09:53:49 15 B 103092 102 2023-12-13 09:53:56 22 B 103092 103 2023-12-13 09:53:57 23 B 103092 104 2023-12-13 09:53:59 25 B 103092 105 2023-12-13 09:54:00 26 B 103092 106 2023-12-13 09:54:02 28 B 103093 107 2023-12-13 09:54:10 36 B 103093 2000 2023-12-13 09:54:13 39ath, "auctions/%3s/bids/%s", auc_id, entry->d_name);

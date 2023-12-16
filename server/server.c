@@ -5,14 +5,33 @@
 int verbose_mode = 0;
 
 //mutex
-// pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+
 
 int main(int argc, char *argv[]) {
+    struct sigaction act;
     int udp_socket, tcp_socket, max_socket;
     struct sockaddr_in server_addr, client_addr;
     socklen_t client_addr_len = sizeof(client_addr);
     char buffer[MAX_BUFFER_SIZE];
     char *as_port;
+
+    // sets necessary signal handlers
+    act.sa_handler = SIG_IGN;
+    if (sigaction(SIGCHLD, &act, NULL) == -1) {
+        perror("sigaction error");
+        exit(EXIT_FAILURE);
+    }
+
+    // FIXME sigpipe faz sentido no server?
+    if (sigaction(SIGPIPE, &act, NULL) == -1) {
+        perror("sigaction error");
+        exit(EXIT_FAILURE);
+    }
+
+    // initializes the mutex
+    //pthread_mutex_init(&mutex, NULL);
+    
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -72,6 +91,17 @@ int main(int argc, char *argv[]) {
     int reuse = 1;
     if (setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse)) == -1) {
         perror("setsockopt error");
+        close(udp_socket);
+        close(tcp_socket);
+        exit(EXIT_FAILURE);
+    }
+
+    struct timeval timeout;
+    timeout.tv_sec = 5;  // 5 seconds
+    timeout.tv_usec = 0;
+
+    if (setsockopt(tcp_socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
+        perror("Error setting receive timeout");
         close(udp_socket);
         close(tcp_socket);
         exit(EXIT_FAILURE);
@@ -166,9 +196,17 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 } else if (pid == 0) {
                     close(tcp_socket);
+                    int auc_fd = lock_dir("auctions");
+                    int users_fd = lock_dir("users");
+                    //pthread_mutex_lock(&mutex);
                     process_tcp_request(client_socket);
+                    //pthread_mutex_unlock(&mutex);
+                    unlock_dir(auc_fd);
+                    unlock_dir(users_fd);
+                    // FIXME temos de fechar o client_socket aqui? 
                     exit(EXIT_SUCCESS);
                 }
+
                 // int ret;
                 // do ret = close(client_socket); while (ret==-1 && errno == EINTR);
                 // if (ret == -1) {
@@ -186,7 +224,7 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-
+    //pthread_mutex_destroy(&mutex);
     // Cleanup (not reached in this example)
     close(udp_socket);
     close(tcp_socket);

@@ -1,6 +1,6 @@
 # user/Makefile
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -pedantic
+CFLAGS = -Wall -Wextra -Werror -Wunused -pedantic
 SRC = *.c
 TARGET = client
 

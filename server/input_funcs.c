@@ -96,6 +96,7 @@ int read_password_udp(char* input, char* password){
     return 1;
 }
 
+
 int read_aid_udp(char* input, char* aid){
     int i, l = 0;
     char buffer[AID_SIZE+1];
