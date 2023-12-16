@@ -109,10 +109,14 @@ int read_aid_udp(char* input, char* aid){
 
     for (i = start_pos; i < max_size; i++) {
 
-        if (i > start_pos) {
-            if (input[i] == '\n'){
-                break;
+        if (input[i] == '\n'){
+            if (i > start_pos) {
+                buffer[l] = '\0';
+                int id = atoi(buffer);
+                sprintf(aid, "%03d", id);
+                return 1;
             }
+            return 0;
         }
         if (!isdigit(input[i])){
             return 0;
@@ -120,10 +124,7 @@ int read_aid_udp(char* input, char* aid){
         buffer[l] = input[i];
         l++;
     }
-    buffer[l] = '\0';
-    int id = atoi(buffer);
-    sprintf(aid, "%03d", id);
-    return 1;
+    return 0;
 }
 
 int verify_uid(char* uid){
