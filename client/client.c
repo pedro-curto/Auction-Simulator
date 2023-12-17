@@ -2,16 +2,14 @@
 
 
 int main(int argc, char *argv[]) {
-    char IP[50] = SERVER_IP;
-    char port[10] = TEJO_PORT;
+    char IP[50] = LOCAL_SERVER_IP;
+    char port[10] = PORT;
     char input[100], command[12];
     char uid[UID_SIZE+1], password[PASSWORD_SIZE+1];
     int user_loggedin = 0;
     struct sigaction act;
     memset(uid, 0, sizeof(uid));
     memset(password, 0, sizeof(password));
-    //strcpy(uid, "000000");
-    //strcpy(password, "00000000");
 
     // handles sigpipes
     act.sa_handler = SIG_IGN;
@@ -48,13 +46,8 @@ int main(int argc, char *argv[]) {
     while (1) {
         // gets stdin into input buffer
         printf(">> ");
-        scanf("%s", command); // FIXME scanf not safe
+        scanf("%s", command);
         fgets(input, sizeof(input), stdin);
-
-        // if (!verify_input_buffer(input, (int)sizeof(input))) {
-        //     printf("Invalid input.\n");
-        //     continue;
-        // }
 
         if (input[strlen(input)-1] == '\n') input[strlen(input)-1] = '\0';
         
@@ -72,9 +65,6 @@ int main(int argc, char *argv[]) {
             } else {
                 if(logout(IP, port, uid, password)){
                     user_loggedin = 0;
-                    // logged out: clears uid and password of user
-                    //strcpy(uid, "000000");
-                    //strcpy(password, "00000000");
                     memset(uid, 0, sizeof(uid));
                     memset(password, 0, sizeof(password));
                 }

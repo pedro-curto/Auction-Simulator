@@ -1,12 +1,7 @@
 #include "server.h"
 
-
 //verbose_mode global variable
 int verbose_mode = 0;
-
-//mutex
-//pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-
 
 int main(int argc, char *argv[]) {
     struct sigaction act;
@@ -23,15 +18,11 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // FIXME sigpipe faz sentido no server?
     if (sigaction(SIGPIPE, &act, NULL) == -1) {
         perror("sigaction error");
         exit(EXIT_FAILURE);
     }
 
-    // initializes the mutex
-    //pthread_mutex_init(&mutex, NULL);
-    
 
     fd_set read_fds;
     FD_ZERO(&read_fds);
@@ -160,23 +151,6 @@ int main(int argc, char *argv[]) {
                 if (verbose_mode) {
                     print_verbose_info(client_addr, "UDP");
                 }
-
-                // // Create a new thread for processing UDP request
-                // pthread_t udp_thread;
-                // struct {
-                //     int udp_socket;
-                //     struct sockaddr_in client_addr;
-                //     char buffer[MAX_BUFFER_SIZE];
-                //     socklen_t client_addr_len;
-                // }* thread_arg = malloc(sizeof(*thread_arg));
-
-                // thread_arg->udp_socket = udp_socket;
-                // thread_arg->client_addr = client_addr;
-                // thread_arg->client_addr_len = client_addr_len;
-                // memcpy(thread_arg->buffer, buffer, sizeof(buffer));
-
-                // pthread_create(&udp_thread, NULL, process_udp_thread, thread_arg);
-
                 process_udp_request(udp_socket, client_addr, buffer, client_addr_len);
                 memset(buffer, 0, sizeof(buffer));
             }
@@ -198,34 +172,17 @@ int main(int argc, char *argv[]) {
                     close(tcp_socket);
                     int auc_fd = lock_dir("server/auctions");
                     int users_fd = lock_dir("server/users");
-                    //pthread_mutex_lock(&mutex);
+                    
                     process_tcp_request(client_socket);
-                    //pthread_mutex_unlock(&mutex);
+                    
                     unlock_dir(auc_fd);
                     unlock_dir(users_fd);
-                    // FIXME temos de fechar o client_socket aqui? 
+
                     exit(EXIT_SUCCESS);
                 }
-
-                // int ret;
-                // do ret = close(client_socket); while (ret==-1 && errno == EINTR);
-                // if (ret == -1) {
-                //     perror("close error");
-                //     exit(EXIT_FAILURE);
-                // }
-
-                close(client_socket);
-                // // Create a new thread for processing TCP request
-                // pthread_t tcp_thread;
-                // int* thread_arg = malloc(sizeof(int));
-                // *thread_arg = client_socket;
-
-                // pthread_create(&tcp_thread, NULL, process_tcp_thread, thread_arg);
             }
         }
     }
-    //pthread_mutex_destroy(&mutex);
-    // Cleanup (not reached in this example)
     close(udp_socket);
     close(tcp_socket);
 
@@ -235,7 +192,6 @@ int main(int argc, char *argv[]) {
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
     char command[COMMAND_SIZE+1];
     memset(command, 0, sizeof(command));
-    // FIXME problem here?
     int command_info = read_command_udp(buffer, command);
 
     if (command_info == 0){
@@ -243,7 +199,6 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         printf("Invalid command.\n");
         return;
     } else if (command_info == 2 && strcmp(command, "LST") != 0){
-        printf("%s\n", command);
         reply_msg(udp_socket, client_addr, client_addr_len, "ERR\n");
         printf("Invalid command.\n");
         return;
@@ -275,7 +230,6 @@ void process_tcp_request(int tcp_socket) {
     memset(command, 0, sizeof(command));
     read_field(tcp_socket, command, 4); 
 
-    printf("command: %s\n", command);
     if (!strncmp(command, "OPA", 3)) {
         handle_open(tcp_socket);
     } else if (!strcmp(command, "CLS")) {

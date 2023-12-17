@@ -2,14 +2,12 @@
 
 // ---------------------------- Auxiliary functions ----------------------------
 
-void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME incluir um campo buffer_size? 
+void connect_UDP(char* IP, char* port, char* request, char* buffer) {
     int fd, errcode;
     ssize_t n;
     socklen_t addrlen;
     struct addrinfo hints, *res;
     struct sockaddr_in addr;
-    //printf("connect_UDP request: %s\n", request);
-    // TODO devemos permitir que a função continue se qualquer um dos perrors ocorrer?
     fd = socket(AF_INET, SOCK_DGRAM, 0);
     if (fd == -1) perror("Error creating socket.");
 
@@ -32,7 +30,6 @@ void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME i
     n = sendto(fd, request, strlen(request), 0, res->ai_addr, res->ai_addrlen);
     if (n == -1) perror("Error sending request.");
     addrlen = sizeof(addr);
-    // FIXME usar sempre este buffer size? talvez só no list
     n = recvfrom(fd, buffer, 8095, 0, (struct sockaddr*) &addr, &addrlen);
     if (n == -1) perror("Error receiving response.");
     buffer[n] = '\0';
@@ -46,14 +43,6 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     char asset_fname[ASSET_FNAME_SIZE + 1], path[50];
     ssize_t n;
     struct addrinfo hints, *res;
-    //socklen_t addrlen;
-    //struct sockaddr_in addr;
-    // OPA UID password name start_value timeactive Fname Fsize Fdata OPA %s %s %s %d %d %s %d\n
-    /*if (!strncmp(request, "OPA", 3)) { 
-        openAuc = 1;
-        sscanf(request, "OPA %*s %*s %*s %*d %*d %s %d", asset_fname, &fsize);
-        //printf("connect_TCP asset_fname: %s, fsize: %d\n", asset_fname, fsize);
-    }*/
     fd = socket(AF_INET, SOCK_STREAM, 0);
     if (fd == -1) perror("Error creating socket.\n");
 
@@ -80,7 +69,6 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
         // uses sendfile() to send the image
         sprintf(path, "client/local_assets/%s", asset_fname);
         asset_fd = open(path, O_RDONLY);
-        printf("path in tcp_connect: %s\n", path);
         if (asset_fd == -1) perror("Error opening file.\n");
         off_t offset = 0;
         ssize_t sent_bytes = sendfile(fd, asset_fd, &offset, fsize);
@@ -102,13 +90,11 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     buffer[n] = '\0';
     freeaddrinfo(res);
     close(fd);
-    //return buffer;
 }
 
 
 // check if an asset filename is valid (only alphanumeric characters plus -, _ and .)
 int valid_filename(char *filename) {
-    printf("filename: %s\n", filename);
     if (strlen(filename) > ASSET_FNAME_SIZE) return 0;  
     if (strspn(filename, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.") != strlen(filename)) return 0;
     char *extension = strrchr(filename, '.');
@@ -135,7 +121,6 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
     
     while (bytes_read <= size) {
         n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
-        //printf("read_field n: %d\n -- %c", (int)n, buffer[bytes_read]);
         
         if (n <= 0) {
             perror("TCP read error11");

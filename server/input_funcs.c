@@ -1,8 +1,8 @@
 #include "server.h"
 
 
+// Read command from buffer input until SEPARATION_CHAR appears
 int read_command_udp(char* input, char* command){
-    // Read command from buffer input until SEPARATION_CHAR appears
     int i = 0;
     char buffer[COMMAND_SIZE+1];
     int default_size = COMMAND_SIZE + 1; //2 separation chars + \n
@@ -190,10 +190,8 @@ int verify_name(char* name){
     if (strlen(name) > NAME_SIZE || strlen(name) < 1){
         return 0;
     }
-    // FIXME tive de alterar isto aqui em baixo porque senão, falhava num dos testes do sigma
     for (i = 0; i < (int)strlen(name); i++){
         if (!isalnum(name[i]) && name[i] != '_' && name[i] != '-') {
-            printf("name[%d] = %c\n", i, name[i]);
             return 0;
         }
     }
@@ -268,17 +266,3 @@ int verify_bid_value(char* bid_value){
     }
     return 1;
 }
-
-// int verify_bid_datetime(char* bid_datetime){
-//     int i;
-//     if (strlen(bid_datetime) != DATETIME_SIZE){
-//         return 0;
-//     }
-//     for (i = 0; i < (int)strlen(bid_datetime); i++){
-//         if (!isdigit(bid_datetime[i])){
-//             return 0;
-//         }
-//     }
-//     return 1;
-// }
-

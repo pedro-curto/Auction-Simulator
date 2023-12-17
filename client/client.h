@@ -21,7 +21,6 @@
 #define SERVER_name "tejo.tecnico.ulisboa.pt"
 #define SERVER_IP "193.136.138.142"
 #define SERVER_IP_TEJO "tejo"
-//#define LOCAL_SERVER_IP "192.168.1.1"
 #define LOCAL_SERVER_IP "localhost"
 #define PORT "58063" 
 #define TEJO_PORT "58011"
@@ -36,10 +35,10 @@
 #define MAX_FILESIZE 10000000 // 10 MB
 #define MAX_AUCTIME 99999
 #define LST_BUFFER_SIZE // max is RLS OK and then 
-#define MA_BUFFER_SIZE 6024// max is RMA OK\n (7) + 6 per auction, so 999*6 we round to 6024 because we can
+#define MA_BUFFER_SIZE 6024// max is RMA OK\n (7) + 6 per auction, so 999*6 we round to 6024
 #define SA_RESPONSE_HEADER 41 // RSA OK Fname------------------- Fsize--- 0\n
 #define SA_BUFFER_SIZE 10 // RSA OK Fname------------------- Fsize--- 0\n
-//#define SA_BUFFER_SIZE 8// RSA OK + espaço +\0 (8)// RSA OK Fname Fsize Fdata so 7 + 24 + 8 + 1 (we receive Fdata after)
+
 
 int verify_input_buffer(char* input, int size);
 int verify_buffer(char* input, int size);
@@ -59,7 +58,6 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
 void SA_connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffer_size);
 int valid_filename(char *filename);
 int getFileSize(char *filename);
-//int readFile(char *filename, char *buffer, int size);
 int sendImage(char *filename, char *buffer, int size);
 int read_file(int tcp_socket, int size, char* path);
 int read_field(int tcp_socket, char *buffer, size_t size);
