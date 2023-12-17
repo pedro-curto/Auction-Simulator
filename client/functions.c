@@ -25,6 +25,12 @@ int login(char* IP, char* port, char* uid, char* password, char* input) { // use
 
     //if (!strncmp(connect_UDP(IP, port, login_request, buffer), "Error", 5)) return 0; //FIXME acho q o "else" la em baixo trata do assunto se der erro aqui
     connect_UDP(IP, port, login_request, buffer);
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return 0;
+    }
+
     if (!strncmp(buffer, "RLI OK", 6)) {
         printf("User is now logged in.\n");
         return 1;
@@ -49,6 +55,12 @@ int logout(char* IP, char* port, char* uid, char* password) {
         return 0;
     }*/
     connect_UDP(IP, port, logout_request, buffer);
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return 0;
+    }
+
     // checks server response
     if (!strncmp(buffer, "RLO OK", 6)) {
         printf("User was correctly logged out.\n");
@@ -72,6 +84,12 @@ int unregister(char* IP, char* port, char* uid, char* password) {
         return 0;
     }*/
     connect_UDP(IP, port, unregister_request, buffer);
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return 0;
+    }
+
     // checks server response
     if (!strncmp(buffer, "RUR OK", 6)) {
         printf("User was successfully unregistered.\n");
@@ -105,6 +123,12 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
     memset(buffer, 0, sizeof(buffer));
     // establishes UDP connection with server and sends request
     connect_UDP(IP, port, list_request, buffer);
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+
     //printf("buffer: %s\n", buffer);
     // checks server response
     if (!strncmp(buffer, "RLS OK", 6)) {
@@ -187,7 +211,12 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
             uid, password, name, start_value, timeactive, asset_fname, fsize);
     // establishes TCP connection
     connect_TCP(IP, port, request_header, buffer, sizeof(buffer));
-    printf("buffer: %s\n", buffer);
+    
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+
     // handles server response
     if (!strncmp(buffer, "ROA NOK", 7)) {
         printf("Auction could not be started.\n");
@@ -225,6 +254,12 @@ void closeAuction(char* IP, char* port, char* uid, char* password, char* input) 
         return;
     }*/
     connect_TCP(IP, port, close_request, buffer, sizeof(buffer));
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+
     // handles server response
     //printf("Server response buffer: %s\n", buffer);
     if (!strncmp(buffer, "RCL OK", 6)) {
@@ -255,6 +290,12 @@ void myAuctions(char* IP, char* port, char* uid) {
     snprintf(myauctions_request, sizeof(myauctions_request), "LMA %6s\n", uid);
     // FIXME este strncmp não faz sentido nenhum, o connect_UDP e connect_TCP deveriam funcionar sendo void
     connect_UDP(IP, port, myauctions_request, buffer);
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+
     // handles server response
     if (!strncmp(buffer, "RMA NOK", 7)) {
         printf("User has no ongoing auctions.\n");
@@ -294,6 +335,12 @@ void myBids(char* IP, char* port, char* uid) { // uses UDP protocol
     char buffer[1024], mybids_request[12]; // LMB UID---\n
     snprintf(mybids_request, sizeof(mybids_request), "LMB %6s\n", uid);
     connect_UDP(IP, port, mybids_request, buffer);
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+
     // handles server response
     if (!strncmp(buffer, "RMB NOK", 7)) {
         printf("You have no ongoing bids!\n");
@@ -382,10 +429,10 @@ void showAsset(char* IP, char* port, int aid) {
         //printf("Asset filename: %s\n", fname);
         //printf("fsize: %s\n", fsize);
         read_file(tcp_socket, atoi(fsize), path);
-        } else if (!strncmp(status2, "ERR", 3)) {
-            printf("Server responded with an error when trying to show asset.\n");
-            return;
-        } else printf("Badly formatted server response: %s\n", status1);
+    } else if (!strncmp(status2, "ERR", 3)) {
+        printf("Server responded with an error when trying to show asset.\n");
+        return;
+    } else printf("Badly formatted server response: %s\n", status1);
 
 }
 
@@ -415,6 +462,12 @@ void bid(char* IP, char* port, char *uid, char* password, int aid, int value) { 
     char buffer[30000], bid_request[32]; // BID UID-- password AID value-\n (31+1)
     snprintf(bid_request, sizeof(bid_request), "BID %6s %8s %03d %06d\n", uid, password, aid, value);
     connect_TCP(IP, port, bid_request, buffer, sizeof(buffer));
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return;
+    }
+
     // handles server response
     if (!strncmp(buffer, "RBD ACC", 7)) {
         printf("Your bid has been accepted!\n");
@@ -467,6 +520,11 @@ void showRecord(char* IP, char* port, int aid) {
     int message_part = 0, first_bid = 1;
     snprintf(showrecord_request, sizeof(showrecord_request), "SRC %03d\n", aid);
     connect_UDP(IP, port, showrecord_request, buffer);
+
+    if (!verify_buffer(buffer, strlen(buffer))) {
+        printf("Error reading server response.\n");
+        return;
+    }
 
     // handles server response
     if (!strncmp(buffer, "RRC NOK", 7)) {

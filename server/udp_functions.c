@@ -6,7 +6,7 @@ void handle_login(int udp_socket, struct sockaddr_in client_addr, char* buffer, 
     char password[PASSWORD_SIZE + 1];
 
     if (!read_uid_udp(buffer, uid) || !read_password_udp(buffer, password)) {
-        strcat(status, "NOK\n");
+        strcat(status, "ERR\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
@@ -48,7 +48,7 @@ void handle_logout(int udp_socket, struct sockaddr_in client_addr, char* buffer,
     // password[strlen(password)] = '\0';
 
     if (!read_uid_udp(buffer, uid) || !read_password_udp(buffer, password)) {
-        strcat(status, "NOK\n");
+        strcat(status, "ERR\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
@@ -82,7 +82,7 @@ void handle_unregister(int udp_socket, struct sockaddr_in client_addr, char* buf
     // uid[strlen(uid)] = '\0';
 
     if (!read_uid_udp(buffer, uid) || !read_password_udp(buffer, password)) {
-        strcat(status, "NOK\n");
+        strcat(status, "ERR\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
@@ -114,8 +114,8 @@ void handle_myauctions(int udp_socket, struct sockaddr_in client_addr, char* buf
     char uid[UID_SIZE + 1];
     char status[9999] = "RMA ";
     // we need to guarantee that we read exactly three characters and a space afterwards
-    if (!read_uid_udp(buffer, uid)) {
-        strcat(status, "NOK\n");
+    if (!read_uid_udp_final(buffer, uid)) {
+        strcat(status, "ERR\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
@@ -143,13 +143,13 @@ void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer,
     char uid[UID_SIZE + 1];
     char status[9999] = "RMB ";
     // we need to guarantee that we read exactly three characters and a space afterwards
-    if (!read_uid_udp(buffer, uid)) {
-        strcat(status, "NOK\n");
+    if (!read_uid_udp_final(buffer, uid)) {
+        strcat(status, "ERR\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
 
-    if (verbose_mode){
+    if (verbose_mode) {
         printf("Request type: Show user bids\nuid: %s\n", uid);
     }
 
@@ -169,19 +169,26 @@ void handle_mybids(int udp_socket, struct sockaddr_in client_addr, char* buffer,
 
 
 void handle_list(int udp_socket, struct sockaddr_in client_addr, char* buffer, socklen_t client_addr_len) {
-    (void) buffer;
     char status[9999] = "RLS ";
 
     if (verbose_mode){
         printf("Request type: List auctions\n");
     }
 
+    if (buffer[3] != '\n') {
+        strcat(status, "ERR\n");
+        reply_msg(udp_socket, client_addr, client_addr_len, status);
+        return;
+    }
+
     //pthread_mutex_lock(&mutex);
-    if (access("auctions", F_OK) == -1) {
+    if (!exists_auctions()) {
+        printf("no auctions\n");
         strcat(status, "NOK\n");
     } else {
         strcat(status, "OK");
         append_auctions(status);
+        printf("status: %s\n", status);
     }
     //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
@@ -192,7 +199,7 @@ void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *bu
     char status[9999] = "RRC ";
 
     if(!read_aid_udp(buffer, auc_id)){
-        strcat(status, "NOK\n");
+        strcat(status, "ERR\n");
         reply_msg(udp_socket, client_addr, client_addr_len, status);
         return;
     }
@@ -200,7 +207,7 @@ void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *bu
     if (verbose_mode){
         printf("Request type: Show record\naid: %s\n", auc_id);
     }
-    
+
     //pthread_mutex_lock(&mutex);
     if (!exists_auction(auc_id)) {
         strcat(status, "NOK\n");
@@ -213,4 +220,3 @@ void handle_show_record(int udp_socket, struct sockaddr_in client_addr, char *bu
     //pthread_mutex_unlock(&mutex);
     reply_msg(udp_socket, client_addr, client_addr_len, status);
 }
-

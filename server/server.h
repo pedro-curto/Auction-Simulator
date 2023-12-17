@@ -116,6 +116,7 @@ int loadBid(char* path, bidlist *list);
 //input_funcs
 int read_command_udp(char* input, char* command);
 int read_uid_udp(char* input, char* uid);
+int read_uid_udp_final(char* input, char* uid);
 int read_password_udp(char* input, char* password);
 int read_aid_udp(char* input, char* aid);
 int verify_uid(char* uid);

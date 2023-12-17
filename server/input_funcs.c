@@ -13,21 +13,20 @@ int read_command_udp(char* input, char* command){
 
     for (i = 0; i < default_size; i++){
         if (i == default_size - 1) {
-            if (input[i] != SEPARATION_CHAR && input[i] != '\n'){
-                return 0;
+            if (input[i] == SEPARATION_CHAR){
+                buffer[COMMAND_SIZE] = '\0';
+                strcpy(command, buffer);
+                return 1;
+            } else if (input[i] == '\n'){
+                buffer[COMMAND_SIZE] = '\0';
+                strcpy(command, buffer);
+                return 2;
             }
-            break;
+            return 0;
         }
         buffer[i] = input[i];
     }
-
-    if (strlen(buffer) != COMMAND_SIZE){
-        return 0;
-    }
-
-    buffer[COMMAND_SIZE] = '\0';
-    strcpy(command, buffer);
-    return 1;
+    return 0;
 }
 
 int read_uid_udp(char* input, char* uid) {
@@ -43,24 +42,47 @@ int read_uid_udp(char* input, char* uid) {
     for (i = start_pos; i < default_size; i++) {
         lenght = i - start_pos;
         if (i == default_size - 1) {
-            if (input[i] != SEPARATION_CHAR && input[i] != '\n'){
-                return 0;
+            if (input[i] == SEPARATION_CHAR){
+                buffer[UID_SIZE] = '\0';
+                strcpy(uid, buffer);
+                return 1;
             }
-            break;
+            return 0;
         }
         if (!isdigit(input[i])){
             return 0;
         }
         buffer[lenght] = input[i];
     }
+    return 0;
+}
 
-    if (strlen(buffer) != UID_SIZE){
+int read_uid_udp_final(char* input, char* uid) {
+    int lenght, i = 0;
+    int start_pos = COMMAND_SIZE + 1;
+    char buffer[UID_SIZE+1];
+    int default_size = COMMAND_SIZE + UID_SIZE + 2; //1 separation chars + \n or ' '
+
+    if ((int)strlen(input) < default_size){
         return 0;
     }
 
-    buffer[UID_SIZE] = '\0';
-    strcpy(uid, buffer);
-    return 1;
+    for (i = start_pos; i < default_size; i++) {
+        lenght = i - start_pos;
+        if (i == default_size - 1) {
+            if (input[i] == '\n'){
+                buffer[UID_SIZE] = '\0';
+                strcpy(uid, buffer);
+                return 1;
+            }
+            return 0;
+        }
+        if (!isdigit(input[i])){
+            return 0;
+        }
+        buffer[lenght] = input[i];
+    }
+    return 0;
 }
 
 int read_password_udp(char* input, char* password){
@@ -76,29 +98,24 @@ int read_password_udp(char* input, char* password){
     for (i = start_pos; i < default_size; i++) {
         lenght = i - start_pos;
         if (i == default_size - 1) {
-            if (input[i] != '\n'){
-                return 0;
+            if (input[i] == '\n'){
+                buffer[PASSWORD_SIZE] = '\0';
+                strcpy(password, buffer);
+                return 1;
             }
-            break;
+            return 0;
         }
         if (!isalnum(input[i])){
             return 0;
         }
         buffer[lenght] = input[i];
     }
-
-    if (strlen(buffer) != PASSWORD_SIZE) {
-        return 0;
-    }
-
-    buffer[PASSWORD_SIZE] = '\0';
-    strcpy(password, buffer);
-    return 1;
+    return 0;
 }
 
 
 int read_aid_udp(char* input, char* aid){
-    int i, l = 0;
+    int i, id , l = 0;
     char buffer[AID_SIZE+1];
     int start_pos = COMMAND_SIZE + 1;
     int max_size = COMMAND_SIZE + AID_SIZE + 2; //1 separation chars + \n or ' '
@@ -113,7 +130,7 @@ int read_aid_udp(char* input, char* aid){
         if (input[i] == '\n'){
             if (i > start_pos) {
                 buffer[l] = '\0';
-                int id = atoi(buffer);
+                id = atoi(buffer);
                 sprintf(aid, "%03d", id);
                 return 1;
             }

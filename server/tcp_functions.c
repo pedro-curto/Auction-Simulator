@@ -7,14 +7,18 @@ void handle_open(int tcp_socket) {
     char status[50] = "ROA ";
     int start_value, timeactive, fsize, auction_id;
     
-    read_field(tcp_socket, uid, 6);
-    read_field(tcp_socket, password, 8);
-    read_field(tcp_socket, name, 10);
-    read_field(tcp_socket, start_valueStr, 6);
-    read_field(tcp_socket, timeactiveStr, 5);
-    read_field(tcp_socket, asset_fname, 24);
-    read_field(tcp_socket, fsizeStr, 8);
+    if (read_field(tcp_socket, uid, 6) < 1 || 
+        read_field(tcp_socket, password, 8) < 1 ||
+        read_field(tcp_socket, name, 10) < 1 ||
+        read_field(tcp_socket, start_valueStr, 6) < 1 ||
+        read_field(tcp_socket, timeactiveStr, 5) < 1 ||
+        read_field(tcp_socket, asset_fname, 24) < 1 ||
+        read_field(tcp_socket, fsizeStr, 8) < 1)  {
 
+            strcat(status, "ERR\n");
+            write_tcp(tcp_socket, status);
+            return;
+    }
     if (!verify_open_args(uid, password, name, start_valueStr, timeactiveStr, asset_fname, fsizeStr)){
         strcat(status, "ERR\n");
         write_tcp(tcp_socket, status);
@@ -59,7 +63,11 @@ void handle_show_asset(int tcp_socket) {
     printf("entering SA\n");
     char auc_id[5];
     char status[200] = "RSA ";
-    read_field(tcp_socket, auc_id, 3);
+    if (read_field(tcp_socket, auc_id, 3) < 1) {
+        strcat(status, "ERR\n");
+        write_tcp(tcp_socket, status);
+        return;
+    }
     if (!verify_aid(auc_id)) {
         strcat(status, "NOK\n");
         write_tcp(tcp_socket, status);
@@ -98,10 +106,16 @@ void handle_bid(int tcp_socket) {
     char uid[7], password[9], aucIdStr[4], valueStr[7];
     char status[50] = "RBD ";
     int value, auction_id;
-    read_field(tcp_socket, uid, 6);
-    read_field(tcp_socket, password, 8);
-    read_field(tcp_socket, aucIdStr, 3);
-    read_field(tcp_socket, valueStr, 6);
+
+    if (read_field(tcp_socket, uid, 6) < 1 || 
+        read_field(tcp_socket, password, 8) < 1 ||
+        read_field(tcp_socket, aucIdStr, 3) < 1 ||
+        read_field(tcp_socket, valueStr, 6) != -1)  {
+
+            strcat(status, "ERR\n");
+            write_tcp(tcp_socket, status);
+            return;
+    }
 
     if (!verify_bid_args(uid, password, aucIdStr, valueStr)){
         strcat(status, "ERR\n");
@@ -147,9 +161,15 @@ void handle_close(int tcp_socket) {
     char uid[7], password[9], aucIdStr[4];
     int auction_id;
     char status[50] = "RCL ";
-    read_field(tcp_socket, uid, 6);
-    read_field(tcp_socket, password, 8);
-    read_field(tcp_socket, aucIdStr, 3);
+
+    if (read_field(tcp_socket, uid, 6) < 1 || 
+        read_field(tcp_socket, password, 8) < 1 ||
+        read_field(tcp_socket, aucIdStr, 3) != -1)  {
+
+            strcat(status, "ERR\n");
+            write_tcp(tcp_socket, status);
+            return;
+    }
 
     if (!verify_close_args(uid, password, aucIdStr)){
         strcat(status, "ERR\n");

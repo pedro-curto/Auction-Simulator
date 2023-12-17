@@ -39,6 +39,8 @@
 #define SA_BUFFER_SIZE 10 // RSA OK Fname------------------- Fsize--- 0\n
 //#define SA_BUFFER_SIZE 8// RSA OK + espaço +\0 (8)// RSA OK Fname Fsize Fdata so 7 + 24 + 8 + 1 (we receive Fdata after)
 
+int verify_input_buffer(char* input, int size);
+int verify_buffer(char* input, int size);
 int login(char* IP, char* port, char* uid, char* password, char* input);
 int logout(char* IP, char* port, char* uid, char* password);
 int unregister(char* IP, char* port, char *uid, char *password);

@@ -127,6 +127,7 @@ int getFileSize(char *filename) {
 int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
     ssize_t n;
+    int first_read = 0; // check if the first character read is a space
     // check if the first character read is a space
     
     while (bytes_read <= size) {
@@ -135,6 +136,14 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
             perror("TCP read error");
             return 0;
         }
+
+        if (first_read) {
+            if (buffer[0] == ' ') {
+                return 0;
+            }
+            first_read = 0;
+        }
+
         bytes_read += n;
         // at any time, if we read a space we stop
         if (buffer[bytes_read-1] == ' ') { // 103091 11111111 abcdefgh
@@ -241,4 +250,42 @@ void write_tcp(int tcp_socket, char* status) {
     while (n < strlen(status)) {
         n += write(tcp_socket, status + n, strlen(status) - n);
     }
+}
+
+int verify_buffer(char* input, int size) {
+    if (input[size-1] != '\n') {
+        return 0;
+    }
+
+    if (input[0] == ' ') {
+        return 0;
+    }
+
+    if (size <= 1) {
+        return 0;
+    }
+
+    for (int i = 1; i < size; i++) {
+        if (input[i] == ' ' && input[i-1] == ' ') {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int verify_input_buffer(char* input, int size) {
+    if (input[0] == ' ') {
+        return 0;
+    }
+
+    if (size <= 1) {
+        return 0;
+    }
+
+    for (int i = 1; i < size; i++) {
+        if (input[i] == ' ' && input[i-1] == ' ') {
+            return 0;
+        }
+    }
+    return 1;
 }

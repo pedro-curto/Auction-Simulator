@@ -232,43 +232,18 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
-// void* process_udp_thread(void* arg) {
-//     // Cast the argument to the required type
-//     struct {
-//         int udp_socket;
-//         struct sockaddr_in client_addr;
-//         char buffer[MAX_BUFFER_SIZE];
-//         socklen_t client_addr_len;
-//     }* thread_arg = (struct { /* ... */ }*)arg;
-
-//     process_udp_request(thread_arg->udp_socket, thread_arg->client_addr, thread_arg->buffer, thread_arg->client_addr_len);
-
-//     // Cleanup and exit the thread
-//     free(thread_arg);
-//     pthread_exit(NULL);
-// }
-
-// void* process_tcp_thread(void* arg) {
-//     // Cast the argument to the required type
-//     int client_socket = *((int*)arg);
-
-//     process_tcp_request(client_socket);
-
-//     // Cleanup and exit the thread
-//     close(client_socket);
-//     free(arg);
-//     pthread_exit(NULL);
-// }
-
-
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
     char command[COMMAND_SIZE+1];
     memset(command, 0, sizeof(command));
     // é esta merda
-    sscanf(buffer, "%3s ", command);
-    command[strlen(command)] = '\0';
+    int command_info = read_command_udp(buffer, command);
 
-    if (!read_command_udp(buffer, command)){
+    if (command_info == 0){
+        reply_msg(udp_socket, client_addr, client_addr_len, "ERR\n");
+        printf("Invalid command.\n");
+        return;
+    } else if (command_info == 2 && strcmp(command, "LST") != 0){
+        printf("%s\n", command);
         reply_msg(udp_socket, client_addr, client_addr_len, "ERR\n");
         printf("Invalid command.\n");
         return;
@@ -280,7 +255,7 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
         handle_logout(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"UNR")) {
         handle_unregister(udp_socket, client_addr, buffer, client_addr_len);
-    } else if (!strncmp(command, "LMA", 3)) {
+    } else if (!strcmp(command, "LMA")) {
         handle_myauctions(udp_socket, client_addr, buffer, client_addr_len);
     } else if (!strcmp(command,"LMB")) {
         handle_mybids(udp_socket, client_addr, buffer, client_addr_len);
@@ -298,11 +273,8 @@ void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *b
 void process_tcp_request(int tcp_socket) {
     char command[5];
     memset(command, 0, sizeof(command));
-    read_field(tcp_socket, command, 4); // faz diferença ser 3 ou 4? acho que precisa de ser 4 pra consumir o espaço
-    /*int bytes_read = 0;
-    while (bytes_read < 4) {
-        bytes_read += read(tcp_socket, command + bytes_read, 4 - bytes_read);
-    }*/
+    read_field(tcp_socket, command, 4); 
+
     printf("command: %s\n", command);
     if (!strncmp(command, "OPA", 3)) {
         handle_open(tcp_socket);
@@ -323,74 +295,3 @@ void process_tcp_request(int tcp_socket) {
 void print_verbose_info(struct sockaddr_in client_addr, const char *protocol) {
     printf("Received %s request from %s:%d\n", protocol, inet_ntoa(client_addr.sin_addr), ntohs(client_addr.sin_port));
 }
-
-
-/*
-void UDPServer() {
-    int fd, errcode;
-    ssize_t n;
-    socklen_t addrlen;
-    struct addrinfo hints, *res;
-    struct sockaddr_in addr;
-    char buffer[128];
-
-    fd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (fd == -1) perror("Error creating socket.");
-
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET; // IPv4
-    hints.ai_socktype = SOCK_DGRAM; // UDP socket
-    hints.ai_flags = AI_PASSIVE; // Use my IP
-    errcode = getaddrinfo(NULL, PORT, &hints, &res);
-    if (errcode != 0) perror("Error getting address info.");
-    n = bind(fd, res->ai_addr, res->ai_addrlen);
-    if (n == -1) perror("Error binding.");
-
-    while (1) {
-        addrlen = sizeof(addr);
-        n = recvfrom(fd, buffer, 128, 0, (struct sockaddr*) &addr, &addrlen);
-        if (n == -1) perror("Error receiving request.");
-        write(1, "Received: ", 10);
-        write(1, buffer, n);
-        n = sendto(fd, buffer, n, 0, (struct sockaddr*) &addr, addrlen);
-        if (n == -1) perror("Error sending response.");
-
-        freeaddrinfo(res);
-        close(fd);
-    }
-}
-
-void TCPServer() {
-    int fd, newfd;
-    ssize_t n = 10;
-    socklen_t addrlen;
-    struct addrinfo hints, *res;
-    struct sockaddr_in addr;
-    char buffer[128];
-
-    fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (fd == -1) perror("Error creating socket.\n");
-
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family = AF_INET; // IPv4
-    hints.ai_socktype = SOCK_STREAM; // TCP socket
-    hints.ai_flags = AI_PASSIVE; // Use my IP
-
-    if (getaddrinfo(NULL, PORT, &hints, &res) != 0) perror("Error getting address info.");
-    if (bind(fd, res->ai_addr, res->ai_addrlen) == -1) perror("Error binding.");
-    if (listen(fd, 5) == -1) perror("Error listening.");
-
-    while (1) {
-        addrlen = sizeof(addr);
-        if ((newfd = accept(fd, (struct sockaddr*) &addr, &addrlen)) == -1) perror("Error accepting connection.");
-        if (read(newfd, buffer, 128) == -1) perror("Error reading.");
-        write(1, "Received: ", 10);
-        write(1, buffer, n);
-        if (write(newfd, buffer, n) == -1) perror("Error writing.");
-        close(newfd);
-
-    }
-    freeaddrinfo(res);
-    close(fd);
-}*/
-

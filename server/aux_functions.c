@@ -191,6 +191,7 @@ void fetch_auctions(char *path, char *auctions) {
 int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
     ssize_t n;
+    int first_read = 1;
     // check if the first character read is a space
     while (bytes_read <= size) {
         n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
@@ -198,17 +199,24 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
             perror("TCP read error");
             return 0;
         }
+        if (first_read) {
+            if (buffer[0] == ' ') {
+                return 0;
+            }
+            first_read = 0;
+        }
         bytes_read += n;
         // at any time, if we read a space or \n we stop
-        if (buffer[bytes_read-1] == ' ' || buffer[bytes_read-1] == '\n') {
-            break;
+        if (buffer[bytes_read-1] == ' ') {
+            buffer[bytes_read-1] = '\0';
+            return bytes_read;
+        }
+        if (buffer[bytes_read-1] == '\n') {
+            buffer[bytes_read-1] = '\0';
+            return -1;
         }
     }
-    // if (buffer[bytes_read-1] != '\n' && buffer[bytes_read-1] != ' '){
-    //     return -1;
-    // }
-    buffer[bytes_read-1] = '\0';
-    return bytes_read;
+    return 0;
 }
 
 
@@ -323,6 +331,7 @@ current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
 int exists_auctions() {
     DIR* dir = opendir("auctions");
     if (readdir(dir) == NULL) {
+        printf("no dir\n");
         return 0;
     }
     struct dirent *entry;
@@ -335,6 +344,7 @@ int exists_auctions() {
     }
 
     closedir(dir);
+    printf("not find\n");
     return 0;
 }
 
