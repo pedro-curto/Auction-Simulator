@@ -1,0 +1,5 @@
+>> New user successfully created and logged in.
+>> User was correctly logged out.
+>> User is now logged in.
+>> User was correctly logged out.
+>> 

@@ -21,7 +21,8 @@
 #define SERVER_name "tejo.tecnico.ulisboa.pt"
 #define SERVER_IP "193.136.138.142"
 #define SERVER_IP_TEJO "tejo"
-#define LOCAL_SERVER_IP "192.168.1.1"
+//#define LOCAL_SERVER_IP "192.168.1.1"
+#define LOCAL_SERVER_IP "localhost"
 #define PORT "58063" 
 #define UID_SIZE 6
 #define PASSWORD_SIZE 8

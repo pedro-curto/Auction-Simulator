@@ -59,11 +59,13 @@ void handle_open(int tcp_socket) {
 }
 
 
-void handle_show_asset(int tcp_socket) {
+void handle_show_asset(int tcp_socket) { 
     printf("entering SA\n");
     char auc_id[5];
     char status[200] = "RSA ";
-    if (read_field(tcp_socket, auc_id, 3) < 1) {
+
+    if (read_field(tcp_socket, auc_id, 3) != -1) {
+        printf("server: error reading auc_id: %s\n", auc_id);
         strcat(status, "ERR\n");
         write_tcp(tcp_socket, status);
         return;

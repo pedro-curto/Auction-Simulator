@@ -1,0 +1,4 @@
+>> Password doesn't match.
+>> User is now logged in.
+>> User was correctly logged out.
+>> 

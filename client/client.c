@@ -2,7 +2,7 @@
 
 
 int main(int argc, char *argv[]) {
-    char IP[50] = SERVER_IP;
+    char IP[50] = LOCAL_SERVER_IP;
     char port[10] = PORT;
     char input[100], command[12];
     char uid[UID_SIZE+1], password[PASSWORD_SIZE+1];

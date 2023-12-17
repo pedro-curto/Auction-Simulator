@@ -26,7 +26,7 @@ show_record 005
 show_record 006
 show_record 007
 show_record 008
-sleep 5
+sleep 5 # 5 seconds
 login 222222 hgfedcba
 bid 001 4
 bid 002 6
@@ -45,7 +45,7 @@ show_record 005
 show_record 006
 show_record 007
 show_record 008
-sleep 5
+sleep 5 # 10 seconds
 show_record 001
 show_record 002
 show_record 003
@@ -54,7 +54,7 @@ show_record 005
 show_record 006
 show_record 007
 show_record 008
-sleep 5
+sleep 5 # 15 seconds
 show_record 001
 show_record 002
 show_record 003
@@ -63,7 +63,7 @@ show_record 005
 show_record 006
 show_record 007
 show_record 008
-sleep 5
+sleep 5 # 20 seconds
 show_record 001
 show_record 002
 show_record 003
@@ -72,7 +72,7 @@ show_record 005
 show_record 006
 show_record 007
 show_record 008
-sleep 5
+sleep 5 # 25 seconds
 show_record 001
 show_record 002
 show_record 003

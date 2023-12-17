@@ -190,8 +190,10 @@ int verify_name(char* name){
     if (strlen(name) > NAME_SIZE || strlen(name) < 1){
         return 0;
     }
+    // FIXME tive de alterar isto aqui em baixo porque senão, falhava num dos testes do sigma
     for (i = 0; i < (int)strlen(name); i++){
-        if (!isalnum(name[i])){
+        if (!isalnum(name[i]) && name[i] != '_' && name[i] != '-') {
+            printf("name[%d] = %c\n", i, name[i]);
             return 0;
         }
     }

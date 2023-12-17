@@ -518,7 +518,7 @@ int ongoing_auction(int auction_id) {
     fclose(start_file);
     closure_fulltime = start_fulltime + timeactive;
     time(&current_time);
-    if (current_time > closure_fulltime) { // FIXME !! é >, ou é >=?
+    if (current_time >= closure_fulltime) { // FIXME !! é >, ou é >=?
         // auction is over -> create END.txt file: end_datetime end_sec_time
         // end_datetime -> date of auction closure (YYYY-MM-DD HH:MM:SS)
         // end_sec_time -> time in seconds during which the auction was active
