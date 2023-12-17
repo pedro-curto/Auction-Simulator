@@ -1,4 +1,0 @@
-show_asset 001
-RCOMP A.txt
-exit
-

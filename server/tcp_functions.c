@@ -32,7 +32,7 @@ void handle_open(int tcp_socket) {
     if (verbose_mode){
         printf("Request type: Open auction\nuid: %s\n", uid);
     }
-
+    printf("uid: %s\npassword: %s\nname: %s\nstart_value: %d\ntimeactive: %d\nasset_fname: %s\nfsize: %d\n", uid, password, name, start_value, timeactive, asset_fname, fsize);
     //pthread_mutex_lock(&mutex);
     if (!verify_user_exists(uid)) {
         strcat(status, "NOK\n");
@@ -43,10 +43,12 @@ void handle_open(int tcp_socket) {
             strcat(status, "NLG\n");
         } else {
             // OPA uid password name start_value timeactive Fname Fsize
-            // FIXME isto é sempre verdade 
+            // FIXME isto é sempre verdade
+            printf("before create_auction\n");
             if ((auction_id = create_auction(tcp_socket, uid, name, asset_fname, start_value, timeactive, fsize)) != 0) {
                 sprintf(status, "ROA OK %03d\n", auction_id);
             } else {
+                printf("something not ok\n");
                 strcat(status, "NOK\n");
             }
         }

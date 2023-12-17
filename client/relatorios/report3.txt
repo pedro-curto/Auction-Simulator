@@ -1,3 +1,0 @@
->> User is now logged in.
->> User was successfully unregistered.
->> 

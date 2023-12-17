@@ -32,7 +32,7 @@ void connect_UDP(char* IP, char* port, char* request, char* buffer) { // FIXME i
     n = sendto(fd, request, strlen(request), 0, res->ai_addr, res->ai_addrlen);
     if (n == -1) perror("Error sending request.");
     addrlen = sizeof(addr);
-    // usar sempre este buffer size? talvez só no list
+    // FIXME usar sempre este buffer size? talvez só no list
     n = recvfrom(fd, buffer, 8095, 0, (struct sockaddr*) &addr, &addrlen);
     if (n == -1) perror("Error receiving response.");
     buffer[n] = '\0';
@@ -78,7 +78,7 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
     if (!strncmp(request, "OPA", 3)) {
         sscanf(request, "OPA %*s %*s %*s %*d %*d %s %d", asset_fname, &fsize); 
         // uses sendfile() to send the image
-        sprintf(path, "local_assets/%s", asset_fname);
+        sprintf(path, "client/local_assets/%s", asset_fname);
         asset_fd = open(path, O_RDONLY);
         printf("path in tcp_connect: %s\n", path);
         if (asset_fd == -1) perror("Error opening file.\n");
@@ -106,15 +106,19 @@ void connect_TCP(char* IP, char* port, char* request, char* buffer, size_t buffe
 }
 
 
+// check if an asset filename is valid (only alphanumeric characters plus -, _ and .)
 int valid_filename(char *filename) {
-    if (strlen(filename) > ASSET_FNAME_SIZE) return -1;
-    if (strspn(filename, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.")) return -1;
+    printf("filename: %s\n", filename);
+    if (strlen(filename) > ASSET_FNAME_SIZE) return 0;  
+    if (strspn(filename, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_.") != strlen(filename)) return 0;
     char *extension = strrchr(filename, '.');
-    if (!extension || strlen(extension) != 4) return -1;
-    if (!isalpha(extension[1]) || !isalpha(extension[2]) || !isalpha(extension[3])) return -1;
+    if (!extension || strlen(extension) != 4) return 0;
+    if (!isalpha(extension[1]) || !isalpha(extension[2]) || !isalpha(extension[3])) return 0;
     return 1;
 }
 
+
+// gets Fsize to send it
 int getFileSize(char *filename) {
     struct stat st;
     int ret_stat;
@@ -123,17 +127,18 @@ int getFileSize(char *filename) {
     return st.st_size;
 }
 
-    
+
 int read_field(int tcp_socket, char *buffer, size_t size) {
     size_t bytes_read = 0;
     ssize_t n;
     int first_read = 0; // check if the first character read is a space
-    // check if the first character read is a space
     
     while (bytes_read <= size) {
         n = read(tcp_socket, buffer + bytes_read, 1); // read one byte at a time
+        //printf("read_field n: %d\n -- %c", (int)n, buffer[bytes_read]);
+        
         if (n <= 0) {
-            perror("TCP read error");
+            perror("TCP read error11");
             return 0;
         }
 
@@ -146,15 +151,17 @@ int read_field(int tcp_socket, char *buffer, size_t size) {
 
         bytes_read += n;
         // at any time, if we read a space we stop
-        if (buffer[bytes_read-1] == ' ') { // 103091 11111111 abcdefgh
+        if (buffer[bytes_read-1] == ' ') { 
             break;
-        } 
+        }
     }
     buffer[bytes_read-1] = '\0';
     return bytes_read;
 }
 
 
+
+// Reads Fdata from a TCP socket and writes it to a file (asset)
 int read_file(int tcp_socket, int size, char* path) {
     char buffer[1024];
     int bytes_read = 0;
@@ -168,7 +175,7 @@ int read_file(int tcp_socket, int size, char* path) {
         if (size - bytes_read < 1024) {
             n = read(tcp_socket, buffer, size - bytes_read); // read the remaining bytes
         } else {
-            n = read(tcp_socket, buffer, 1024); // read in chunks
+            n = read(tcp_socket, buffer, 1024); // reads in chunks
         }
         if (n <= 0) {
             perror("TCP read error");
@@ -186,7 +193,6 @@ int read_file(int tcp_socket, int size, char* path) {
         perror("TCP read1 error");
         return 0;
     }
-
     return bytes_read;
 }
 
@@ -217,6 +223,7 @@ int connect_tcp(char* IP, char* port) {
 
     if (getaddrinfo(IP, port, &hints, &res) != 0) {
         perror("Error getting address info.\n");
+        //perror("Error connecting.\n");
         close(fd);
         exit(EXIT_FAILURE);
     }
@@ -226,12 +233,14 @@ int connect_tcp(char* IP, char* port) {
         close(fd);
         exit(EXIT_FAILURE);
     }
+
     freeaddrinfo(res);
     return fd;
 }
 
+
 int read_buffer_token(char* buffer, char* token, ssize_t token_size, int start_pos){
-    int i,j;
+    int i, j;
     int size = (int)token_size -1;
     for (i = start_pos, j = 0; buffer[i] != ' ' && j < size && i > -1; i++,j++){
         if (buffer[i] == '\n'){
@@ -241,7 +250,6 @@ int read_buffer_token(char* buffer, char* token, ssize_t token_size, int start_p
         token[j] = buffer[i];
     }
     token[j] = '\0';
-    if (i == 1024) return -1;
     return i;
 }
 
@@ -272,6 +280,8 @@ int verify_buffer(char* input, int size) {
     }
     return 1;
 }
+
+
 
 int verify_input_buffer(char* input, int size) {
     if (input[0] == ' ') {

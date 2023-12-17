@@ -37,8 +37,8 @@ int main(int argc, char *argv[]) {
     FD_ZERO(&read_fds);
 
     as_port = PORT;
-    mkdir("users", 0777);
-    mkdir("auctions", 0777);
+    mkdir("server/users", 0777);
+    mkdir("server/auctions", 0777);
     
     switch(argc) {
         case 1:
@@ -196,8 +196,8 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 } else if (pid == 0) {
                     close(tcp_socket);
-                    int auc_fd = lock_dir("auctions");
-                    int users_fd = lock_dir("users");
+                    int auc_fd = lock_dir("server/auctions");
+                    int users_fd = lock_dir("server/users");
                     //pthread_mutex_lock(&mutex);
                     process_tcp_request(client_socket);
                     //pthread_mutex_unlock(&mutex);
@@ -235,7 +235,7 @@ int main(int argc, char *argv[]) {
 void process_udp_request(int udp_socket, struct sockaddr_in client_addr, char *buffer, socklen_t client_addr_len) {
     char command[COMMAND_SIZE+1];
     memset(command, 0, sizeof(command));
-    // é esta merda
+    // FIXME problem here?
     int command_info = read_command_udp(buffer, command);
 
     if (command_info == 0){

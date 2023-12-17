@@ -118,7 +118,7 @@ identifiers AID and state for all auctions, separated by single spaces, is sent
 by the AS. state takes value 1 if the auction is active, or 0 otherwise. 
 */
 void listAllAuctions(char* IP, char* port) { // uses UDP protocol
-    char buffer[8096], *list_request = "LST\n"; // FIXME buffer size? 4096?
+    char buffer[6100], *list_request = "LST\n"; // FIXME buffer size? 4096? 
     // memset(.., .., n*sizeof(char)) substituir por isto?
     memset(buffer, 0, sizeof(buffer));
     // establishes UDP connection with server and sends request
@@ -129,7 +129,7 @@ void listAllAuctions(char* IP, char* port) { // uses UDP protocol
         return;
     }
 
-    //printf("buffer: %s\n", buffer);
+    printf("buffer: %s\n", buffer);
     // checks server response
     if (!strncmp(buffer, "RLS OK", 6)) {
         printf("Auctions currently open:\n");
@@ -178,7 +178,7 @@ void openAuction(char* IP, char* port, char* uid, char* password, char* input) {
     char buffer[1024], request_header[100], path[50];//, fsizeStr[9];
     int start_value, timeactive, aid;
     sscanf(input, "%s %s %d %d", name, asset_fname, &start_value, &timeactive);
-    sprintf(path, "local_assets/%s", asset_fname);
+    sprintf(path, "client/local_assets/%s", asset_fname);
     printf("path: %s\n", path);
     int fsize = getFileSize(path);
     printf("fsize: %d\n", fsize);
@@ -399,7 +399,7 @@ void showAsset(char* IP, char* port, int aid) {
 
     // receives server response
     char status1[5], status2[5], fname[ASSET_FNAME_SIZE + 1], fsize[9];
-    char path[50] = "assets/";
+    char path[50] = "client/assets/";
     //mudar isto sff TODO
     if (!read_field(tcp_socket, status1, 3)) {
         printf("Error reading server response.\n");

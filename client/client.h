@@ -24,6 +24,7 @@
 //#define LOCAL_SERVER_IP "192.168.1.1"
 #define LOCAL_SERVER_IP "localhost"
 #define PORT "58063" 
+#define TEJO_PORT "58011"
 #define UID_SIZE 6
 #define PASSWORD_SIZE 8
 #define NAME_SIZE 10

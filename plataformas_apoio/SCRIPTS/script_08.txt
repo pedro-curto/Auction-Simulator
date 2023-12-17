@@ -1,3 +1,0 @@
-show_asset 002
-RCOMP Whistlers_Mother.jpg
-exit

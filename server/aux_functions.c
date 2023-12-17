@@ -1,23 +1,23 @@
 #include "server.h"
 
 int create_user(char* uid, char* password) {
-    char path[50]; //users/uid/hosted
+    char path[100]; //server/users/uid/hosted
     
-    sprintf(path, "users/%s", uid);
-    mkdir(path, 0777); // creates users/uid
-    sprintf(path, "users/%s/hosted", uid);
-    mkdir(path, 0777); // creates users/uid/hosted
-    sprintf(path, "users/%s/bidded", uid);
-    mkdir(path, 0777); // creates users/uid/bidded
+    sprintf(path, "server/users/%s", uid);
+    mkdir(path, 0777); // creates server/users/uid
+    sprintf(path, "server/users/%s/hosted", uid);
+    mkdir(path, 0777); // creates server/users/uid/hosted
+    sprintf(path, "server/users/%s/bidded", uid);
+    mkdir(path, 0777); // creates server/users/uid/bidded
     // creates files
-    sprintf(path, "users/%s/pass.txt", uid);
+    sprintf(path, "server/users/%s/pass.txt", uid);
     FILE *pass_file = fopen(path, "w");
     if (pass_file == NULL) {
         return 0;
     }
     fprintf(pass_file, "%s", password);
     fclose(pass_file);
-    sprintf(path, "users/%s/login.txt", uid);
+    sprintf(path, "server/users/%s/login.txt", uid);
     FILE *login_file = fopen(path, "w");
     fclose(login_file);
     return 1;
@@ -31,7 +31,7 @@ void reply_msg(int udp_socket, struct sockaddr_in client_addr,socklen_t client_a
 }
 
 int verify_user_exists(char* uid) {
-    char path[50] = "users/";
+    char path[100] = "server/users/";
     struct stat st;
     strcat(path, uid);
     DIR *dir = opendir(path);
@@ -50,7 +50,7 @@ int verify_user_exists(char* uid) {
 
 
 int is_user_login(char* uid) {
-    char path[50] = "users/";
+    char path[50] = "server/users/";
     struct stat st;
     strcat(path, uid);
     strcat(path, "/login.txt");
@@ -62,7 +62,7 @@ int is_user_login(char* uid) {
 
 
 void change_user_login(char* uid) {
-    char path[50] = "users/";
+    char path[50] = "server/users/";
     strcat(path, uid);
     strcat(path, "/login.txt");
     FILE *login_file = fopen(path, "r");
@@ -77,7 +77,7 @@ void change_user_login(char* uid) {
 
 int verify_password_correct(char* uid, char* password) {
     // checks if the given uid and password match the ones in the file
-    char path[50] = "users/";
+    char path[50] = "server/users/";
     strcat(path, uid);
     strcat(path, "/pass.txt");
     FILE *pass_file = fopen(path, "r");
@@ -98,7 +98,7 @@ int verify_password_correct(char* uid, char* password) {
 
 
 void delete_user(char* uid) {
-    char path[50] = "users/";
+    char path[50] = "server/users/";
     char path2[50];
     strcat(path, uid);
     strcpy(path2, path);
@@ -113,7 +113,7 @@ int user_auc_status(char* uid, char* status) {
     char user_auctions[9999];
     memset(user_auctions, 0, sizeof(user_auctions));
     char path[50];
-    sprintf(path, "users/%s/hosted/", uid);
+    sprintf(path, "server/users/%s/hosted/", uid);
     if (is_directory_empty(path)) {
         return 0;
     }
@@ -137,7 +137,7 @@ int user_bids_status(char* uid, char* status) {
     char user_auctions[9999];
     memset(user_auctions, 0, sizeof(user_auctions));
     char path[50];
-    sprintf(path, "users/%s/bidded/", uid);
+    sprintf(path, "server/users/%s/bidded/", uid);
     if (is_directory_empty(path)) {
         return 0;
     }
@@ -172,7 +172,7 @@ void fetch_auctions(char *path, char *auctions) {
             char auc_id[4];
             memset(auc_id, 0, sizeof(auc_id));
 
-            // auctions/auction_id.txt, so we must get the auction_id section
+            // server/auctions/auction_id.txt, so we must get the auction_id section
             strncpy(auc_id, auctions_list[i]->d_name, strlen(auctions_list[i]->d_name) - 4);
             auc_id[AID_SIZE] = '\0';
 
@@ -255,41 +255,44 @@ int store_file(int tcp_socket, int size, char* path) {
 
 // FIXME enviar antes uma estrutura com informações da auction? devíamos apagar o diretório em qualquer return 0?
 int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int start_value, int timeactive, int fsize) {
+    printf("entered create_auction\n");
     int auction_id = get_next_auction_id();
     struct tm *local_time;
-    char path[50], start_datetime[20];// YYYY-MM-DD HH-MM-SS (19 bytes)
+    char path[100], start_datetime[20];// YYYY-MM-DD HH-MM-SS (19 bytes)
     /*time_t fulltime;
     struct tm *current_time;
     char time_str[20];*/
-    // need to create: users/uid/hosted/auction_id.txt; 
-    // auctions/auction_id (directory); auctions/auction_id/START_auction_id.txt; auctions/auction_id/asset (directory);
-    // auctions/auction_id/bids (directory); auctions/auction_id/asset/asset_fname (5 total)
+    // need to create: server/users/uid/hosted/auction_id.txt; 
+    // server/auctions/auction_id (directory); server/auctions/auction_id/START_auction_id.txt; server/auctions/auction_id/asset (directory);
+    // server/auctions/auction_id/bids (directory); server/auctions/auction_id/asset/asset_fname (5 total)
     // UID name asset_fname start value timeactive start_datetime start_fulltime
     // creates hosted file txt
-    sprintf(path, "users/%s/hosted/%03d.txt", uid, auction_id); // users/uid/hosted/auction_id.txt
-    FILE *hosted_file = fopen(path, "w"); // creates auction_id.txt in users/uid/hosted (1/5)
+    printf("auction_id: %d\n", auction_id);
+    printf("uid: %s\n", uid);
+    sprintf(path, "server/users/%s/hosted/%03d.txt", uid, auction_id); // server/users/uid/hosted/auction_id.txt
+    FILE *hosted_file = fopen(path, "w"); // creates auction_id.txt in server/users/uid/hosted (1/5)
     if (hosted_file == NULL) {
         perror("Could not create auction file in user directory.\n");
         return 0;
     }
     // creates directory in auctions folder with asset and bids and start file
-    sprintf(path, "auctions/%03d", auction_id);
-    if (mkdir(path, 0777)) { // auctions/auction_id (2/5)
+    sprintf(path, "server/auctions/%03d", auction_id);
+    if (mkdir(path, 0777)) { // server/auctions/auction_id (2/5)
         perror("Could not create auction directory.\n");
         return 0;
     }
     strcat(path, "/asset");
-    if (mkdir(path, 0777)) { // auctions/auction_id/asset (3/5)
+    if (mkdir(path, 0777)) { // server/auctions/auction_id/asset (3/5)
         perror("Could not create asset directory.\n");
         return 0;
     }
-    sprintf(path, "auctions/%03d/bids", auction_id);
-    if (mkdir(path, 0777)) { // auctions/auction_id/bids (4/5)
+    sprintf(path, "server/auctions/%03d/bids", auction_id);
+    if (mkdir(path, 0777)) { // server/auctions/auction_id/bids (4/5)
         perror("Could not create bids directory.\n");
         return 0;
     }
-    sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
-    FILE *auction_file = fopen(path, "w"); // auctions/auction_id/START_auction_id.txt (5/5)
+    sprintf(path, "server/auctions/%03d/START_%03d.txt", auction_id, auction_id);
+    FILE *auction_file = fopen(path, "w"); // server/auctions/auction_id/START_auction_id.txt (5/5)
     if (auction_file == NULL) {
         perror("Could not create auction file in auction directory.\n");
         return 0;
@@ -307,13 +310,14 @@ int create_auction(int tcp_socket, char* uid, char* name, char* asset_fname, int
     start_value, timeactive, start_datetime, t);
     fclose(auction_file);
     // creates and stores asset file
-    sprintf(path, "auctions/%03d/asset/%s", auction_id, asset_fname);
+    sprintf(path, "server/auctions/%03d/asset/%s", auction_id, asset_fname);
     if (!store_file(tcp_socket, fsize, path)) {
         perror("Could not create and store asset file.\n");
         return 0;
     }
     return auction_id;
 }
+
 
 /*change start_date time to be obtained like below:
 time_t fulltime;
@@ -329,7 +333,7 @@ current_time->tm_hour, current_time->tm_min, current_time->tm_sec);
 
 // generalizar para exists path
 int exists_auctions() {
-    DIR* dir = opendir("auctions");
+    DIR* dir = opendir("server/auctions");
     if (readdir(dir) == NULL) {
         printf("no dir\n");
         return 0;
@@ -370,7 +374,7 @@ int is_directory_empty(char *path) {
 
 void append_auctions(char *status) {
     struct dirent **auctions_list;
-    int num_entries = scandir("auctions", &auctions_list, NULL, alphasort);
+    int num_entries = scandir("server/auctions", &auctions_list, NULL, alphasort);
 
     if (num_entries < 0) {
         perror("scandir error");
@@ -398,7 +402,7 @@ void append_auctions(char *status) {
 
 
 int exists_auction(char* auc_id) {
-    char path[50] = "auctions/";
+    char path[50] = "server/auctions/";
     strcat(path, auc_id);
     DIR* dir = opendir(path);
     if (dir == NULL) {
@@ -410,7 +414,7 @@ int exists_auction(char* auc_id) {
 
 
 int get_auc_file_info(char* auc_id, char* status) {
-    char path[50] = "auctions/";
+    char path[50] = "server/auctions/";
     char size[10];
     strcat(path, auc_id);
     strcat(path, "/asset/");
@@ -444,7 +448,7 @@ void write_tcp(int tcp_socket, char* status) {
 
 
 int send_auc_file(int tcp_socket, char* auc_id) {
-    char path[50] = "auctions/";
+    char path[100] = "server/auctions/";
     struct stat st;
     strcat(path, auc_id);
     strcat(path, "/asset/");
@@ -477,7 +481,7 @@ int send_auc_file(int tcp_socket, char* auc_id) {
 
 
 int get_next_auction_id() {
-    DIR* dir = opendir("auctions");
+    DIR* dir = opendir("server/auctions");
     struct dirent *entry;
     int max = 0;
     while ((entry = readdir(dir)) != NULL) {
@@ -497,17 +501,17 @@ int get_next_auction_id() {
 int ongoing_auction(int auction_id) {
     // START.txt is composed like: UID name asset_fname start value timeactive start_datetime start_fulltime
     // we need to add timeactive to start_fulltime and compare it to a call to time() (current time)
-    char path[50];
+    char path[100];
     time_t current_time, start_fulltime, timeactive, closure_fulltime;
     struct tm *closure_datetime;
     char time_str[20];
     // checks if there exists an END.txt file
-    sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
+    sprintf(path, "server/auctions/%03d/END_%03d.txt", auction_id, auction_id);
     if (access(path, F_OK) != -1) {
         return 0;
     }
     // if there is no END.txt file, we check if we need to create one
-    sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
+    sprintf(path, "server/auctions/%03d/START_%03d.txt", auction_id, auction_id);
     FILE *start_file = fopen(path, "r");
     if (start_file == NULL) {
         perror("fopen error");
@@ -523,7 +527,7 @@ int ongoing_auction(int auction_id) {
         // end_datetime -> date of auction closure (YYYY-MM-DD HH:MM:SS)
         // end_sec_time -> time in seconds during which the auction was active
         // here, the auction wasn't closed prematurely so end_sec_time is the same as timeactive
-        sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
+        sprintf(path, "server/auctions/%03d/END_%03d.txt", auction_id, auction_id);
         FILE *end_file = fopen(path, "w");
         if (end_file == NULL) {
             perror("fopen error");
@@ -541,8 +545,8 @@ int ongoing_auction(int auction_id) {
 
 
 int hosted_by_self(int auction_id, char* uid) {
-    char path[50];
-    sprintf(path, "users/%s/hosted/", uid);
+    char path[100];
+    sprintf(path, "server/users/%s/hosted/", uid);
     DIR *dir = opendir(path);
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
@@ -564,10 +568,10 @@ int hosted_by_self(int auction_id, char* uid) {
 // UID bid_value bid_datetime bid_sec_time
 int bid_accepted(int auction_id, int value, char* uid) {
     // first we see if there is any placed bid
-    char path[50];
+    char path[100];
     int max_bid = 0, start_value;
     time_t start_fulltime;
-    sprintf(path, "auctions/%03d/bids/", auction_id);
+    sprintf(path, "server/auctions/%03d/bids/", auction_id);
     DIR *dir = opendir(path);
     struct dirent *entry;
     while ((entry = readdir(dir)) != NULL) {
@@ -581,7 +585,7 @@ int bid_accepted(int auction_id, int value, char* uid) {
         }
     }
     closedir(dir);
-    sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
+    sprintf(path, "server/auctions/%03d/START_%03d.txt", auction_id, auction_id);
     FILE *start_file = fopen(path, "r");
     if (start_file == NULL) {
         perror("fopen error");
@@ -605,12 +609,12 @@ int bid_accepted(int auction_id, int value, char* uid) {
 // creates a new bid file with name bid_value.txt
 // and the contents: UID bid_value bid_datetime bid_sec_time
 int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime) {
-    char path[50];
+    char path[100];
     time_t current_fulltime;
     struct tm *current_datetime;
     char time_str[20]; // YYYY-MM-DD HH:MM:SS (19 bytes) + \0
-    // creates file on auctions directory (auctions/aid/bids)
-    sprintf(path, "auctions/%03d/bids/%d.txt", auction_id, value);
+    // creates file on auctions directory (server/auctions/aid/bids)
+    sprintf(path, "server/auctions/%03d/bids/%d.txt", auction_id, value);
     FILE *bid_file = fopen(path, "w");
     if (bid_file == NULL) {
         perror("Could not create a bid file in the auctions directory.");
@@ -621,8 +625,8 @@ int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime
     strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", current_datetime);
     fprintf(bid_file, "%s %d %s %ld", uid, value, time_str, current_fulltime-start_fulltime);
     fclose(bid_file);
-    // creates file on users directory (users/uid/bidded)
-    sprintf(path, "users/%s/bidded/%03d.txt", uid, auction_id);
+    // creates file on users directory (server/users/uid/bidded)
+    sprintf(path, "server/users/%s/bidded/%03d.txt", uid, auction_id);
     FILE *bidded_file = fopen(path, "w");
     if (bidded_file == NULL) {
         perror("Could not create a bid file in the user directory.");
@@ -634,13 +638,13 @@ int create_bid_files(int auction_id, int value, char* uid, time_t start_fulltime
 
 
 int close_auction(int auction_id) {
-    // creates an END file in the directory auctions/auction_id
+    // creates an END file in the directory server/auctions/auction_id
     // since it's being closed prematurely, we need to subtract current time from start_fulltime
-    char path[50];
+    char path[100];
     time_t current_fulltime, start_fulltime;
     struct tm *current_datetime;
     char time_str[20];
-    sprintf(path, "auctions/%03d/START_%03d.txt", auction_id, auction_id);
+    sprintf(path, "server/auctions/%03d/START_%03d.txt", auction_id, auction_id);
     FILE *start_file = fopen(path, "r");
     if (start_file == NULL) {
         perror("fopen error");
@@ -650,7 +654,7 @@ int close_auction(int auction_id) {
     fscanf(start_file, "%*s %*s %*s %*s %*s %*s %*s %ld", &start_fulltime);
     fclose(start_file);
     time(&current_fulltime);
-    sprintf(path, "auctions/%03d/END_%03d.txt", auction_id, auction_id);
+    sprintf(path, "server/auctions/%03d/END_%03d.txt", auction_id, auction_id);
     // creates an END.txt with contents: end_datetime end_sec_time
     FILE *end_file = fopen(path, "w");
     if (end_file == NULL) {
@@ -666,7 +670,7 @@ int close_auction(int auction_id) {
 
 
 void get_auc_info(int auc_id, char* status) {
-    char path[50];
+    char path[100];
     char aux_buffer[100];
     char uid[7], name[11], asset_fname[25];
     char datetime1[11], datetime2[9], datetime[20];
@@ -675,7 +679,7 @@ void get_auc_info(int auc_id, char* status) {
     time_t fulltime, timeactive, bidtime, end_sec_time;
     //int start_value;
     //time_t timeactive, fulltime;
-    sprintf(path, "auctions/%03d/START_%03d.txt", auc_id, auc_id);
+    sprintf(path, "server/auctions/%03d/START_%03d.txt", auc_id, auc_id);
     FILE *start_file = fopen(path, "r");
     if (start_file == NULL) {
         perror("fopen error");
@@ -690,13 +694,13 @@ void get_auc_info(int auc_id, char* status) {
     sprintf(aux_buffer, " %s %s %s %d %s %ld", uid, name, asset_fname, start_value, datetime, timeactive);
     strcat(status, aux_buffer);
     // gets bids
-    sprintf(path, "auctions/%03d/bids/", auc_id);
+    sprintf(path, "server/auctions/%03d/bids/", auc_id);
     if (access(path, F_OK) != -1) {
         DIR *dir = opendir(path);
         struct dirent *entry;
         while ((entry = readdir(dir)) != NULL) {
             if (strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")) {
-                sprintf(path, "auctions/%03d/bids/", auc_id);
+                sprintf(path, "server/auctions/%03d/bids/", auc_id);
                 strcat(path, entry->d_name);
                 FILE *bid_file = fopen(path, "r");
                 if (bid_file == NULL) {
@@ -719,7 +723,7 @@ void get_auc_info(int auc_id, char* status) {
     // END.txt content: end_datetime end_sec_time
     // need to verify if auction is over
     if (!ongoing_auction(auc_id)) {
-        sprintf(path, "auctions/%03d/END_%03d.txt", auc_id, auc_id);
+        sprintf(path, "server/auctions/%03d/END_%03d.txt", auc_id, auc_id);
         FILE *end_file = fopen(path, "r");
         if (end_file == NULL) {
             perror("fopen error");
@@ -769,7 +773,7 @@ int unlock_dir(int dir_fd) {
 
 
     /*if (access(path, F_OK) != -1) {
-        DIR *dir = opendiRRC OK 103091 aucname123 A.txt 100 2023-12-13 09:53:34 3000 B 103092 101 2023-12-13 09:53:49 15 B 103092 102 2023-12-13 09:53:56 22 B 103092 103 2023-12-13 09:53:57 23 B 103092 104 2023-12-13 09:53:59 25 B 103092 105 2023-12-13 09:54:00 26 B 103092 106 2023-12-13 09:54:02 28 B 103093 107 2023-12-13 09:54:10 36 B 103093 2000 2023-12-13 09:54:13 39ath, "auctions/%3s/bids/%s", auc_id, entry->d_name);
+        DIR *dir = opendiRRC OK 103091 aucname123 A.txt 100 2023-12-13 09:53:34 3000 B 103092 101 2023-12-13 09:53:49 15 B 103092 102 2023-12-13 09:53:56 22 B 103092 103 2023-12-13 09:53:57 23 B 103092 104 2023-12-13 09:53:59 25 B 103092 105 2023-12-13 09:54:00 26 B 103092 106 2023-12-13 09:54:02 28 B 103093 107 2023-12-13 09:54:10 36 B 103093 2000 2023-12-13 09:54:13 39ath, "server/auctions/%3s/bids/%s", auc_id, entry->d_name);
                 FILE *bid_file = fopen(path, "r");
                 if (bid_file == NULL) {
                     perror("fopen error");
@@ -828,7 +832,7 @@ int unlock_dir(int dir_fd) {
     char dirname[20];
     char pathname[32];
 
-    sprintf(dirname, "auctions/%03d/bids/", auction_id);
+    sprintf(dirname, "server/auctions/%03d/bids/", auction_id);
     n_entries = scandir(dirname, &filelist, 0, alphasort);
     if (n_entries <= 0) return 0;
     n_bids = 0;
@@ -838,7 +842,7 @@ int unlock_dir(int dir_fd) {
         printf("filelist[n_entries]->d_name: %s\n", filelist[n_entries]->d_name);
         //if (len == 10) { FIXME esta verificação é necessária de todo?
         // FIXME trocar o %s final para um strcat()
-        sprintf(pathname, "auctions/%03d/bids/", auction_id);
+        sprintf(pathname, "server/auctions/%03d/bids/", auction_id);
         strcat(pathname, filelist[n_entries]->d_name);
         if (loadBid(pathname, list)) n_bids++;
         free(filelist[n_entries]);
