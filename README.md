@@ -37,9 +37,6 @@ The user can interact with the server through commands. The commands are:
 The user can use the list, show_asset and show_record commands without being logged in;
 however, the other commands require the user to be logged in.
 
-The user application was tested with incorrect inputs and errors and is resilient to
-them, attempting to recover from them whenever possible.
-
 The assets that can be used in the open command are located in the local_assets folder 
 within the user directory, and the assets received from the server are stored in
 the assets folder within the user directory.
@@ -58,25 +55,8 @@ information and the UID of the user that made the request, respectively.
 
 The server saves data in the folders `auctions` and `users` within the server directory, 
 so while testing it might make sense to delete the folders after each test. 
-The server creates both these folders if they don't exist on startup; the server's 
-database structure mimics the structure present on the "guia.pdf" file provided; 
-the logic and contents of each file and some auxiliar functions were also based on
-the "guia.pdf" file.
+The server creates both these folders if they don't exist on startup.
 
-The server was also tested with incorrect inputs and errors and is resilient to 
-them, attempting to recover from them when possible.
-
-The server ignores the SIGPIPE and the SIGCHLD signals, ignoring when a client
-closes the connection and when a child process ends, respectively, and can be terminated
-with CTRL+C.
-
-The support of multiple clients is achieved through the use of fork() that 
-generates child processes whenever a new TCP connection is established to the server,
-using file locks to ensure data integrity.
-
-We also used timeouts to ensure that the server doesn't get stuck waiting for an answer
-that may never arrive, and to ensure the same for the client, that it doesn't get stuck
-waiting for the server to send an answer that may never come for some reason.
 
 ### Authors
 Pedro Sousa - 102664
