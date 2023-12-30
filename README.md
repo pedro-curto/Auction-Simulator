@@ -60,4 +60,5 @@ The server creates both these folders if they don't exist on startup.
 
 ### Authors
 Pedro Sousa - 102664
+
 Pedro Curto - 103091
