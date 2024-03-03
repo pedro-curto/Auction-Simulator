@@ -21,7 +21,7 @@ it should listen on port 58063 (5800 + GN), where our GN is 63.
 
 The user can interact with the server through commands. The commands are:
 
-- login UID password
+- login UID password (UID must be 6 numeric characters, password must be 8 alphanumeric characters)
 - logout
 - unregister
 - open name asset_fname start_value timeactive (opens a new auction)
