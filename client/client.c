@@ -10,6 +10,7 @@ int main(int argc, char *argv[]) {
     struct sigaction act;
     memset(uid, 0, sizeof(uid));
     memset(password, 0, sizeof(password));
+    mkdir("client/assets", 0777);
 
     // handles sigpipes
     act.sa_handler = SIG_IGN;
